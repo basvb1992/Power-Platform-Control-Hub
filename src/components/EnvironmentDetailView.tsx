@@ -42,6 +42,7 @@ import {
   SubtractCircleRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
+import type { EnvironmentGroup } from '../types/admin.ts';
 import { RESOURCE_TYPE_LABELS } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
@@ -59,6 +60,7 @@ import { useOwners } from '../services/ownerCache.ts';
 interface EnvironmentDetailViewProps {
   environment: Resource;
   resources: Resource[];
+  envGroups?: EnvironmentGroup[];
   onBack: () => void;
   onRefreshEnvironments?: () => Promise<void>;
 }
@@ -268,6 +270,7 @@ function resourceTypeIcon(type: string): ReactElement {
 export default function EnvironmentDetailView({
   environment: env,
   resources,
+  envGroups = [],
   onBack,
   onRefreshEnvironments,
 }: EnvironmentDetailViewProps): ReactElement {
@@ -286,6 +289,8 @@ export default function EnvironmentDetailView({
     ? new Date(env.properties.createdAt as string).toLocaleDateString()
     : '—';
   const shortId = env.name.length > 20 ? `${env.name.slice(0, 8)}…${env.name.slice(-8)}` : env.name;
+  const envGroupId = env.properties['environmentGroupId'] as string | undefined;
+  const groupMap = useMemo(() => new Map(envGroups.map((g) => [g.id, g.displayName])), [envGroups]);
 
   const { execute: execEnable } = useMutation(enableEnvironment, {
     successMessage: 'Enable environment request submitted.',
@@ -363,6 +368,11 @@ export default function EnvironmentDetailView({
           <div className={styles.heroBadges}>
             <Badge appearance="filled" color={envTypeColor(envType)}>{envType}</Badge>
             {isManaged && <Badge appearance="tint" color="success">Managed</Badge>}
+            {envGroupId && (
+              <Badge appearance="outline" color="informative" icon={<LayerRegular />}>
+                {groupMap.get(envGroupId) ?? 'In Group'}
+              </Badge>
+            )}
             {isPending && <Badge appearance="tint" color="informative">Working…</Badge>}
           </div>
           <Menu>
@@ -378,8 +388,12 @@ export default function EnvironmentDetailView({
                   : <MenuItem icon={<ShieldRegular />} onClick={() => void runAction(() => execEnableManaged(env.name))}>Enable Managed</MenuItem>
                 }
                 <MenuItem icon={<SaveRegular />} onClick={() => setShowBackup(true)}>Create Backup</MenuItem>
-                <MenuItem icon={<LayerRegular />} onClick={() => setGroupDialogMode('add')}>Add to Group</MenuItem>
-                <MenuItem icon={<SubtractCircleRegular />} onClick={() => setGroupDialogMode('remove')}>Remove from Group</MenuItem>
+                {!envGroupId && (
+                  <MenuItem icon={<LayerRegular />} onClick={() => setGroupDialogMode('add')}>Add to Group</MenuItem>
+                )}
+                {envGroupId && (
+                  <MenuItem icon={<SubtractCircleRegular />} onClick={() => setGroupDialogMode('remove')}>Remove from Group</MenuItem>
+                )}
               </MenuList>
             </MenuPopover>
           </Menu>
@@ -513,6 +527,7 @@ export default function EnvironmentDetailView({
         mode={groupDialogMode ?? 'add'}
         environmentName={displayName}
         environmentId={env.name}
+        preselectedGroupId={groupDialogMode === 'remove' ? envGroupId : undefined}
         onClose={() => setGroupDialogMode(null)}
         onSuccess={() => void onRefreshEnvironments?.()}
       />

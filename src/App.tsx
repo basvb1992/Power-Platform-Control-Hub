@@ -184,6 +184,7 @@ export default function App(): ReactElement {
             <EnvironmentsView
               environments={environments}
               resources={resources}
+              envGroups={envGroups}
               isLoading={dataLoading}
               error={dataError}
               onRefreshEnvironments={refresh}

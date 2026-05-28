@@ -36,6 +36,7 @@ import {
   SubtractCircleRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
+import type { EnvironmentGroup } from '../types/admin.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import BackupDialog from './BackupDialog.tsx';
 import EnvironmentDetailView from './EnvironmentDetailView.tsx';
@@ -52,6 +53,7 @@ import {
 interface EnvironmentsViewProps {
   environments: Resource[];
   resources: Resource[];
+  envGroups: EnvironmentGroup[];
   isLoading: boolean;
   error: string | null;
   onRefreshEnvironments?: () => Promise<void>;
@@ -176,6 +178,7 @@ function envTypeColor(
 export default function EnvironmentsView({
   environments,
   resources,
+  envGroups,
   isLoading,
   error,
   onRefreshEnvironments,
@@ -219,6 +222,11 @@ export default function EnvironmentsView({
     await action();
     setPendingEnvId(null);
   }
+
+  const groupMap = useMemo(
+    () => new Map(envGroups.map((g) => [g.id, g.displayName])),
+    [envGroups],
+  );
 
   // Derive unique type and region values from data
   const typeOptions = useMemo(() => {
@@ -266,6 +274,7 @@ export default function EnvironmentsView({
       <EnvironmentDetailView
         environment={selectedEnv}
         resources={resources}
+        envGroups={envGroups}
         onBack={() => setSelectedEnv(null)}
         onRefreshEnvironments={onRefreshEnvironments}
       />
@@ -425,7 +434,7 @@ export default function EnvironmentsView({
                   )}
                   {envGroupId && (
                     <Badge appearance="outline" color="informative" size="small" icon={<LayerRegular />}>
-                      In Group
+                      {groupMap.get(envGroupId) ?? 'In Group'}
                     </Badge>
                   )}
                   {isPending && <Spinner size="tiny" />}
