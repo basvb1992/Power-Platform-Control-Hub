@@ -10,12 +10,6 @@ import {
   makeStyles,
   shorthands,
   tokens,
-  Dialog,
-  DialogSurface,
-  DialogBody,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@fluentui/react-components';
 import {
   SearchRegular,
@@ -26,12 +20,10 @@ import {
   InfoRegular,
   DismissRegular,
   PlayRegular,
+  ListRegular,
 } from '@fluentui/react-icons';
 import type { AdvisorRecommendation } from '../types/admin.ts';
-import { useMutation } from '../hooks/useMutation.tsx';
-import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
-
-const API_VERSION = '2024-10-01';
+import RecommendationResourcesDialog from './RecommendationResourcesDialog.tsx';
 
 interface RecommendationsViewProps {
   recommendations: AdvisorRecommendation[];
@@ -171,22 +163,6 @@ const useStyles = makeStyles({
   emptyState: {
     color: tokens.colorNeutralForeground3,
   },
-  resultList: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalXS,
-    maxHeight: '300px',
-    overflowY: 'auto',
-    fontSize: tokens.fontSizeBase200,
-  },
-  resultRow: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: `${tokens.spacingVerticalXS} 0`,
-    borderBottomWidth: '1px',
-    borderBottomStyle: 'solid',
-    borderBottomColor: tokens.colorNeutralStroke2,
-  },
 });
 
 function formatScenarioName(value: string): string {
@@ -210,22 +186,6 @@ function accentColor(resourceCount: number): string {
   if (resourceCount >= 5) return tokens.colorStatusWarningBackground3;
   return tokens.colorBrandBackground;
 }
-
-async function executeAction(scenario: string, actionName: string) {
-  const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(
-    { scenario, actionParameters: {} },
-    actionName,
-    API_VERSION,
-  );
-  if (!result.success || result.error) throw new Error(result.error?.message ?? 'Action failed');
-  return result.data;
-}
-
-interface ActionConfirm {
-  scenario: string;
-  actionName: string;
-  displayName: string;
-  resourceCount: number;
 }
 
 export default function RecommendationsView({
@@ -236,22 +196,7 @@ export default function RecommendationsView({
   const styles = useStyles();
   const [search, setSearch] = useState('');
   const [noticeVisible, setNoticeVisible] = useState(true);
-  const [actionConfirm, setActionConfirm] = useState<ActionConfirm | null>(null);
-  const [actionResult, setActionResult] = useState<{ succeeded: number; failed: number } | null>(null);
-
-  const { execute: execAction, isLoading: isActionLoading } = useMutation(
-    (scenario: string, actionName: string) => executeAction(scenario, actionName),
-    {
-      successMessage: 'Recommendation action submitted successfully.',
-      onSuccess: (data) => {
-        const results = (data as { results?: { statusCode?: number }[] })?.results ?? [];
-        const succeeded = results.filter((r) => (r.statusCode ?? 200) < 300).length;
-        const failed = results.length - succeeded;
-        setActionResult({ succeeded, failed });
-        setActionConfirm(null);
-      },
-    },
-  );
+  const [resourcesDialog, setResourcesDialog] = useState<{ scenario: string; name: string; actions: AdvisorRecommendation['details']['actions'] } | null>(null);
 
   const filteredRecommendations = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -340,88 +285,32 @@ export default function RecommendationsView({
                 </div>
               </div>
 
-              {rec.details.actions && rec.details.actions.length > 0 && (
-                <div className={styles.cardActions}>
-                  {rec.details.actions.map((action) => (
-                    <Button
-                      key={action.actionType ?? action.actionName}
-                      appearance="outline"
-                      size="small"
-                      icon={<PlayRegular />}
-                      onClick={() => setActionConfirm({
-                        scenario: rec.scenario,
-                        actionName: action.actionType ?? action.actionName ?? '',
-                        displayName: action.actionName ?? action.actionType ?? 'Action',
-                        resourceCount: rec.details.resourceCount,
-                      })}
-                    >
-                      {action.actionName ?? action.actionType}
-                    </Button>
-                  ))}
-                </div>
-              )}
+              <div className={styles.cardActions}>
+                <Button
+                  appearance="subtle"
+                  size="small"
+                  icon={<ListRegular />}
+                  onClick={() => setResourcesDialog({
+                    scenario: rec.scenario,
+                    name: formatScenarioName(rec.scenario),
+                    actions: rec.details.actions ?? [],
+                  })}
+                >
+                  View resources
+                </Button>
+              </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Confirm execute action */}
-      <Dialog open={actionConfirm !== null} onOpenChange={(_, d) => { if (!d.open) setActionConfirm(null); }}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Execute Recommendation Action</DialogTitle>
-            <DialogContent>
-              <Text>
-                Run <strong>{actionConfirm?.displayName}</strong> on all{' '}
-                <strong>{actionConfirm?.resourceCount}</strong> resource(s) affected by{' '}
-                <strong>{actionConfirm ? formatScenarioName(actionConfirm.scenario) : ''}</strong>?
-              </Text>
-              <Text style={{ display: 'block', marginTop: tokens.spacingVerticalS, fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
-                This action will be applied to every resource in this recommendation.
-              </Text>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="secondary" disabled={isActionLoading} onClick={() => setActionConfirm(null)}>Cancel</Button>
-              <Button
-                appearance="primary"
-                disabled={isActionLoading}
-                icon={isActionLoading ? <Spinner size="tiny" /> : <PlayRegular />}
-                onClick={() => {
-                  if (actionConfirm) {
-                    void execAction(actionConfirm.scenario, actionConfirm.actionName);
-                  }
-                }}
-              >
-                {isActionLoading ? 'Executing…' : 'Execute'}
-              </Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
-
-      {/* Action result summary */}
-      <Dialog open={actionResult !== null} onOpenChange={(_, d) => { if (!d.open) setActionResult(null); }}>
-        <DialogSurface>
-          <DialogBody>
-            <DialogTitle>Action Results</DialogTitle>
-            <DialogContent>
-              <div className={styles.resultList}>
-                <div className={styles.resultRow}>
-                  <Text>✅ Succeeded</Text>
-                  <Text style={{ fontWeight: tokens.fontWeightSemibold }}>{actionResult?.succeeded ?? 0}</Text>
-                </div>
-                <div className={styles.resultRow}>
-                  <Text>❌ Failed</Text>
-                  <Text style={{ fontWeight: tokens.fontWeightSemibold }}>{actionResult?.failed ?? 0}</Text>
-                </div>
-              </div>
-            </DialogContent>
-            <DialogActions>
-              <Button appearance="primary" onClick={() => setActionResult(null)}>Close</Button>
-            </DialogActions>
-          </DialogBody>
-        </DialogSurface>
-      </Dialog>
+      <RecommendationResourcesDialog
+        open={resourcesDialog !== null}
+        scenario={resourcesDialog?.scenario ?? ''}
+        scenarioDisplayName={resourcesDialog?.name ?? ''}
+        actions={resourcesDialog?.actions ?? []}
+        onClose={() => setResourcesDialog(null)}
+      />
     </div>
   );
 }

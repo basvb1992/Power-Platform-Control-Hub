@@ -13,13 +13,13 @@ import {
   Spinner,
 } from '@fluentui/react-components';
 import {
-  GridRegular,
   TableRegular,
   GlobeRegular,
   ArrowClockwiseRegular,
   LightbulbRegular,
   ShieldRegular,
   PlugConnectedRegular,
+  GridRegular,
 } from '@fluentui/react-icons';
 import { useAdminData } from './hooks/useAdminData.ts';
 import { useInventory } from './hooks/useInventory.ts';
@@ -29,6 +29,7 @@ import EnvironmentsView from './components/EnvironmentsView.tsx';
 import RecommendationsView from './components/RecommendationsView.tsx';
 import GovernanceView from './components/GovernanceView.tsx';
 import ConnectorsView from './components/ConnectorsView.tsx';
+import ppaLogo from './assets/ppa-logo.png';
 
 type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'connectors';
 
@@ -45,16 +46,36 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
-    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalXL}`,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalXL}`,
     backgroundColor: tokens.colorBrandBackground,
     boxShadow: tokens.shadow4,
+    flexShrink: 0,
+  },
+  headerLogo: {
+    height: '32px',
+    width: 'auto',
+    borderRadius: tokens.borderRadiusSmall,
+    flexShrink: 0,
+  },
+  headerDivider: {
+    width: '1px',
+    height: '24px',
+    backgroundColor: 'rgba(255,255,255,0.3)',
     flexShrink: 0,
   },
   appTitle: {
     color: tokens.colorNeutralForegroundOnBrand,
     fontSize: tokens.fontSizeBase500,
     fontWeight: tokens.fontWeightSemibold,
-    marginRight: 'auto',
+    flex: 1,
+  },
+  headerCredit: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: tokens.fontSizeBase100,
+    whiteSpace: 'nowrap',
   },
   nav: {
     backgroundColor: tokens.colorNeutralBackground1,
@@ -107,13 +128,13 @@ export default function App(): ReactElement {
     <FluentProvider theme={webLightTheme}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <GridRegular
-            style={{ fontSize: '1.5rem', color: tokens.colorNeutralForegroundOnBrand }}
-          />
+          <img src={ppaLogo} alt="Power Platform Advocates" className={styles.headerLogo} />
+          <div className={styles.headerDivider} />
           <Text className={styles.appTitle}>{__APP_DISPLAY_NAME__}</Text>
           {(dataLoading || adminLoading) && (
             <Spinner size="tiny" style={{ marginRight: tokens.spacingHorizontalS }} />
           )}
+          <Text className={styles.headerCredit}>by Power Platform Advocates</Text>
           <Button
             appearance="subtle"
             icon={<ArrowClockwiseRegular />}
