@@ -4,6 +4,7 @@ import {
   FluentProvider,
   Toaster,
   webLightTheme,
+  webDarkTheme,
   makeStyles,
   tokens,
   Text,
@@ -20,6 +21,8 @@ import {
   ShieldRegular,
   PlugConnectedRegular,
   GridRegular,
+  WeatherMoonRegular,
+  WeatherSunnyRegular,
 } from '@fluentui/react-icons';
 import { useAdminData } from './hooks/useAdminData.ts';
 import { useInventory } from './hooks/useInventory.ts';
@@ -89,6 +92,7 @@ export default function App(): ReactElement {
   const styles = useStyles();
   const [activeTab, setActiveTab] = useState<TabValue>('overview');
   const [resourceTypeFilter, setResourceTypeFilter] = useState<string>('all');
+  const [isDark, setIsDark] = useState(false);
 
   function navigateToResources(typeKey: string) {
     setResourceTypeFilter(typeKey);
@@ -120,7 +124,7 @@ export default function App(): ReactElement {
   }
 
   return (
-    <FluentProvider theme={webLightTheme}>
+    <FluentProvider theme={isDark ? webDarkTheme : webLightTheme}>
       <div className={styles.shell}>
         <nav className={styles.nav}>
           <div className={styles.navTabs}>
@@ -142,6 +146,12 @@ export default function App(): ReactElement {
           </div>
           <div className={styles.navRight}>
             {(dataLoading || adminLoading) && <Spinner size="tiny" />}
+            <Button
+              appearance="subtle"
+              icon={isDark ? <WeatherSunnyRegular /> : <WeatherMoonRegular />}
+              onClick={() => setIsDark((d) => !d)}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            />
             <Button
               appearance="subtle"
               icon={<ArrowClockwiseRegular />}
