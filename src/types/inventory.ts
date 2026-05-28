@@ -40,6 +40,8 @@ export interface ResourceCounts {
   cloudFlows: number;
   agents: number;
   agentFlows: number;
+  appBuilderApps: number;
+  m365AgentFlows: number;
   codeApps: number;
   total: number;
 }
@@ -50,6 +52,8 @@ export const RESOURCE_TYPE_LABELS: Record<string, string> = {
   'microsoft.powerautomate/cloudflows': 'Cloud Flow',
   'microsoft.copilotstudio/agents': 'Copilot Studio Agent',
   'microsoft.powerautomate/agentflows': 'Agent Flow',
+  'microsoft.powerapps/apps': 'App Builder App',
+  'microsoft.powerautomate/m365agentflows': 'M365 Agent Flow',
   'microsoft.powerapps/codeapps': 'Code App',
   'microsoft.powerplatform/environments': 'Environment',
 };
@@ -61,5 +65,7 @@ export const RESOURCE_TYPES_FILTER = [
   { key: 'microsoft.powerautomate/cloudflows', label: 'Cloud Flows' },
   { key: 'microsoft.copilotstudio/agents', label: 'Agents' },
   { key: 'microsoft.powerautomate/agentflows', label: 'Agent Flows' },
+  { key: 'microsoft.powerapps/apps', label: 'App Builder Apps' },
+  { key: 'microsoft.powerautomate/m365agentflows', label: 'M365 Agent Flows' },
   { key: 'microsoft.powerapps/codeapps', label: 'Code Apps' },
 ] as const;

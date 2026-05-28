@@ -1,15 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  fetchResources,
-  fetchEnvironments,
   computeResourceCounts,
+  fetchEnvironments,
+  fetchResources,
 } from '../services/inventoryApi.ts';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
-
-interface UseInventoryOptions {
-  isAuthenticated: boolean;
-  getToken: () => Promise<string | null>;
-}
 
 export interface UseInventoryResult {
   resources: Resource[];
@@ -20,30 +15,21 @@ export interface UseInventoryResult {
   refresh: () => Promise<void>;
 }
 
-export function useInventory({
-  isAuthenticated,
-  getToken,
-}: UseInventoryOptions): UseInventoryResult {
+export function useInventory(): UseInventoryResult {
   const [resources, setResources] = useState<Resource[]>([]);
   const [environments, setEnvironments] = useState<Resource[]>([]);
   const [counts, setCounts] = useState<ResourceCounts | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    const token = await getToken();
-    if (!token) {
-      setError('Could not acquire an access token. Please sign in again.');
-      return;
-    }
-
+  const refresh = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
       const [fetchedResources, fetchedEnvironments] = await Promise.all([
-        fetchResources(token),
-        fetchEnvironments(token),
+        fetchResources(),
+        fetchEnvironments(),
       ]);
 
       setResources(fetchedResources);
@@ -56,13 +42,11 @@ export function useInventory({
     } finally {
       setIsLoading(false);
     }
-  }, [getToken]);
+  }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      void loadData();
-    }
-  }, [isAuthenticated, loadData]);
+    void refresh();
+  }, [refresh]);
 
-  return { resources, environments, counts, isLoading, error, refresh: loadData };
+  return { resources, environments, counts, isLoading, error, refresh };
 }

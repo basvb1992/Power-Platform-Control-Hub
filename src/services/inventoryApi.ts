@@ -1,35 +1,51 @@
-import type { InventoryQueryResult, Resource, ResourceCounts } from '../types/inventory.ts';
+import type { IOperationResult } from '@microsoft/power-apps/data';
+import type {
+  ResourceItem,
+  ResourceQueryRequest,
+  ResourceQueryResponse,
+} from '../generated/models/PowerPlatformforAdminsV2Model.ts';
+import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
+import type { Resource, ResourceCounts } from '../types/inventory.ts';
 
-const API_URL =
-  'https://api.powerplatform.com/resourcequery/resources/query?api-version=2024-10-01';
+const API_VERSION = '2024-10-01';
 
-async function queryInventory(
-  token: string,
-  body: Record<string, unknown>,
-): Promise<InventoryQueryResult> {
-  const response = await fetch(API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Inventory API error ${response.status}: ${text}`);
+function unwrapOperationResult<T>(result: IOperationResult<T>): T {
+  if (result.error) {
+    throw new Error(result.error.message);
   }
 
-  return response.json() as Promise<InventoryQueryResult>;
+  return result.value;
+}
+
+function normalizeResource(resource: ResourceItem): Resource {
+  const record = resource as ResourceItem & { joinKey?: string };
+
+  return {
+    id: resource.id,
+    name: resource.name ?? '',
+    type: resource.type ?? '',
+    location: resource.location,
+    properties: (resource.properties as Resource['properties'] | undefined) ?? {},
+    joinKey: record.joinKey,
+    environmentName: resource.environmentName,
+    environmentRegion: resource.environmentRegion,
+    environmentType: resource.environmentType,
+    isManagedEnvironment: resource.isManagedEnvironment,
+  };
+}
+
+async function queryInventory(body: ResourceQueryRequest): Promise<ResourceQueryResponse> {
+  const result = await PowerPlatformforAdminsV2Service.QueryResources(API_VERSION, body);
+  return unwrapOperationResult(result);
 }
 
 /**
  * Fetches all non-environment Power Platform resources (canvas apps, model-driven
- * apps, cloud flows, agents, agent flows, code apps) enriched with environment info.
+ * apps, cloud flows, agents, agent flows, app builder apps, M365 agent flows,
+ * and code apps) enriched with environment info.
  */
-export async function fetchResources(token: string): Promise<Resource[]> {
-  const body: Record<string, unknown> = {
+export async function fetchResources(): Promise<Resource[]> {
+  const body: ResourceQueryRequest = {
     Options: { Top: 1000, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
     Clauses: [
@@ -75,25 +91,32 @@ export async function fetchResources(token: string): Promise<Resource[]> {
           "'microsoft.powerautomate/cloudflows'",
           "'microsoft.copilotstudio/agents'",
           "'microsoft.powerautomate/agentflows'",
+          "'microsoft.powerapps/apps'",
+          "'microsoft.powerautomate/m365agentflows'",
           "'microsoft.powerapps/codeapps'",
         ],
       },
       {
+        $type: 'extend',
+        FieldName: 'createdAtStr',
+        Expression: 'tostring(properties.createdAt)',
+      },
+      {
         $type: 'orderby',
         FieldNamesAscDesc: {
-          'tostring(properties.createdAt)': 'desc',
+          createdAtStr: 'desc',
         },
       },
     ],
   };
 
-  const result = await queryInventory(token, body);
-  return result.data ?? [];
+  const result = await queryInventory(body);
+  return (result.data ?? []).map(normalizeResource);
 }
 
 /** Fetches all Power Platform environments. */
-export async function fetchEnvironments(token: string): Promise<Resource[]> {
-  const body: Record<string, unknown> = {
+export async function fetchEnvironments(): Promise<Resource[]> {
+  const body: ResourceQueryRequest = {
     Options: { Top: 500, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
     Clauses: [
@@ -104,16 +127,21 @@ export async function fetchEnvironments(token: string): Promise<Resource[]> {
         Values: ["'microsoft.powerplatform/environments'"],
       },
       {
+        $type: 'extend',
+        FieldName: 'displayNameStr',
+        Expression: 'tostring(properties.displayName)',
+      },
+      {
         $type: 'orderby',
         FieldNamesAscDesc: {
-          'properties.displayName': 'asc',
+          displayNameStr: 'asc',
         },
       },
     ],
   };
 
-  const result = await queryInventory(token, body);
-  return result.data ?? [];
+  const result = await queryInventory(body);
+  return (result.data ?? []).map(normalizeResource);
 }
 
 /** Computes resource counts from an already-fetched resource array. */
@@ -124,6 +152,8 @@ export function computeResourceCounts(resources: Resource[]): ResourceCounts {
     cloudFlows: 0,
     agents: 0,
     agentFlows: 0,
+    appBuilderApps: 0,
+    m365AgentFlows: 0,
     codeApps: 0,
     total: resources.length,
   };
@@ -144,6 +174,12 @@ export function computeResourceCounts(resources: Resource[]): ResourceCounts {
         break;
       case 'microsoft.powerautomate/agentflows':
         counts.agentFlows++;
+        break;
+      case 'microsoft.powerapps/apps':
+        counts.appBuilderApps++;
+        break;
+      case 'microsoft.powerautomate/m365agentflows':
+        counts.m365AgentFlows++;
         break;
       case 'microsoft.powerapps/codeapps':
         counts.codeApps++;

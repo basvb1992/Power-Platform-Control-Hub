@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   makeStyles,
@@ -14,8 +15,9 @@ import {
   DatabaseRegular,
   ArrowRepeatAllRegular,
   BotRegular,
+  BoxRegular,
   CodeRegular,
-  GlobeRegular,
+  SettingsRegular,
 } from '@fluentui/react-icons';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS } from '../types/inventory.ts';
@@ -25,7 +27,10 @@ interface DashboardProps {
   counts: ResourceCounts | null;
   isLoading: boolean;
   error: string | null;
+  onNavigateToResources: (typeKey: string) => void;
 }
+
+const PAGE_SIZE = 25;
 
 const useStyles = makeStyles({
   root: {
@@ -53,7 +58,10 @@ const useStyles = makeStyles({
     gap: tokens.spacingVerticalS,
     padding: `${tokens.spacingVerticalXL} ${tokens.spacingHorizontalL}`,
     textAlign: 'center',
-    cursor: 'default',
+    cursor: 'pointer',
+    ':hover': {
+      backgroundColor: tokens.colorNeutralBackground1Hover,
+    },
   },
   metricIcon: {
     fontSize: '2rem',
@@ -70,9 +78,14 @@ const useStyles = makeStyles({
     fontSize: tokens.fontSizeBase200,
     color: tokens.colorNeutralForeground2,
   },
+  tableCard: {
+    overflow: 'hidden',
+    padding: '0',
+  },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    tableLayout: 'fixed',
   },
   th: {
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
@@ -91,6 +104,17 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground1,
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     verticalAlign: 'middle',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  },
+  sentinel: {
+    height: '1px',
+  },
+  loadingMore: {
+    display: 'flex',
+    justifyContent: 'center',
+    padding: tokens.spacingVerticalM,
   },
   centered: {
     display: 'flex',
@@ -103,31 +127,49 @@ const useStyles = makeStyles({
 const METRIC_ITEMS = [
   {
     key: 'canvasApps' as const,
+    typeKey: 'microsoft.powerapps/canvasapps',
     label: 'Canvas Apps',
     icon: <GridRegular />,
   },
   {
     key: 'modelDrivenApps' as const,
+    typeKey: 'microsoft.powerapps/modeldrivenapps',
     label: 'Model-Driven Apps',
     icon: <DatabaseRegular />,
   },
   {
     key: 'cloudFlows' as const,
+    typeKey: 'microsoft.powerautomate/cloudflows',
     label: 'Cloud Flows',
     icon: <ArrowRepeatAllRegular />,
   },
   {
     key: 'agents' as const,
+    typeKey: 'microsoft.copilotstudio/agents',
     label: 'Agents',
     icon: <BotRegular />,
   },
   {
     key: 'agentFlows' as const,
+    typeKey: 'microsoft.powerautomate/agentflows',
     label: 'Agent Flows',
     icon: <ArrowRepeatAllRegular />,
   },
   {
+    key: 'appBuilderApps' as const,
+    typeKey: 'microsoft.powerapps/apps',
+    label: 'App Builder Apps',
+    icon: <BoxRegular />,
+  },
+  {
+    key: 'm365AgentFlows' as const,
+    typeKey: 'microsoft.powerautomate/m365agentflows',
+    label: 'M365 Agent Flows',
+    icon: <SettingsRegular />,
+  },
+  {
     key: 'codeApps' as const,
+    typeKey: 'microsoft.powerapps/codeapps',
     label: 'Code Apps',
     icon: <CodeRegular />,
   },
@@ -138,8 +180,30 @@ export default function Dashboard({
   counts,
   isLoading,
   error,
+  onNavigateToResources,
 }: DashboardProps): ReactElement {
   const styles = useStyles();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLTableRowElement>(null);
+
+  // Reset pagination when resources change (e.g. refresh)
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [resources]);
+
+  // Lazy-load more rows when sentinel scrolls into view
+  const loadMore = useCallback(() => {
+    setVisibleCount((n) => Math.min(n + PAGE_SIZE, resources.length));
+  }, [resources.length]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) loadMore(); },
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   if (isLoading) {
     return (
@@ -159,7 +223,8 @@ export default function Dashboard({
     );
   }
 
-  const recent = resources.slice(0, 15);
+  const visible = resources.slice(0, visibleCount);
+  const hasMore = visibleCount < resources.length;
 
   return (
     <div className={styles.root}>
@@ -167,7 +232,12 @@ export default function Dashboard({
 
       <div className={styles.cardsGrid}>
         {METRIC_ITEMS.map((item) => (
-          <Card key={item.key} className={styles.metricCard}>
+          <Card
+            key={item.key}
+            className={styles.metricCard}
+            onClick={() => onNavigateToResources(item.typeKey)}
+            title={`View all ${item.label}`}
+          >
             <span className={styles.metricIcon}>{item.icon}</span>
             <Text className={styles.metricCount}>
               {counts ? String(counts[item.key]) : '—'}
@@ -179,8 +249,15 @@ export default function Dashboard({
 
       <Text className={styles.sectionTitle}>Recently Created</Text>
 
-      <Card>
+      <Card className={styles.tableCard}>
         <table className={styles.table}>
+          <colgroup>
+            <col style={{ width: '30%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '30%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '12%' }} />
+          </colgroup>
           <thead>
             <tr>
               <th className={styles.th}>Name</th>
@@ -191,34 +268,46 @@ export default function Dashboard({
             </tr>
           </thead>
           <tbody>
-            {recent.length === 0 ? (
+            {visible.length === 0 ? (
               <tr>
                 <td className={styles.td} colSpan={5} style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
                   No resources found
                 </td>
               </tr>
             ) : (
-              recent.map((r, i) => (
-                <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
-                  <td className={styles.td}>
-                    {r.properties.displayName ?? r.name}
-                  </td>
-                  <td className={styles.td}>
-                    <Badge appearance="outline" size="small">
-                      {RESOURCE_TYPE_LABELS[r.type.toLowerCase()] ?? r.type}
-                    </Badge>
-                  </td>
-                  <td className={styles.td}>{r.environmentName ?? '—'}</td>
-                  <td className={styles.td}>
-                    {r.environmentRegion ?? r.location ?? '—'}
-                  </td>
-                  <td className={styles.td}>
-                    {r.properties.createdAt
-                      ? new Date(r.properties.createdAt).toLocaleDateString()
-                      : '—'}
-                  </td>
-                </tr>
-              ))
+              <>
+                {visible.map((r, i) => {
+                  const name = r.properties.displayName ?? r.name;
+                  return (
+                    <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
+                      <td className={styles.td} title={name}>{name}</td>
+                      <td className={styles.td}>
+                        <Badge appearance="outline" size="small">
+                          {RESOURCE_TYPE_LABELS[r.type.toLowerCase()] ?? r.type}
+                        </Badge>
+                      </td>
+                      <td className={styles.td} title={r.environmentName ?? undefined}>
+                        {r.environmentName ?? '—'}
+                      </td>
+                      <td className={styles.td}>{r.environmentRegion ?? r.location ?? '—'}</td>
+                      <td className={styles.td}>
+                        {r.properties.createdAt
+                          ? new Date(r.properties.createdAt).toLocaleDateString()
+                          : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {hasMore && (
+                  <tr ref={sentinelRef} className={styles.sentinel}>
+                    <td colSpan={5}>
+                      <div className={styles.loadingMore}>
+                        <Spinner size="tiny" label={`Loading more… (${visibleCount} / ${resources.length})`} />
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             )}
           </tbody>
         </table>

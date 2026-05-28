@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import {
   makeStyles,
@@ -25,6 +25,7 @@ interface ResourcesViewProps {
   isLoading: boolean;
   error: string | null;
   onRefresh: () => Promise<void>;
+  initialTypeFilter?: string;
 }
 
 const useStyles = makeStyles({
@@ -108,12 +109,18 @@ export default function ResourcesView({
   isLoading,
   error,
   onRefresh,
+  initialTypeFilter,
 }: ResourcesViewProps): ReactElement {
   const styles = useStyles();
   const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState(initialTypeFilter ?? 'all');
   const [sortField, setSortField] = useState<SortField>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  // Sync when navigating from Overview tile
+  useEffect(() => {
+    setTypeFilter(initialTypeFilter ?? 'all');
+  }, [initialTypeFilter]);
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();

@@ -5,14 +5,14 @@ import {
   tokens,
   Text,
   Card,
-  CardHeader,
   Badge,
   Input,
   Spinner,
   MessageBar,
   MessageBarBody,
+  Divider,
 } from '@fluentui/react-components';
-import { SearchRegular, GlobeRegular, LockClosedRegular } from '@fluentui/react-icons';
+import { SearchRegular, GlobeRegular, LockClosedRegular, AppsListRegular, BoxRegular } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 
 interface EnvironmentsViewProps {
@@ -49,40 +49,69 @@ const useStyles = makeStyles({
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
     gap: tokens.spacingHorizontalL,
     overflowY: 'auto',
     flex: 1,
     paddingBottom: tokens.spacingVerticalL,
+    alignItems: 'start',
   },
   card: {
     display: 'flex',
     flexDirection: 'column',
+    padding: tokens.spacingVerticalM,
     gap: tokens.spacingVerticalS,
   },
-  cardMeta: {
+  cardTop: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: tokens.spacingHorizontalM,
+  },
+  cardIcon: {
+    fontSize: '1.5rem',
+    color: tokens.colorBrandForeground1,
+    flexShrink: 0,
+    marginTop: '2px',
+  },
+  cardTitles: {
     display: 'flex',
     flexDirection: 'column',
-    gap: tokens.spacingVerticalXS,
+    gap: '2px',
+    minWidth: 0,
+  },
+  cardName: {
+    fontWeight: tokens.fontWeightSemibold,
+    fontSize: tokens.fontSizeBase300,
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  cardRegion: {
     fontSize: tokens.fontSizeBase200,
-    color: tokens.colorNeutralForeground2,
-    paddingLeft: tokens.spacingHorizontalS,
-    paddingRight: tokens.spacingHorizontalS,
-    paddingBottom: tokens.spacingVerticalM,
+    color: tokens.colorNeutralForeground3,
+  },
+  badgeRow: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalS,
+    flexWrap: 'wrap',
+    paddingTop: tokens.spacingVerticalXS,
+  },
+  divider: {
+    marginTop: tokens.spacingVerticalXS,
+    marginBottom: tokens.spacingVerticalXS,
   },
   metaRow: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground2,
   },
-  badgeRow: {
+  metaIcon: {
     display: 'flex',
-    gap: tokens.spacingHorizontalS,
-    flexWrap: 'wrap',
-    paddingLeft: tokens.spacingHorizontalS,
-    paddingRight: tokens.spacingHorizontalS,
-    paddingBottom: tokens.spacingVerticalM,
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
   },
   centered: {
     display: 'flex',
@@ -172,73 +201,51 @@ export default function EnvironmentsView({
             const envType = (e.properties.environmentType ?? 'Unknown') as string;
             const isManaged = e.properties.isManaged === true;
             const region = e.location ?? '—';
-            const resourceCount =
-              countByEnv.get(displayName.toLowerCase()) ?? 0;
+            const resourceCount = countByEnv.get(displayName.toLowerCase()) ?? 0;
+            const createdAt = e.properties.createdAt
+              ? new Date(e.properties.createdAt as string).toLocaleDateString()
+              : null;
 
             return (
               <Card key={e.id ?? `env-${e.name}-${i}`} className={styles.card}>
-                <CardHeader
-                  image={
-                    <GlobeRegular
-                      style={{
-                        fontSize: '1.5rem',
-                        color: tokens.colorBrandForeground1,
-                      }}
-                    />
-                  }
-                  header={
-                    <Text style={{ fontWeight: tokens.fontWeightSemibold }}>
-                      {displayName}
-                    </Text>
-                  }
-                  description={
-                    <Text
-                      style={{
-                        fontSize: tokens.fontSizeBase200,
-                        color: tokens.colorNeutralForeground3,
-                      }}
-                    >
-                      {region}
-                    </Text>
-                  }
-                />
+                <div className={styles.cardTop}>
+                  <GlobeRegular className={styles.cardIcon} />
+                  <div className={styles.cardTitles}>
+                    <Text className={styles.cardName} title={displayName}>{displayName}</Text>
+                    <Text className={styles.cardRegion}>{region}</Text>
+                  </div>
+                </div>
 
                 <div className={styles.badgeRow}>
-                  <Badge
-                    appearance="filled"
-                    color={envTypeColor(envType)}
-                    size="small"
-                  >
+                  <Badge appearance="filled" color={envTypeColor(envType)} size="small">
                     {envType}
                   </Badge>
                   {isManaged && (
-                    <Badge
-                      appearance="outline"
-                      color="success"
-                      size="small"
-                      icon={<LockClosedRegular />}
-                    >
+                    <Badge appearance="outline" color="success" size="small" icon={<LockClosedRegular />}>
                       Managed
                     </Badge>
                   )}
                 </div>
 
-                <div className={styles.cardMeta}>
-                  <div className={styles.metaRow}>
+                <Divider className={styles.divider} />
+
+                <div className={styles.metaRow}>
+                  <span className={styles.metaIcon}>
+                    <BoxRegular style={{ fontSize: '0.9rem' }} />
                     <Text>Resources</Text>
-                    <Text style={{ fontWeight: tokens.fontWeightSemibold }}>
-                      {resourceCount}
-                    </Text>
-                  </div>
-                  {e.properties.createdAt && (
-                    <div className={styles.metaRow}>
-                      <Text>Created</Text>
-                      <Text>
-                        {new Date(e.properties.createdAt as string).toLocaleDateString()}
-                      </Text>
-                    </div>
-                  )}
+                  </span>
+                  <Text style={{ fontWeight: tokens.fontWeightSemibold }}>{resourceCount}</Text>
                 </div>
+
+                {createdAt && (
+                  <div className={styles.metaRow}>
+                    <span className={styles.metaIcon}>
+                      <AppsListRegular style={{ fontSize: '0.9rem' }} />
+                      <Text>Created</Text>
+                    </span>
+                    <Text>{createdAt}</Text>
+                  </div>
+                )}
               </Card>
             );
           })
