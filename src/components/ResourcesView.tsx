@@ -8,14 +8,17 @@ import {
   Dropdown,
   Option,
   Badge,
+  Button,
   Spinner,
   MessageBar,
   MessageBarBody,
-  Button,
 } from '@fluentui/react-components';
-import { SearchRegular, ArrowClockwiseRegular } from '@fluentui/react-icons';
+import { DeleteRegular, SearchRegular, ArrowClockwiseRegular } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES_FILTER } from '../types/inventory.ts';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { useMutation } from '../hooks/useMutation.ts';
+import { deleteCopilotAgent, deleteFlow } from '../services/resourceMutations.ts';
 
 type SortField = 'name' | 'type' | 'environment' | 'region' | 'created';
 type SortDir = 'asc' | 'desc';
@@ -104,6 +107,11 @@ function getFieldValue(r: Resource, field: SortField): string {
   }
 }
 
+const DELETABLE_TYPES = new Set([
+  'microsoft.powerautomate/cloudflows',
+  'microsoft.copilotstudio/agents',
+]);
+
 export default function ResourcesView({
   resources,
   isLoading,
@@ -116,6 +124,19 @@ export default function ResourcesView({
   const [typeFilter, setTypeFilter] = useState(initialTypeFilter ?? 'all');
   const [sortField, setSortField] = useState<SortField>('created');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [confirmDelete, setConfirmDelete] = useState<Resource | null>(null);
+  const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
+
+  const { execute: execDeleteFlow } = useMutation(deleteFlow, {
+    successMessage: 'Flow deleted.',
+    onSuccess: () => { setPendingResourceName(null); void onRefresh(); },
+    onError: () => setPendingResourceName(null),
+  });
+  const { execute: execDeleteAgent } = useMutation(deleteCopilotAgent, {
+    successMessage: 'Copilot agent deleted.',
+    onSuccess: () => { setPendingResourceName(null); void onRefresh(); },
+    onError: () => setPendingResourceName(null),
+  });
 
   // Sync when navigating from Overview tile
   useEffect(() => {
@@ -224,6 +245,7 @@ export default function ResourcesView({
               <th className={styles.th} onClick={() => handleSort('created')}>
                 Created{sortIndicator('created')}
               </th>
+              <th className={styles.th} style={{ width: '60px' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -231,7 +253,7 @@ export default function ResourcesView({
               <tr>
                 <td
                   className={styles.td}
-                  colSpan={5}
+                  colSpan={6}
                   style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}
                 >
                   No resources match your filters.
@@ -257,12 +279,47 @@ export default function ResourcesView({
                       ? new Date(r.properties.createdAt).toLocaleDateString()
                       : '—'}
                   </td>
+                  <td className={styles.td}>
+                    {DELETABLE_TYPES.has(r.type.toLowerCase()) && (
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<DeleteRegular />}
+                        title="Delete"
+                        disabled={pendingResourceName === r.name}
+                        style={{ color: tokens.colorStatusDangerForeground1 }}
+                        onClick={() => setConfirmDelete(r)}
+                      />
+                    )}
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      <ConfirmDialog
+        open={Boolean(confirmDelete)}
+        title={confirmDelete?.type.toLowerCase() === 'microsoft.copilotstudio/agents' ? 'Delete Copilot Agent' : 'Delete Flow'}
+        message={`Delete "${confirmDelete?.properties.displayName ?? confirmDelete?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        isDangerous
+        isLoading={pendingResourceName !== null}
+        onConfirm={() => {
+          if (confirmDelete) {
+            setPendingResourceName(confirmDelete.name);
+            const type = confirmDelete.type.toLowerCase();
+            if (type === 'microsoft.copilotstudio/agents') {
+              void execDeleteAgent(confirmDelete.properties.environmentId ?? '', confirmDelete.name);
+            } else {
+              void execDeleteFlow(confirmDelete.name);
+            }
+          }
+          setConfirmDelete(null);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   Badge,
+  Button,
   Dropdown,
   Link,
   MessageBar,
@@ -14,14 +15,17 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { GlobeRegular, LinkRegular, PlugConnectedRegular, TableRegular } from '@fluentui/react-icons';
+import { DeleteRegular, GlobeRegular, LinkRegular, PlugConnectedRegular, TableRegular } from '@fluentui/react-icons';
 import {
   fetchConnections,
   fetchConnectors,
   fetchPowerPagesWebsites,
 } from '../services/adminApi.ts';
+import { deleteConnection } from '../services/connectorMutations.ts';
 import type { Connection, PowerPagesWebsite } from '../types/admin.ts';
 import type { Resource } from '../types/inventory.ts';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { useMutation } from '../hooks/useMutation.ts';
 
 interface ConnectorsViewProps {
   environments: Resource[];
@@ -120,6 +124,25 @@ export default function ConnectorsView({
   const [websitesByEnvironment, setWebsitesByEnvironment] = useState<Record<string, PowerPagesWebsite[]>>({});
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [errorByKey, setErrorByKey] = useState<Record<string, string>>({});
+  const [confirmDeleteConnection, setConfirmDeleteConnection] = useState<Connection | null>(null);
+  const [pendingConnectionId, setPendingConnectionId] = useState<string | null>(null);
+
+  const { execute: execDeleteConnection } = useMutation(deleteConnection, {
+    successMessage: 'Connection deleted.',
+    onSuccess: () => {
+      if (confirmDeleteConnection) {
+        setConnectionsByEnvironment((prev) => ({
+          ...prev,
+          [selectedEnvironmentId]: (prev[selectedEnvironmentId] ?? []).filter(
+            (c) => c.id !== confirmDeleteConnection.id,
+          ),
+        }));
+      }
+      setPendingConnectionId(null);
+      setConfirmDeleteConnection(null);
+    },
+    onError: () => setPendingConnectionId(null),
+  });
 
   const environmentOptions = useMemo(() => environments.map((environment) => ({
     id: environment.name,
@@ -288,12 +311,13 @@ export default function ConnectorsView({
               <th className={styles.th}>Custom API</th>
               <th className={styles.th}>Created</th>
               <th className={styles.th}>Type (Tier)</th>
+              {activeTab === 'connections' && <th className={styles.th} style={{ width: '60px' }}></th>}
             </tr>
           </thead>
           <tbody>
             {currentConnections.length === 0 ? (
               <tr>
-                <td className={styles.td} colSpan={5} style={{ textAlign: 'center' }}>
+                <td className={styles.td} colSpan={activeTab === 'connections' ? 6 : 5} style={{ textAlign: 'center' }}>
                   No {activeTab} found for this environment.
                 </td>
               </tr>
@@ -311,6 +335,19 @@ export default function ConnectorsView({
                   </td>
                   <td className={styles.td}>{formatDate(item.properties.createdTime)}</td>
                   <td className={styles.td}>{item.properties.tier ?? item.type}</td>
+                  {activeTab === 'connections' && (
+                    <td className={styles.td}>
+                      <Button
+                        appearance="subtle"
+                        size="small"
+                        icon={<DeleteRegular />}
+                        title="Delete connection"
+                        disabled={pendingConnectionId === item.id}
+                        style={{ color: tokens.colorStatusDangerForeground1 }}
+                        onClick={() => setConfirmDeleteConnection(item)}
+                      />
+                    </td>
+                  )}
                 </tr>
               ))
             )}
@@ -370,6 +407,22 @@ export default function ConnectorsView({
 
         {content}
       </div>
+
+      <ConfirmDialog
+        open={Boolean(confirmDeleteConnection)}
+        title="Delete Connection"
+        message={`Delete connection "${confirmDeleteConnection?.properties.displayName}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        isDangerous
+        isLoading={pendingConnectionId !== null}
+        onConfirm={() => {
+          if (confirmDeleteConnection) {
+            setPendingConnectionId(confirmDeleteConnection.id);
+            void execDeleteConnection(confirmDeleteConnection.id);
+          }
+        }}
+        onCancel={() => setConfirmDeleteConnection(null)}
+      />
     </div>
   );
 }

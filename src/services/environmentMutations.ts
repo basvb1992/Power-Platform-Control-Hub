@@ -1,0 +1,42 @@
+import type { IOperationResult } from '@microsoft/power-apps/data';
+import type { CreateBackupRequest } from '../generated/models/PowerPlatformforAdminsV2Model.ts';
+import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
+
+const API = '2024-10-01';
+
+function unwrapOperationResult<T>(result: IOperationResult<T>): T {
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return result.value;
+}
+
+export async function enableEnvironment(environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.EnableEnvironment(environmentId, API);
+  unwrapOperationResult(result);
+}
+
+export async function disableEnvironment(environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.DisableEnvironment(environmentId, API);
+  unwrapOperationResult(result);
+}
+
+export async function enableManagedEnvironment(environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.EnableManagedEnvironment(environmentId, API);
+  unwrapOperationResult(result);
+}
+
+export async function disableManagedEnvironment(environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.DisableManagedEnvironment(environmentId, API);
+  unwrapOperationResult(result);
+}
+
+export async function createEnvironmentBackup(environmentId: string, notes: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.CreateEnvironmentBackup(
+    environmentId,
+    API,
+    { notes } as unknown as CreateBackupRequest,
+  );
+  unwrapOperationResult(result);
+}

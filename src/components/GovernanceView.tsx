@@ -2,23 +2,41 @@ import { useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   Badge,
+  Button,
   Card,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
+  Field,
+  Input,
   MessageBar,
   MessageBarBody,
   Spinner,
   Tab,
   TabList,
   Text,
+  Textarea,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { PeopleRegular, ShieldRegular } from '@fluentui/react-icons';
+import { AddRegular, DeleteRegular, EditRegular, PeopleRegular, ShieldRegular } from '@fluentui/react-icons';
 import type {
   BillingPolicy,
   CrossTenantReport,
   EnvironmentGroup,
   RoleAssignment,
 } from '../types/admin.ts';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { useMutation } from '../hooks/useMutation.ts';
+import {
+  createEnvironmentGroup,
+  deleteEnvironmentGroup,
+  triggerCrossTenantReport,
+  updateEnvironmentGroup,
+} from '../services/governanceMutations.ts';
 
 interface GovernanceViewProps {
   roleAssignments: RoleAssignment[];
@@ -27,6 +45,7 @@ interface GovernanceViewProps {
   crossTenantReports: CrossTenantReport[];
   isLoading: boolean;
   error: string | null;
+  onRefreshAdmin?: () => Promise<void>;
 }
 
 type GovernanceTab = 'environmentGroups' | 'billingPolicies' | 'crossTenantReports';
@@ -123,6 +142,43 @@ const useStyles = makeStyles({
   },
 });
 
+interface GroupFormDialogProps {
+  open: boolean;
+  initial?: EnvironmentGroup;
+  isLoading: boolean;
+  onSubmit: (displayName: string, description: string) => void;
+  onCancel: () => void;
+}
+
+function GroupFormDialog({ open, initial, isLoading, onSubmit, onCancel }: GroupFormDialogProps): ReactElement {
+  const [displayName, setDisplayName] = useState(initial?.displayName ?? '');
+  const [description, setDescription] = useState(initial?.description ?? '');
+  const isEdit = Boolean(initial);
+  return (
+    <Dialog open={open} onOpenChange={(_, data) => { if (!data.open) onCancel(); }}>
+      <DialogSurface>
+        <DialogBody>
+          <DialogTitle>{isEdit ? 'Edit Environment Group' : 'New Environment Group'}</DialogTitle>
+          <DialogContent style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM }}>
+            <Field label="Display name" required>
+              <Input value={displayName} onChange={(_, d) => setDisplayName(d.value)} placeholder="My Group" />
+            </Field>
+            <Field label="Description">
+              <Textarea value={description} onChange={(_, d) => setDescription(d.value)} rows={3} />
+            </Field>
+          </DialogContent>
+          <DialogActions>
+            <Button appearance="secondary" disabled={isLoading} onClick={onCancel}>Cancel</Button>
+            <Button appearance="primary" disabled={isLoading || !displayName.trim()} onClick={() => onSubmit(displayName.trim(), description.trim())}>
+              {isLoading ? 'Saving…' : isEdit ? 'Save' : 'Create'}
+            </Button>
+          </DialogActions>
+        </DialogBody>
+      </DialogSurface>
+    </Dialog>
+  );
+}
+
 function formatDate(value?: string): string {
   if (!value) return '—';
   const date = new Date(value);
@@ -152,6 +208,9 @@ function getReportBadgeColor(
 function renderEnvironmentGroupsTable(
   styles: ReturnType<typeof useStyles>,
   envGroups: EnvironmentGroup[],
+  pendingGroupId: string | null,
+  onEdit: (group: EnvironmentGroup) => void,
+  onDelete: (group: EnvironmentGroup) => void,
 ): ReactElement {
   return (
     <div className={styles.tableWrapper}>
@@ -163,12 +222,13 @@ function renderEnvironmentGroupsTable(
             <th className={styles.th}>Created By</th>
             <th className={styles.th}>Created Time</th>
             <th className={styles.th}>Child Count</th>
+            <th className={styles.th} style={{ width: '80px' }}></th>
           </tr>
         </thead>
         <tbody>
           {envGroups.length === 0 ? (
             <tr>
-              <td className={styles.td} colSpan={5} style={{ textAlign: 'center' }}>
+              <td className={styles.td} colSpan={6} style={{ textAlign: 'center' }}>
                 No environment groups found.
               </td>
             </tr>
@@ -180,6 +240,25 @@ function renderEnvironmentGroupsTable(
                 <td className={styles.td}>{group.createdBy.displayName ?? group.createdBy.email ?? group.createdBy.id}</td>
                 <td className={styles.td}>{formatDate(group.createdTime)}</td>
                 <td className={styles.td}>{group.childrenGroupIds?.length ?? 0}</td>
+                <td className={styles.td}>
+                  <span style={{ display: 'flex', gap: tokens.spacingHorizontalXS }}>
+                    <Button
+                      appearance="subtle" size="small"
+                      icon={<EditRegular />}
+                      disabled={pendingGroupId === group.id}
+                      title="Edit"
+                      onClick={() => onEdit(group)}
+                    />
+                    <Button
+                      appearance="subtle" size="small"
+                      icon={<DeleteRegular />}
+                      disabled={pendingGroupId === group.id}
+                      title="Delete"
+                      style={{ color: tokens.colorStatusDangerForeground1 }}
+                      onClick={() => onDelete(group)}
+                    />
+                  </span>
+                </td>
               </tr>
             ))
           )}
@@ -236,52 +315,67 @@ function renderBillingPoliciesTable(
 function renderCrossTenantReportsTable(
   styles: ReturnType<typeof useStyles>,
   crossTenantReports: CrossTenantReport[],
+  isTriggerLoading: boolean,
+  onTrigger: () => void,
 ): ReactElement {
   return (
-    <div className={styles.tableWrapper}>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.th}>Report ID</th>
-            <th className={styles.th}>Request Date</th>
-            <th className={styles.th}>Status</th>
-            <th className={styles.th}>Inbound</th>
-            <th className={styles.th}>Outbound</th>
-          </tr>
-        </thead>
-        <tbody>
-          {crossTenantReports.length === 0 ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM, flex: 1, minHeight: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Button
+          appearance="primary"
+          size="small"
+          icon={<AddRegular />}
+          disabled={isTriggerLoading}
+          onClick={onTrigger}
+        >
+          {isTriggerLoading ? 'Submitting…' : 'Trigger New Report'}
+        </Button>
+      </div>
+      <div className={styles.tableWrapper}>
+        <table className={styles.table}>
+          <thead>
             <tr>
-              <td className={styles.td} colSpan={5} style={{ textAlign: 'center' }}>
-                No cross-tenant reports found.
-              </td>
+              <th className={styles.th}>Report ID</th>
+              <th className={styles.th}>Request Date</th>
+              <th className={styles.th}>Status</th>
+              <th className={styles.th}>Inbound</th>
+              <th className={styles.th}>Outbound</th>
             </tr>
-          ) : (
-            crossTenantReports.map((report) => {
-              const inboundCount = report.status === 'Completed'
-                ? report.connections?.filter((connection) => connection.connectionType === 'Inbound').length ?? 0
-                : null;
-              const outboundCount = report.status === 'Completed'
-                ? report.connections?.filter((connection) => connection.connectionType === 'Outbound').length ?? 0
-                : null;
+          </thead>
+          <tbody>
+            {crossTenantReports.length === 0 ? (
+              <tr>
+                <td className={styles.td} colSpan={5} style={{ textAlign: 'center' }}>
+                  No cross-tenant reports found.
+                </td>
+              </tr>
+            ) : (
+              crossTenantReports.map((report) => {
+                const inboundCount = report.status === 'Completed'
+                  ? report.connections?.filter((connection) => connection.connectionType === 'Inbound').length ?? 0
+                  : null;
+                const outboundCount = report.status === 'Completed'
+                  ? report.connections?.filter((connection) => connection.connectionType === 'Outbound').length ?? 0
+                  : null;
 
-              return (
-                <tr key={report.reportId}>
-                  <td className={styles.td}>{report.reportId}</td>
-                  <td className={styles.td}>{formatDate(report.requestDate)}</td>
-                  <td className={styles.td}>
-                    <Badge appearance="filled" color={getReportBadgeColor(report.status)}>
-                      {report.status}
-                    </Badge>
-                  </td>
-                  <td className={styles.td}>{inboundCount ?? '—'}</td>
-                  <td className={styles.td}>{outboundCount ?? '—'}</td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
+                return (
+                  <tr key={report.reportId}>
+                    <td className={styles.td}>{report.reportId}</td>
+                    <td className={styles.td}>{formatDate(report.requestDate)}</td>
+                    <td className={styles.td}>
+                      <Badge appearance="filled" color={getReportBadgeColor(report.status)}>
+                        {report.status}
+                      </Badge>
+                    </td>
+                    <td className={styles.td}>{inboundCount ?? '—'}</td>
+                    <td className={styles.td}>{outboundCount ?? '—'}</td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -293,9 +387,31 @@ export default function GovernanceView({
   crossTenantReports,
   isLoading,
   error,
+  onRefreshAdmin,
 }: GovernanceViewProps): ReactElement {
   const styles = useStyles();
   const [activeTab, setActiveTab] = useState<GovernanceTab>('environmentGroups');
+  const [groupFormOpen, setGroupFormOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState<EnvironmentGroup | null>(null);
+  const [deleteGroup, setDeleteGroup] = useState<EnvironmentGroup | null>(null);
+  const [pendingGroupId, setPendingGroupId] = useState<string | null>(null);
+
+  const { execute: execCreate, isLoading: isCreating } = useMutation(createEnvironmentGroup, {
+    successMessage: 'Environment group created.',
+    onSuccess: () => { setGroupFormOpen(false); void onRefreshAdmin?.(); },
+  });
+  const { execute: execUpdate, isLoading: isUpdating } = useMutation(updateEnvironmentGroup, {
+    successMessage: 'Environment group updated.',
+    onSuccess: () => { setEditingGroup(null); void onRefreshAdmin?.(); },
+  });
+  const { execute: execDelete } = useMutation(deleteEnvironmentGroup, {
+    successMessage: 'Environment group deleted.',
+    onSuccess: () => { setPendingGroupId(null); void onRefreshAdmin?.(); },
+  });
+  const { execute: execTriggerReport, isLoading: isTriggeringReport } = useMutation(triggerCrossTenantReport, {
+    successMessage: 'Cross-tenant report request submitted. Results will appear when processing completes.',
+    onSuccess: () => void onRefreshAdmin?.(),
+  });
 
   const content = useMemo(() => {
     if (isLoading) {
@@ -318,12 +434,21 @@ export default function GovernanceView({
       case 'billingPolicies':
         return renderBillingPoliciesTable(styles, billingPolicies);
       case 'crossTenantReports':
-        return renderCrossTenantReportsTable(styles, crossTenantReports);
+        return renderCrossTenantReportsTable(styles, crossTenantReports, isTriggeringReport, () => void execTriggerReport());
       case 'environmentGroups':
       default:
-        return renderEnvironmentGroupsTable(styles, envGroups);
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM, flex: 1, minHeight: 0 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button appearance="primary" size="small" icon={<AddRegular />} onClick={() => setGroupFormOpen(true)}>
+                New Group
+              </Button>
+            </div>
+            {renderEnvironmentGroupsTable(styles, envGroups, pendingGroupId, (g) => setEditingGroup(g), (g) => setDeleteGroup(g))}
+          </div>
+        );
     }
-  }, [activeTab, billingPolicies, crossTenantReports, envGroups, error, isLoading, styles]);
+  }, [activeTab, billingPolicies, crossTenantReports, envGroups, error, execTriggerReport, isTriggeringReport, isLoading, pendingGroupId, styles]);
 
   return (
     <div className={styles.root}>
@@ -355,6 +480,42 @@ export default function GovernanceView({
 
         {content}
       </div>
+
+      {/* Create group dialog */}
+      <GroupFormDialog
+        open={groupFormOpen}
+        isLoading={isCreating}
+        onSubmit={(name, desc) => void execCreate(name, desc)}
+        onCancel={() => setGroupFormOpen(false)}
+      />
+
+      {/* Edit group dialog */}
+      {editingGroup && (
+        <GroupFormDialog
+          open
+          initial={editingGroup}
+          isLoading={isUpdating}
+          onSubmit={(name, desc) => void execUpdate(editingGroup.id, name, desc)}
+          onCancel={() => setEditingGroup(null)}
+        />
+      )}
+
+      {/* Delete group confirmation */}
+      <ConfirmDialog
+        open={Boolean(deleteGroup)}
+        title="Delete Environment Group"
+        message={`Delete group "${deleteGroup?.displayName}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        isDangerous
+        onConfirm={() => {
+          if (deleteGroup) {
+            setPendingGroupId(deleteGroup.id);
+            void execDelete(deleteGroup.id);
+          }
+          setDeleteGroup(null);
+        }}
+        onCancel={() => setDeleteGroup(null)}
+      />
     </div>
   );
 }

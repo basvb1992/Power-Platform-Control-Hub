@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   FluentProvider,
+  Toaster,
   webLightTheme,
   makeStyles,
   tokens,
@@ -165,6 +166,7 @@ export default function App(): ReactElement {
               resources={resources}
               isLoading={dataLoading}
               error={dataError}
+              onRefreshEnvironments={refresh}
             />
           )}
           {activeTab === 'recommendations' && (
@@ -182,6 +184,7 @@ export default function App(): ReactElement {
               crossTenantReports={crossTenantReports}
               isLoading={adminLoading}
               error={adminError}
+              onRefreshAdmin={refreshAdmin}
             />
           )}
           {activeTab === 'connectors' && (
@@ -189,6 +192,7 @@ export default function App(): ReactElement {
           )}
         </main>
       </div>
+      <Toaster toasterId="coe-toaster" />
     </FluentProvider>
   );
 }
