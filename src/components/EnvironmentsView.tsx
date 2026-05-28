@@ -87,12 +87,12 @@ const useStyles = makeStyles({
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
     gap: tokens.spacingHorizontalXL,
     overflowY: 'auto',
     flex: 1,
     paddingBottom: tokens.spacingVerticalL,
-    alignItems: 'start',
+    alignContent: 'start',
   },
   card: {
     display: 'flex',
@@ -100,6 +100,7 @@ const useStyles = makeStyles({
     padding: tokens.spacingVerticalM,
     gap: tokens.spacingVerticalS,
     minWidth: 0,
+    boxSizing: 'border-box',
   },
   cardTop: {
     display: 'flex',
@@ -135,6 +136,8 @@ const useStyles = makeStyles({
     gap: tokens.spacingHorizontalS,
     flexWrap: 'wrap',
     paddingTop: tokens.spacingVerticalXS,
+    flex: 1,
+    alignContent: 'flex-start',
   },
   divider: {
     marginTop: tokens.spacingVerticalXS,
