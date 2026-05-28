@@ -19,6 +19,7 @@ import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES_FILTER } from '../types/inventory.
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent, deleteFlow } from '../services/resourceMutations.ts';
+import { getTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
 
 type SortField = 'name' | 'type' | 'environment' | 'region' | 'created';
 type SortDir = 'asc' | 'desc';
@@ -126,7 +127,7 @@ export default function ResourcesView({
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [confirmDelete, setConfirmDelete] = useState<Resource | null>(null);
   const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
-  const [deletedNames, setDeletedNames] = useState<Set<string>>(new Set());
+  const [deletedNames, setDeletedNames] = useState<Set<string>>(() => getTombstonedIds());
   const pendingDeleteRef = useRef<string | null>(null);
 
   const { execute: execDeleteFlow } = useMutation(deleteFlow, {
@@ -135,6 +136,7 @@ export default function ResourcesView({
     onError: () => {
       // Roll back the optimistic removal on failure
       if (pendingDeleteRef.current) {
+        removeTombstone(pendingDeleteRef.current);
         setDeletedNames((prev) => { const n = new Set(prev); n.delete(pendingDeleteRef.current!); return n; });
         pendingDeleteRef.current = null;
       }
@@ -146,6 +148,7 @@ export default function ResourcesView({
     onSuccess: () => setPendingResourceName(null),
     onError: () => {
       if (pendingDeleteRef.current) {
+        removeTombstone(pendingDeleteRef.current);
         setDeletedNames((prev) => { const n = new Set(prev); n.delete(pendingDeleteRef.current!); return n; });
         pendingDeleteRef.current = null;
       }
@@ -325,9 +328,17 @@ export default function ResourcesView({
         onConfirm={() => {
           if (confirmDelete) {
             const name = confirmDelete.name;
+            const displayName = confirmDelete.properties.displayName ?? name;
             setPendingResourceName(name);
             pendingDeleteRef.current = name;
-            // Optimistically remove from the list immediately
+            // Optimistically remove from list and persist to localStorage
+            addTombstone({
+              resourceId: name,
+              resourceType: confirmDelete.type,
+              environmentId: confirmDelete.properties.environmentId ?? '',
+              displayName,
+              deletedBy: '',
+            });
             setDeletedNames((prev) => new Set([...prev, name]));
             const type = confirmDelete.type.toLowerCase();
             if (type === 'microsoft.copilotstudio/agents') {
