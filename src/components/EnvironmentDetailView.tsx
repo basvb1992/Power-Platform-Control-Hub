@@ -450,7 +450,7 @@ export default function EnvironmentDetailView({
                     const created = r.properties.createdAt ? new Date(r.properties.createdAt as string).toLocaleDateString() : '—';
                     const modified = r.properties.modifiedAt ? new Date(r.properties.modifiedAt as string).toLocaleDateString() : '—';
                     const ownerGuid = (r.properties.createdBy ?? r.properties.ownerId ?? '') as string;
-                    const owner = ownerNames.get(ownerGuid.toLowerCase()) ?? ownerGuid || '—';
+                    const owner = ownerNames.get(ownerGuid.toLowerCase()) ?? (ownerGuid || '—');
                     return (
                       <TableRow key={r.id ?? `${r.name}-${i}`}>
                         <TableCell><Text style={{ fontWeight: tokens.fontWeightSemibold }}>{name}</Text></TableCell>
