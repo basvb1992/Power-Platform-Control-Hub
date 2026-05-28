@@ -44,10 +44,13 @@ export default function ConfirmDialog({
               Cancel
             </Button>
             <Button
-              appearance={confirmAppearance}
+              appearance={isDangerous ? 'outline' : confirmAppearance}
               disabled={isLoading}
               onClick={onConfirm}
-              style={isDangerous ? { color: tokens.colorStatusDangerForeground1 } : undefined}
+              style={isDangerous ? {
+                color: tokens.colorStatusDangerForeground1,
+                borderColor: tokens.colorStatusDangerForeground1,
+              } : undefined}
             >
               {isLoading ? 'Working…' : confirmLabel}
             </Button>
