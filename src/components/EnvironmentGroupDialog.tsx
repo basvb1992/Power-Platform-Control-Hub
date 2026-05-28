@@ -115,7 +115,7 @@ export default function EnvironmentGroupDialog({
   }
 
   const title = mode === 'add' ? 'Add to Environment Group' : 'Remove from Environment Group';
-  const confirmLabel = mode === 'add' ? 'Add to Group' : 'Remove from Group';
+  const confirmLabel = mode === 'add' ? 'Add' : 'Remove';
   const confirmAppearance = mode === 'add' ? 'primary' : 'primary';
   const confirmIcon = mode === 'add' ? <LayerRegular /> : <SubtractCircleRegular />;
 
@@ -172,13 +172,14 @@ export default function EnvironmentGroupDialog({
               )}
             </div>
           </DialogContent>
-          <DialogActions>
-            <Button appearance="secondary" onClick={onClose} disabled={isBusy}>Cancel</Button>
+          <DialogActions style={{ justifyContent: 'flex-end' }}>
+            <Button appearance="secondary" onClick={onClose} disabled={isBusy} style={{ minWidth: 'unset' }}>Cancel</Button>
             <Button
               appearance={confirmAppearance}
               icon={confirmIcon}
               onClick={handleConfirm}
               disabled={isBusy || !selectedGroupId || loadingGroups}
+              style={{ minWidth: 'unset' }}
             >
               {isBusy ? <Spinner size="tiny" /> : confirmLabel}
             </Button>
