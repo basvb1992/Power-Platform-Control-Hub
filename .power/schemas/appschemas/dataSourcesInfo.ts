@@ -5,6 +5,13 @@
  */
 
 export const dataSourcesInfo = {
+  "ppa_resourcetombstones": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "ppa_resourcetombstoneid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
   "powerplatformadminv2": {
     "tableId": "",
     "version": "",

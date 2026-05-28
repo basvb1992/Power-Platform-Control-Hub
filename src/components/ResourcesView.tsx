@@ -19,8 +19,7 @@ import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES_FILTER } from '../types/inventory.
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent, deleteFlow } from '../services/resourceMutations.ts';
-import { getTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
-
+import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
 type SortField = 'name' | 'type' | 'environment' | 'region' | 'created';
 type SortDir = 'asc' | 'desc';
 
@@ -127,7 +126,12 @@ export default function ResourcesView({
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [confirmDelete, setConfirmDelete] = useState<Resource | null>(null);
   const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
-  const [deletedNames, setDeletedNames] = useState<Set<string>>(() => getTombstonedIds());
+  const [deletedNames, setDeletedNames] = useState<Set<string>>(new Set());
+
+  // Load tombstones from Dataverse (+ localStorage fallback) on mount
+  useEffect(() => {
+    void fetchTombstonedIds().then(setDeletedNames);
+  }, []);
   const pendingDeleteRef = useRef<string | null>(null);
 
   const { execute: execDeleteFlow } = useMutation(deleteFlow, {
