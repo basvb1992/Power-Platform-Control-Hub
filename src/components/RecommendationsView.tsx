@@ -186,7 +186,6 @@ function accentColor(resourceCount: number): string {
   if (resourceCount >= 5) return tokens.colorStatusWarningBackground3;
   return tokens.colorBrandBackground;
 }
-}
 
 export default function RecommendationsView({
   recommendations,
