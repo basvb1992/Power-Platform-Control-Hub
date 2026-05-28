@@ -89,7 +89,7 @@ function formatDate(value?: string): string {
 
 async function executeForResource(scenario: string, actionName: string, resourceId: string) {
   const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(
-    { scenario, actionParameters: { resourceId } },
+    { scenario, actionParameters: { resourceId: [resourceId] } },
     actionName,
     API_VERSION,
   );
