@@ -23,11 +23,10 @@ import type {
 const API_VERSION = '2024-10-01';
 
 function unwrapOperationResult<T>(result: IOperationResult<T>): T {
-  if (result.error) {
-    throw new Error(result.error.message);
+  if (!result.success || result.error) {
+    throw new Error(result.error?.message ?? 'Operation failed');
   }
-
-  return result.value;
+  return result.data;
 }
 
 function mapPrincipal(principal?: Principal) {

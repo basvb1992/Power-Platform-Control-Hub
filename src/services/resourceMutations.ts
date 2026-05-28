@@ -4,11 +4,10 @@ import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlat
 const API = '2024-10-01';
 
 function unwrapOperationResult<T>(result: IOperationResult<T>): T {
-  if (result.error) {
-    throw new Error(result.error.message);
+  if (!result.success || result.error) {
+    throw new Error(result.error?.message ?? 'Operation failed');
   }
-
-  return result.value;
+  return result.data;
 }
 
 export async function deleteFlow(flowId: string): Promise<void> {
