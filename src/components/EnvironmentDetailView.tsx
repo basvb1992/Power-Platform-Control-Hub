@@ -455,7 +455,7 @@ export default function EnvironmentDetailView({
                       <TableRow key={r.id ?? `${r.name}-${i}`}>
                         <TableCell><Text style={{ fontWeight: tokens.fontWeightSemibold }}>{name}</Text></TableCell>
                         <TableCell>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalXS }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalXS, whiteSpace: 'nowrap' }}>
                             {resourceTypeIcon(r.type)}
                             <Text>{typeLabel}</Text>
                           </span>
