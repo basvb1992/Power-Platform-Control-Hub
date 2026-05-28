@@ -221,3 +221,13 @@ export async function fetchPowerPagesWebsites(environmentId: string): Promise<Po
   const result = await PowerPlatformforAdminsV2Service.GetWebsites(environmentId, API_VERSION);
   return (unwrapOperationResult(result).value ?? []).map(mapWebsite);
 }
+
+export async function addEnvironmentToGroup(groupId: string, environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.AddEnvironmentToGroup(groupId, environmentId, API_VERSION);
+  unwrapOperationResult(result);
+}
+
+export async function removeEnvironmentFromGroup(groupId: string, environmentId: string): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.RemoveEnvironmentFromGroup(groupId, environmentId, API_VERSION);
+  unwrapOperationResult(result);
+}
