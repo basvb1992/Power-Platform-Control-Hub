@@ -87,6 +87,7 @@ const useStyles = makeStyles({
     flex: 1,
     paddingBottom: tokens.spacingVerticalL,
     alignContent: 'start',
+    alignItems: 'start',
   },
   card: {
     display: 'flex',
@@ -95,6 +96,7 @@ const useStyles = makeStyles({
     gap: tokens.spacingVerticalS,
     minWidth: 0,
     boxSizing: 'border-box',
+    minHeight: '160px',
   },
   cardTop: {
     display: 'flex',
@@ -132,7 +134,7 @@ const useStyles = makeStyles({
     paddingTop: tokens.spacingVerticalXS,
   },
   divider: {
-    marginTop: 'auto',
+    marginTop: tokens.spacingVerticalS,
     marginBottom: tokens.spacingVerticalXS,
   },
   metaRow: {
