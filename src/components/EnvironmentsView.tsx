@@ -12,14 +12,6 @@ import {
   MessageBarBody,
   Divider,
   Button,
-  Dialog,
-  DialogSurface,
-  DialogBody,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Field,
-  Textarea,
   Menu,
   MenuTrigger,
   MenuList,
@@ -43,6 +35,8 @@ import {
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
+import BackupDialog from './BackupDialog.tsx';
+import EnvironmentDetailView from './EnvironmentDetailView.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
 import {
   enableEnvironment,
@@ -174,43 +168,6 @@ function envTypeColor(
   }
 }
 
-interface BackupDialogProps {
-  open: boolean;
-  envName: string;
-  isLoading: boolean;
-  onConfirm: (notes: string) => void;
-  onCancel: () => void;
-}
-
-function BackupDialog({ open, envName, isLoading, onConfirm, onCancel }: BackupDialogProps): ReactElement {
-  const [notes, setNotes] = useState('');
-  return (
-    <Dialog open={open} onOpenChange={(_, data) => { if (!data.open) onCancel(); }}>
-      <DialogSurface>
-        <DialogBody>
-          <DialogTitle>Create Backup — {envName}</DialogTitle>
-          <DialogContent>
-            <Field label="Backup notes (optional)" style={{ marginTop: tokens.spacingVerticalS }}>
-              <Textarea
-                value={notes}
-                onChange={(_, data) => setNotes(data.value)}
-                placeholder="e.g. Pre-release snapshot"
-                rows={3}
-              />
-            </Field>
-          </DialogContent>
-          <DialogActions>
-            <Button appearance="secondary" disabled={isLoading} onClick={onCancel}>Cancel</Button>
-            <Button appearance="primary" disabled={isLoading} onClick={() => onConfirm(notes)}>
-              {isLoading ? 'Submitting…' : 'Create Backup'}
-            </Button>
-          </DialogActions>
-        </DialogBody>
-      </DialogSurface>
-    </Dialog>
-  );
-}
-
 export default function EnvironmentsView({
   environments,
   resources,
@@ -219,6 +176,7 @@ export default function EnvironmentsView({
   onRefreshEnvironments,
 }: EnvironmentsViewProps): ReactElement {
   const styles = useStyles();
+  const [selectedEnv, setSelectedEnv] = useState<Resource | null>(null);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [regionFilter, setRegionFilter] = useState('all');
@@ -297,6 +255,17 @@ export default function EnvironmentsView({
     );
   }
 
+  if (selectedEnv) {
+    return (
+      <EnvironmentDetailView
+        environment={selectedEnv}
+        resources={resources}
+        onBack={() => setSelectedEnv(null)}
+        onRefreshEnvironments={onRefreshEnvironments}
+      />
+    );
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
@@ -358,7 +327,12 @@ export default function EnvironmentsView({
             const isPending = pendingEnvId === e.name;
 
             return (
-              <Card key={e.id ?? `env-${e.name}-${i}`} className={styles.card}>
+              <Card
+                key={e.id ?? `env-${e.name}-${i}`}
+                className={styles.card}
+                onClick={() => setSelectedEnv(e)}
+                style={{ cursor: 'pointer' }}
+              >
                 <div className={styles.cardTop}>
                   <GlobeRegular className={styles.cardIcon} />
                   <div className={styles.cardTitles}>
@@ -489,7 +463,7 @@ export default function EnvironmentsView({
       {backupEnv && (
         <BackupDialog
           open
-          envName={backupEnv.properties.displayName ?? backupEnv.name}
+          environmentName={backupEnv.properties.displayName ?? backupEnv.name}
           isLoading={isBackupLoading}
           onConfirm={(notes) => void execBackup(backupEnv.name, notes)}
           onCancel={() => setBackupEnv(null)}
