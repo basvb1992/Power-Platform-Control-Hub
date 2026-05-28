@@ -29,6 +29,7 @@ import EnvironmentsView from './components/EnvironmentsView.tsx';
 import RecommendationsView from './components/RecommendationsView.tsx';
 import GovernanceView from './components/GovernanceView.tsx';
 import ConnectorsView from './components/ConnectorsView.tsx';
+import powerConfig from '../power.config.json';
 
 type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'connectors';
 
@@ -110,7 +111,7 @@ export default function App(): ReactElement {
           <GridRegular
             style={{ fontSize: '1.5rem', color: tokens.colorNeutralForegroundOnBrand }}
           />
-          <Text className={styles.appTitle}>CoE Dashboard</Text>
+          <Text className={styles.appTitle}>{powerConfig.appDisplayName}</Text>
           {(dataLoading || adminLoading) && (
             <Spinner size="tiny" style={{ marginRight: tokens.spacingHorizontalS }} />
           )}
