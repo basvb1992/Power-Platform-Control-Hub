@@ -12,7 +12,11 @@ export const msalConfig: Configuration = {
   },
 };
 
-/** Scopes required to call the Power Platform Inventory API. */
+/**
+ * Scope for the Power Platform API.
+ * Using `.default` grants all delegated permissions that were consented in the
+ * app registration (e.g. ResourceQuery.Resources.Read).
+ */
 export const tokenRequest: PopupRequest = {
-  scopes: ['https://api.powerplatform.com/user_impersonation'],
+  scopes: ['https://api.powerplatform.com/.default'],
 };

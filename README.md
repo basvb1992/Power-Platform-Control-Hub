@@ -71,29 +71,43 @@ CoE-Code/
 
 ## Azure AD Setup
 
-The Inventory API requires a delegated token with the `https://api.powerplatform.com/user_impersonation` scope. You must register an application in Azure Active Directory.
+The Inventory API is part of the **Power Platform API** and requires a delegated token obtained via Microsoft Entra. The correct scope is `https://api.powerplatform.com/.default`. Full reference: [Programmability authentication](https://learn.microsoft.com/en-us/power-platform/admin/programmability-authentication-v2).
 
-### 1 — Register an app in Azure AD
+### 1 — Register an app in Microsoft Entra
 
-1. Go to [Azure Portal → Azure Active Directory → App registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps).
+1. Go to [Azure Portal → Microsoft Entra ID → App registrations](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps).
 2. Click **New registration**.
 3. Enter a name (e.g. `CoE Dashboard`).
 4. Under **Supported account types**, select **Accounts in this organisational directory only**.
-5. Under **Redirect URI**, choose **Single-page application (SPA)** and enter:
-   - For local development: `http://localhost:5173`
-   - For production: the URL assigned after `npx power-apps push`
+5. Skip the redirect URI for now (configured in step 3 below).
 6. Click **Register**.
 7. Note the **Application (client) ID** and **Directory (tenant) ID** from the Overview page.
 
 ### 2 — Add API permissions
 
-1. Go to **API permissions → Add a permission**.
-2. Select **APIs my organisation uses** and search for **Power Platform API**.
-3. Select **Delegated permissions → user_impersonation**.
-4. Click **Add permissions**.
-5. (Optional but recommended) Click **Grant admin consent for \<your tenant\>**.
+1. Go to **API permissions → Add a permission → APIs my organization uses**.
+2. Search for **Power Platform API** by its GUID: **`8578e004-a5c6-46e7-913e-12f58912df43`**.
+   > If it does not appear, run the following to register it in your tenant:
+   > ```powershell
+   > Connect-MgGraph
+   > New-MgServicePrincipal -AppId 8578e004-a5c6-46e7-913e-12f58912df43 -DisplayName "Power Platform API"
+   > ```
+3. Choose **Delegated permissions** and add **`ResourceQuery.Resources.Read`** (under the *ResourceQuery* namespace).
+4. Click **Grant admin consent for \<your tenant\>**.
 
-> **Note:** Users who run the dashboard need a **Power Apps Premium** licence and must be a **Power Platform admin** or **environment admin** to call the Inventory API.
+> **Note:** Power Platform API uses **delegated permissions only** — there are no application permissions. The signed-in user must be a Power Platform admin or environment admin to read cross-tenant inventory data.
+
+### 3 — Configure the redirect URI (SPA)
+
+This app runs entirely in the browser, so you must use a **Single-Page Application** redirect URI (not "Mobile and desktop").
+
+1. In your app registration, go to **Authentication → Add a platform → Single-page application**.
+2. Add the following redirect URIs:
+   - For local development: `http://localhost:5173`
+   - For production: the Power Apps URL assigned after `npx power-apps push`
+3. Click **Configure**.
+
+> No client secret is needed — SPA apps use PKCE (proof key for code exchange) by default.
 
 ---
 
@@ -106,11 +120,13 @@ cp .env.example .env
 ```
 
 ```
-VITE_AZURE_CLIENT_ID=<Application (client) ID from Azure AD>
-VITE_AZURE_TENANT_ID=<Directory (tenant) ID from Azure AD>
+VITE_AZURE_CLIENT_ID=<Application (client) ID from step 1>
+VITE_AZURE_TENANT_ID=<Directory (tenant) ID from step 1>
 ```
 
 > `.env` is in `.gitignore` — never commit it to source control.
+>
+> `VITE_AZURE_TENANT_ID` can be omitted if you want to allow any Entra tenant (the app will use the `organizations` authority). For single-tenant deployments, always set it.
 
 ---
 
