@@ -17,8 +17,6 @@ import {
   ClockRegular,
   ArrowClockwiseRegular,
   BoxRegular,
-  InfoRegular,
-  DismissRegular,
   PlayRegular,
   ListRegular,
 } from '@fluentui/react-icons';
@@ -39,21 +37,6 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalXL,
     height: '100%',
     overflow: 'hidden',
-  },
-  notice: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: tokens.spacingHorizontalS,
-    backgroundColor: tokens.colorNeutralBackground3,
-    ...shorthands.border('1px', 'solid', tokens.colorNeutralStroke2),
-    borderRadius: tokens.borderRadiusMedium,
-    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
-    flexShrink: 0,
-  },
-  noticeText: {
-    fontSize: tokens.fontSizeBase200,
-    color: tokens.colorNeutralForeground3,
-    flex: 1,
   },
   toolbar: {
     display: 'flex',
@@ -194,7 +177,6 @@ export default function RecommendationsView({
 }: RecommendationsViewProps): ReactElement {
   const styles = useStyles();
   const [search, setSearch] = useState('');
-  const [noticeVisible, setNoticeVisible] = useState(true);
   const [resourcesDialog, setResourcesDialog] = useState<{ scenario: string; name: string; actions: AdvisorRecommendation['details']['actions'] } | null>(null);
 
   const filteredRecommendations = useMemo(() => {
@@ -216,22 +198,6 @@ export default function RecommendationsView({
 
   return (
     <div className={styles.root}>
-      {noticeVisible && (
-        <div className={styles.notice}>
-          <InfoRegular style={{ fontSize: '0.9rem', flexShrink: 0, marginTop: '1px', color: tokens.colorNeutralForeground3 }} />
-          <Text className={styles.noticeText}>
-            Some permissions (Monitor.Alerts, Monitor.Metrics, Security.Recommendations, CopilotGovernance) are registered but their API endpoints are not yet publicly available.
-          </Text>
-          <Button
-            appearance="subtle"
-            size="small"
-            icon={<DismissRegular />}
-            onClick={() => setNoticeVisible(false)}
-            style={{ flexShrink: 0 }}
-          />
-        </div>
-      )}
-
       <div className={styles.toolbar}>
         <LightbulbRegular style={{ fontSize: '1.25rem', color: tokens.colorBrandForeground1 }} />
         <Text className={styles.title}>Recommendations</Text>
