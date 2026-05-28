@@ -1,0 +1,52 @@
+{
+  "name": "aaduser",
+  "title": "AAD Users",
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "x-ms-dataverse-entity": true,
+      "x-ms-dataverse-entityset": "aadusers",
+      "x-ms-dataverse-primary-id": "aaduserid",
+      "x-ms-dataverse-primary-name": "displayname",
+      "properties": {
+        "aaduserid": {
+          "type": "string",
+          "title": "AAD User",
+          "x-ms-dataverse-attribute": "aaduserid",
+          "x-ms-dataverse-type": "UniqueidentifierType",
+          "x-ms-schema-name": "AADUserId",
+          "x-ms-dataverse-primary-id": true,
+          "required": true,
+          "x-ms-keyType": "primary"
+        },
+        "displayname": {
+          "type": "string",
+          "title": "Display Name",
+          "x-ms-dataverse-attribute": "displayname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "displayname",
+          "x-ms-dataverse-primary-name": true,
+          "maxLength": 400
+        },
+        "mail": {
+          "type": "string",
+          "title": "Email",
+          "x-ms-dataverse-attribute": "mail",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "mail",
+          "maxLength": 400
+        },
+        "userprincipalname": {
+          "type": "string",
+          "title": "User Principal Name",
+          "x-ms-dataverse-attribute": "userprincipalname",
+          "x-ms-dataverse-type": "StringType",
+          "x-ms-schema-name": "userprincipalname",
+          "maxLength": 400
+        }
+      },
+      "required": ["aaduserid"]
+    }
+  }
+}

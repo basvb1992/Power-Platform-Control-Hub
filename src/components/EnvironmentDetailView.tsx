@@ -54,6 +54,7 @@ import {
 } from '../services/environmentMutations.ts';
 import BackupDialog from './BackupDialog.tsx';
 import EnvironmentGroupDialog from './EnvironmentGroupDialog.tsx';
+import { useOwners } from '../services/ownerCache.ts';
 
 interface EnvironmentDetailViewProps {
   environment: Resource;
@@ -335,6 +336,12 @@ export default function EnvironmentDetailView({
     );
   }, [envResources, search]);
 
+  const ownerGuids = useMemo(
+    () => envResources.map((r) => (r.properties.createdBy ?? r.properties.ownerId) as string | undefined),
+    [envResources],
+  );
+  const ownerNames = useOwners(ownerGuids);
+
   return (
     <div className={styles.root}>
       {/* Hero */}
@@ -442,7 +449,8 @@ export default function EnvironmentDetailView({
                     const typeLabel = RESOURCE_TYPE_LABELS[r.type] ?? r.type;
                     const created = r.properties.createdAt ? new Date(r.properties.createdAt as string).toLocaleDateString() : '—';
                     const modified = r.properties.modifiedAt ? new Date(r.properties.modifiedAt as string).toLocaleDateString() : '—';
-                    const owner = (r.properties.createdBy ?? r.properties.ownerId ?? '—') as string;
+                    const ownerGuid = (r.properties.createdBy ?? r.properties.ownerId ?? '') as string;
+                    const owner = ownerNames.get(ownerGuid.toLowerCase()) ?? ownerGuid || '—';
                     return (
                       <TableRow key={r.id ?? `${r.name}-${i}`}>
                         <TableCell><Text style={{ fontWeight: tokens.fontWeightSemibold }}>{name}</Text></TableCell>
