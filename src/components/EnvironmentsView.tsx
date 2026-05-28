@@ -32,11 +32,14 @@ import {
   ShieldRegular,
   ShieldDismissRegular,
   SaveRegular,
+  LayerRegular,
+  SubtractCircleRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import BackupDialog from './BackupDialog.tsx';
 import EnvironmentDetailView from './EnvironmentDetailView.tsx';
+import EnvironmentGroupDialog from './EnvironmentGroupDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
 import {
   enableEnvironment,
@@ -188,6 +191,7 @@ export default function EnvironmentsView({
   } | null>(null);
   const [backupEnv, setBackupEnv] = useState<Resource | null>(null);
   const [pendingEnvId, setPendingEnvId] = useState<string | null>(null);
+  const [groupDialog, setGroupDialog] = useState<{ mode: 'add' | 'remove'; env: Resource } | null>(null);
 
   const { execute: execEnable } = useMutation(enableEnvironment, {
     successMessage: 'Enable environment request submitted.',
@@ -350,42 +354,55 @@ export default function EnvironmentsView({
                         disabled={isPending}
                         title="Actions"
                         style={{ marginLeft: 'auto', flexShrink: 0 }}
+                        onClick={(ev) => ev.stopPropagation()}
                       />
                     </MenuTrigger>
                     <MenuPopover>
                       <MenuList>
                         <MenuItem
                           icon={<PlayRegular />}
-                          onClick={() => void runAction(e.name, () => execEnable(e.name))}
+                          onClick={(ev) => { ev.stopPropagation(); void runAction(e.name, () => execEnable(e.name)); }}
                         >
                           Enable
                         </MenuItem>
                         <MenuItem
                           icon={<StopRegular />}
-                          onClick={() => setConfirmAction({ type: 'disable', env: e })}
+                          onClick={(ev) => { ev.stopPropagation(); setConfirmAction({ type: 'disable', env: e }); }}
                         >
                           Disable
                         </MenuItem>
                         {isManaged ? (
                           <MenuItem
                             icon={<ShieldDismissRegular />}
-                            onClick={() => setConfirmAction({ type: 'disableManaged', env: e })}
+                            onClick={(ev) => { ev.stopPropagation(); setConfirmAction({ type: 'disableManaged', env: e }); }}
                           >
                             Disable Managed
                           </MenuItem>
                         ) : (
                           <MenuItem
                             icon={<ShieldRegular />}
-                            onClick={() => void runAction(e.name, () => execEnableManaged(e.name))}
+                            onClick={(ev) => { ev.stopPropagation(); void runAction(e.name, () => execEnableManaged(e.name)); }}
                           >
                             Enable Managed
                           </MenuItem>
                         )}
                         <MenuItem
                           icon={<SaveRegular />}
-                          onClick={() => setBackupEnv(e)}
+                          onClick={(ev) => { ev.stopPropagation(); setBackupEnv(e); }}
                         >
                           Create Backup
+                        </MenuItem>
+                        <MenuItem
+                          icon={<LayerRegular />}
+                          onClick={(ev) => { ev.stopPropagation(); setGroupDialog({ mode: 'add', env: e }); }}
+                        >
+                          Add to Group
+                        </MenuItem>
+                        <MenuItem
+                          icon={<SubtractCircleRegular />}
+                          onClick={(ev) => { ev.stopPropagation(); setGroupDialog({ mode: 'remove', env: e }); }}
+                        >
+                          Remove from Group
                         </MenuItem>
                       </MenuList>
                     </MenuPopover>
@@ -469,6 +486,16 @@ export default function EnvironmentsView({
           isLoading={isBackupLoading}
           onConfirm={(notes) => void execBackup(backupEnv.name, notes)}
           onCancel={() => setBackupEnv(null)}
+        />
+      )}
+
+      {groupDialog && (
+        <EnvironmentGroupDialog
+          open
+          mode={groupDialog.mode}
+          environmentId={groupDialog.env.name}
+          environmentName={groupDialog.env.properties.displayName ?? groupDialog.env.name}
+          onClose={() => setGroupDialog(null)}
         />
       )}
     </div>
