@@ -42,51 +42,47 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground2,
     overflow: 'hidden',
   },
-  header: {
+  nav: {
     display: 'flex',
     alignItems: 'center',
-    gap: tokens.spacingHorizontalM,
-    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalXL}`,
-    backgroundColor: tokens.colorBrandBackground,
-    boxShadow: tokens.shadow4,
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    padding: `0 ${tokens.spacingHorizontalL}`,
     flexShrink: 0,
+    gap: tokens.spacingHorizontalS,
   },
-  headerLogo: {
-    height: '32px',
-    width: 'auto',
-    borderRadius: tokens.borderRadiusSmall,
-    flexShrink: 0,
-  },
-  headerDivider: {
-    width: '1px',
-    height: '24px',
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    flexShrink: 0,
-  },
-  appTitle: {
-    color: tokens.colorNeutralForegroundOnBrand,
-    fontSize: tokens.fontSizeBase500,
-    fontWeight: tokens.fontWeightSemibold,
+  navTabs: {
     flex: 1,
   },
-  headerCredit: {
+  navRight: {
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalXS,
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: tokens.fontSizeBase100,
-    whiteSpace: 'nowrap',
-  },
-  nav: {
-    backgroundColor: tokens.colorNeutralBackground1,
-    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
-    padding: `0 ${tokens.spacingHorizontalXL}`,
     flexShrink: 0,
   },
   content: {
     flex: 1,
     overflow: 'hidden',
     backgroundColor: tokens.colorNeutralBackground2,
+  },
+  footer: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalL}`,
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderTop: `1px solid ${tokens.colorNeutralStroke2}`,
+    flexShrink: 0,
+  },
+  footerLogo: {
+    height: '16px',
+    width: 'auto',
+    opacity: 0.7,
+  },
+  footerText: {
+    fontSize: tokens.fontSizeBase100,
+    color: tokens.colorNeutralForeground3,
   },
 });
 
@@ -127,39 +123,33 @@ export default function App(): ReactElement {
   return (
     <FluentProvider theme={webLightTheme}>
       <div className={styles.shell}>
-        <header className={styles.header}>
-          <img src={ppaLogo} alt="Power Platform Advocates" className={styles.headerLogo} />
-          <div className={styles.headerDivider} />
-          <Text className={styles.appTitle}>{__APP_DISPLAY_NAME__}</Text>
-          {(dataLoading || adminLoading) && (
-            <Spinner size="tiny" style={{ marginRight: tokens.spacingHorizontalS }} />
-          )}
-          <Text className={styles.headerCredit}>by Power Platform Advocates</Text>
-          <Button
-            appearance="subtle"
-            icon={<ArrowClockwiseRegular />}
-            style={{ color: tokens.colorNeutralForegroundOnBrand }}
-            onClick={() => void refreshAll()}
-            title="Refresh data"
-          />
-        </header>
-
         <nav className={styles.nav}>
-          <TabList
-            selectedValue={activeTab}
-            onTabSelect={(_, data) => {
-              const tab = data.value as TabValue;
-              if (tab === 'resources') setResourceTypeFilter('all');
-              setActiveTab(tab);
-            }}
-          >
-            <Tab value="overview" icon={<GridRegular />}>Overview</Tab>
-            <Tab value="resources" icon={<TableRegular />}>Resources</Tab>
-            <Tab value="environments" icon={<GlobeRegular />}>Environments</Tab>
-            <Tab value="recommendations" icon={<LightbulbRegular />}>Recommendations</Tab>
-            <Tab value="governance" icon={<ShieldRegular />}>Governance</Tab>
-            <Tab value="connectors" icon={<PlugConnectedRegular />}>Connectors</Tab>
-          </TabList>
+          <div className={styles.navTabs}>
+            <TabList
+              selectedValue={activeTab}
+              onTabSelect={(_, data) => {
+                const tab = data.value as TabValue;
+                if (tab === 'resources') setResourceTypeFilter('all');
+                setActiveTab(tab);
+              }}
+            >
+              <Tab value="overview" icon={<GridRegular />}>Overview</Tab>
+              <Tab value="resources" icon={<TableRegular />}>Resources</Tab>
+              <Tab value="environments" icon={<GlobeRegular />}>Environments</Tab>
+              <Tab value="recommendations" icon={<LightbulbRegular />}>Recommendations</Tab>
+              <Tab value="governance" icon={<ShieldRegular />}>Governance</Tab>
+              <Tab value="connectors" icon={<PlugConnectedRegular />}>Connectors</Tab>
+            </TabList>
+          </div>
+          <div className={styles.navRight}>
+            {(dataLoading || adminLoading) && <Spinner size="tiny" />}
+            <Button
+              appearance="subtle"
+              icon={<ArrowClockwiseRegular />}
+              onClick={() => void refreshAll()}
+              title="Refresh data"
+            />
+          </div>
         </nav>
 
         <main className={styles.content}>
@@ -212,6 +202,11 @@ export default function App(): ReactElement {
             <ConnectorsView environments={environments} />
           )}
         </main>
+
+        <footer className={styles.footer}>
+          <img src={ppaLogo} alt="Power Platform Advocates" className={styles.footerLogo} />
+          <Text className={styles.footerText}>Made with ❤️ by the Power Platform Advocates</Text>
+        </footer>
       </div>
       <Toaster toasterId="coe-toaster" />
     </FluentProvider>
