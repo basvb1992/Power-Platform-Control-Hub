@@ -148,7 +148,7 @@ export default function RecommendationResourcesDialog({
     <Dialog open={open} onOpenChange={(_, d) => { if (!d.open) onClose(); }}>
       <DialogSurface style={{ maxWidth: '900px', width: '90vw' }}>
         <DialogBody>
-          <DialogTitle>{scenarioDisplayName} — Affected Resources</DialogTitle>
+          <DialogTitle>{scenarioDisplayName}</DialogTitle>
           <DialogContent>
             {isLoading ? (
               <div style={{ display: 'flex', justifyContent: 'center', padding: tokens.spacingVerticalXL }}>
@@ -264,7 +264,7 @@ export default function RecommendationResourcesDialog({
                   className={styles.bulkButton}
                   onClick={() => void execBulk(primaryAction.actionType ?? primaryAction.actionName ?? '')}
                 >
-                  {isBulkLoading ? 'Executing…' : `Execute All — ${primaryAction.actionName ?? primaryAction.actionType}`}
+                  {isBulkLoading ? 'Executing…' : 'Execute All'}
                 </Button>
               )}
             </div>

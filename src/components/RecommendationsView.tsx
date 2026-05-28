@@ -306,7 +306,7 @@ export default function RecommendationsView({
       <RecommendationResourcesDialog
         open={resourcesDialog !== null}
         scenario={resourcesDialog?.scenario ?? ''}
-        scenarioDisplayName={resourcesDialog?.name ?? ''}
+        scenarioDisplayName={(resourcesDialog?.name ?? '').replace(/([^ ])for /gi, '$1 for ')}
         actions={resourcesDialog?.actions ?? []}
         onClose={() => setResourcesDialog(null)}
       />
