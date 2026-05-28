@@ -2,7 +2,7 @@
 # Requires PAC CLI: https://aka.ms/PowerAppsCLI
 
 param(
-    [string]$EnvironmentUrl = "",
+    [string]$EnvironmentUrl = "https://org15ddc379.crm.dynamics.com",
     [switch]$Deploy
 )
 

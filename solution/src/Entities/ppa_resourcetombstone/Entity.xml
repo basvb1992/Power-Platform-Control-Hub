@@ -1,111 +1,99 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <Entities>
-    <Entity>
-      <EntityInfo>
-        <entity Name="ppa_resourcetombstone">
+<Entity xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name LocalizedName="Resource Tombstone" OriginalName="ppa_resourcetombstone">ppa_resourcetombstone</Name>
+  <EntityInfo>
+    <entity Name="ppa_resourcetombstone">
+      <LocalizedNames>
+        <LocalizedName description="Resource Tombstone" languagecode="1033" />
+      </LocalizedNames>
+      <LocalizedCollectionNames>
+        <LocalizedCollectionName description="Resource Tombstones" languagecode="1033" />
+      </LocalizedCollectionNames>
+      <Descriptions>
+        <Description description="Tracks resources deleted via Power Platform Control Hub so they stay hidden across all users until the Inventory API refreshes." languagecode="1033" />
+      </Descriptions>
+      <attributes>
+        <attribute PhysicalName="ppa_resourceid">
+          <Type>nvarchar</Type>
+          <Name>ppa_resourceid</Name>
+          <LogicalName>ppa_resourceid</LogicalName>
+          <RequiredLevel>required</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <MaxLength>200</MaxLength>
+          <IsPrimaryName>1</IsPrimaryName>
           <LocalizedNames>
-            <LocalizedName description="Resource Tombstone" languagecode="1033" />
+            <LocalizedName description="Resource ID" languagecode="1033" />
           </LocalizedNames>
-          <LocalizedCollectionNames>
-            <LocalizedCollectionName description="Resource Tombstones" languagecode="1033" />
-          </LocalizedCollectionNames>
-          <Descriptions>
-            <Description description="Tracks resources deleted via Power Platform Control Hub so they are hidden across all users until the Inventory API refreshes." languagecode="1033" />
-          </Descriptions>
-          <attributes>
-            <!-- Primary name column — stores the resource GUID / name -->
-            <attribute PhysicalName="ppa_resourceid">
-              <Type>nvarchar</Type>
-              <Name>ppa_resourceid</Name>
-              <LogicalName>ppa_resourceid</LogicalName>
-              <RequiredLevel>required</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <MaxLength>200</MaxLength>
-              <IsPrimaryName>1</IsPrimaryName>
-              <LocalizedNames>
-                <LocalizedName description="Resource ID" languagecode="1033" />
-              </LocalizedNames>
-              <Descriptions>
-                <Description description="The unique name/GUID of the deleted resource as returned by the Inventory API." languagecode="1033" />
-              </Descriptions>
-            </attribute>
-            <!-- Resource type, e.g. microsoft.copilotstudio/agents -->
-            <attribute PhysicalName="ppa_resourcetype">
-              <Type>nvarchar</Type>
-              <Name>ppa_resourcetype</Name>
-              <LogicalName>ppa_resourcetype</LogicalName>
-              <RequiredLevel>none</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <MaxLength>200</MaxLength>
-              <LocalizedNames>
-                <LocalizedName description="Resource Type" languagecode="1033" />
-              </LocalizedNames>
-            </attribute>
-            <!-- Environment the resource belonged to -->
-            <attribute PhysicalName="ppa_environmentid">
-              <Type>nvarchar</Type>
-              <Name>ppa_environmentid</Name>
-              <LogicalName>ppa_environmentid</LogicalName>
-              <RequiredLevel>none</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <MaxLength>100</MaxLength>
-              <LocalizedNames>
-                <LocalizedName description="Environment ID" languagecode="1033" />
-              </LocalizedNames>
-            </attribute>
-            <!-- Display name at time of deletion, for audit readability -->
-            <attribute PhysicalName="ppa_displayname">
-              <Type>nvarchar</Type>
-              <Name>ppa_displayname</Name>
-              <LogicalName>ppa_displayname</LogicalName>
-              <RequiredLevel>none</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <MaxLength>500</MaxLength>
-              <LocalizedNames>
-                <LocalizedName description="Display Name" languagecode="1033" />
-              </LocalizedNames>
-            </attribute>
-            <!-- UTC datetime when the delete action was confirmed -->
-            <attribute PhysicalName="ppa_deletedon">
-              <Type>datetime</Type>
-              <Name>ppa_deletedon</Name>
-              <LogicalName>ppa_deletedon</LogicalName>
-              <RequiredLevel>none</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <Format>DateAndTime</Format>
-              <LocalizedNames>
-                <LocalizedName description="Deleted On" languagecode="1033" />
-              </LocalizedNames>
-            </attribute>
-            <!-- UPN / display name of the user who deleted the resource -->
-            <attribute PhysicalName="ppa_deletedby">
-              <Type>nvarchar</Type>
-              <Name>ppa_deletedby</Name>
-              <LogicalName>ppa_deletedby</LogicalName>
-              <RequiredLevel>none</RequiredLevel>
-              <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
-              <MaxLength>200</MaxLength>
-              <LocalizedNames>
-                <LocalizedName description="Deleted By" languagecode="1033" />
-              </LocalizedNames>
-            </attribute>
-          </attributes>
-          <EntitySetName>ppa_resourcetombstones</EntitySetName>
-          <IsAuditEnabled>0</IsAuditEnabled>
-          <IsAvailableOffline>0</IsAvailableOffline>
-          <IsChildEntity>0</IsChildEntity>
-          <IsCustomizable>1</IsCustomizable>
-          <IsDocumentManagementEnabled>0</IsDocumentManagementEnabled>
-          <IsDuplicateDetectionEnabled>0</IsDuplicateDetectionEnabled>
-          <IsMailMergeEnabled>0</IsMailMergeEnabled>
-          <IsRenameable>1</IsRenameable>
-          <IsValidForQueue>0</IsValidForQueue>
-          <IsVisibleInMobile>0</IsVisibleInMobile>
-          <OwnershipType>UserOwned</OwnershipType>
-          <PrimaryNameAttribute>ppa_resourceid</PrimaryNameAttribute>
-        </entity>
-      </EntityInfo>
-    </Entity>
-  </Entities>
-</ImportExportXml>
+        </attribute>
+        <attribute PhysicalName="ppa_resourcetype">
+          <Type>nvarchar</Type>
+          <Name>ppa_resourcetype</Name>
+          <LogicalName>ppa_resourcetype</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <MaxLength>200</MaxLength>
+          <LocalizedNames>
+            <LocalizedName description="Resource Type" languagecode="1033" />
+          </LocalizedNames>
+        </attribute>
+        <attribute PhysicalName="ppa_environmentid">
+          <Type>nvarchar</Type>
+          <Name>ppa_environmentid</Name>
+          <LogicalName>ppa_environmentid</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <MaxLength>100</MaxLength>
+          <LocalizedNames>
+            <LocalizedName description="Environment ID" languagecode="1033" />
+          </LocalizedNames>
+        </attribute>
+        <attribute PhysicalName="ppa_displayname">
+          <Type>nvarchar</Type>
+          <Name>ppa_displayname</Name>
+          <LogicalName>ppa_displayname</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <MaxLength>500</MaxLength>
+          <LocalizedNames>
+            <LocalizedName description="Display Name" languagecode="1033" />
+          </LocalizedNames>
+        </attribute>
+        <attribute PhysicalName="ppa_deletedon">
+          <Type>datetime</Type>
+          <Name>ppa_deletedon</Name>
+          <LogicalName>ppa_deletedon</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <Format>DateAndTime</Format>
+          <LocalizedNames>
+            <LocalizedName description="Deleted On" languagecode="1033" />
+          </LocalizedNames>
+        </attribute>
+        <attribute PhysicalName="ppa_deletedby">
+          <Type>nvarchar</Type>
+          <Name>ppa_deletedby</Name>
+          <LogicalName>ppa_deletedby</LogicalName>
+          <RequiredLevel>none</RequiredLevel>
+          <DisplayMask>ValidForAdvancedFind ValidForCreate ValidForRead ValidForUpdate</DisplayMask>
+          <MaxLength>200</MaxLength>
+          <LocalizedNames>
+            <LocalizedName description="Deleted By" languagecode="1033" />
+          </LocalizedNames>
+        </attribute>
+      </attributes>
+      <EntitySetName>ppa_resourcetombstones</EntitySetName>
+      <IsAuditEnabled>0</IsAuditEnabled>
+      <IsAvailableOffline>0</IsAvailableOffline>
+      <IsChildEntity>0</IsChildEntity>
+      <IsCustomizable>1</IsCustomizable>
+      <IsDocumentManagementEnabled>0</IsDocumentManagementEnabled>
+      <IsDuplicateDetectionEnabled>0</IsDuplicateDetectionEnabled>
+      <IsMailMergeEnabled>0</IsMailMergeEnabled>
+      <IsRenameable>1</IsRenameable>
+      <IsValidForQueue>0</IsValidForQueue>
+      <IsVisibleInMobile>0</IsVisibleInMobile>
+      <OwnershipType>UserOwned</OwnershipType>
+      <PrimaryNameAttribute>ppa_resourceid</PrimaryNameAttribute>
+    </entity>
+  </EntityInfo>
+</Entity>
