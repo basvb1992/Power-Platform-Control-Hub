@@ -17,7 +17,7 @@ import { DeleteRegular, SearchRegular, ArrowClockwiseRegular } from '@fluentui/r
 import type { Resource } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES_FILTER } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
-import { useMutation } from '../hooks/useMutation.ts';
+import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent, deleteFlow } from '../services/resourceMutations.ts';
 
 type SortField = 'name' | 'type' | 'environment' | 'region' | 'created';

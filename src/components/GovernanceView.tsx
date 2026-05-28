@@ -30,7 +30,7 @@ import type {
   RoleAssignment,
 } from '../types/admin.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
-import { useMutation } from '../hooks/useMutation.ts';
+import { useMutation } from '../hooks/useMutation.tsx';
 import {
   createEnvironmentGroup,
   deleteEnvironmentGroup,

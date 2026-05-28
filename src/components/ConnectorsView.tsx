@@ -25,7 +25,7 @@ import { deleteConnection } from '../services/connectorMutations.ts';
 import type { Connection, PowerPagesWebsite } from '../types/admin.ts';
 import type { Resource } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
-import { useMutation } from '../hooks/useMutation.ts';
+import { useMutation } from '../hooks/useMutation.tsx';
 
 interface ConnectorsViewProps {
   environments: Resource[];
