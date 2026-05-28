@@ -25,6 +25,8 @@ import {
   MenuList,
   MenuItem,
   MenuPopover,
+  Dropdown,
+  Option,
 } from '@fluentui/react-components';
 import {
   SearchRegular,
@@ -217,6 +219,8 @@ export default function EnvironmentsView({
 }: EnvironmentsViewProps): ReactElement {
   const styles = useStyles();
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [regionFilter, setRegionFilter] = useState('all');
   const [confirmAction, setConfirmAction] = useState<{
     type: 'disable' | 'disableManaged';
     env: Resource;
@@ -251,6 +255,17 @@ export default function EnvironmentsView({
     setPendingEnvId(null);
   }
 
+  // Derive unique type and region values from data
+  const typeOptions = useMemo(() => {
+    const types = new Set(environments.map((e) => (e.properties.environmentType as string | undefined) ?? 'Unknown'));
+    return ['all', ...Array.from(types).sort()];
+  }, [environments]);
+
+  const regionOptions = useMemo(() => {
+    const regions = new Set(environments.map((e) => e.location ?? 'Unknown'));
+    return ['all', ...Array.from(regions).sort()];
+  }, [environments]);
+
   // Pre-compute resource counts per environment name (lower-cased for matching).
   const countByEnv = useMemo(() => {
     const map = new Map<string, number>();
@@ -263,12 +278,15 @@ export default function EnvironmentsView({
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
-    if (!term) return environments;
     return environments.filter((e) => {
       const name = (e.properties.displayName ?? e.name).toLowerCase();
-      return name.includes(term) || (e.location ?? '').toLowerCase().includes(term);
+      const matchesSearch = !term || name.includes(term) || (e.location ?? '').toLowerCase().includes(term);
+      const envType = (e.properties.environmentType as string | undefined) ?? 'Unknown';
+      const matchesType = typeFilter === 'all' || envType === typeFilter;
+      const matchesRegion = regionFilter === 'all' || (e.location ?? 'Unknown') === regionFilter;
+      return matchesSearch && matchesType && matchesRegion;
     });
-  }, [environments, search]);
+  }, [environments, search, typeFilter, regionFilter]);
 
   if (isLoading) {
     return (
@@ -290,6 +308,28 @@ export default function EnvironmentsView({
           size="small"
           style={{ minWidth: '200px' }}
         />
+        <Dropdown
+          value={typeFilter === 'all' ? 'All Types' : typeFilter}
+          selectedOptions={[typeFilter]}
+          onOptionSelect={(_, data) => setTypeFilter(data.optionValue ?? 'all')}
+          size="small"
+          style={{ minWidth: '140px' }}
+        >
+          {typeOptions.map((t) => (
+            <Option key={t} value={t}>{t === 'all' ? 'All Types' : t}</Option>
+          ))}
+        </Dropdown>
+        <Dropdown
+          value={regionFilter === 'all' ? 'All Regions' : regionFilter}
+          selectedOptions={[regionFilter]}
+          onOptionSelect={(_, data) => setRegionFilter(data.optionValue ?? 'all')}
+          size="small"
+          style={{ minWidth: '160px' }}
+        >
+          {regionOptions.map((r) => (
+            <Option key={r} value={r}>{r === 'all' ? 'All Regions' : r}</Option>
+          ))}
+        </Dropdown>
         <Text className={styles.count}>{filtered.length} environment(s)</Text>
       </div>
 
