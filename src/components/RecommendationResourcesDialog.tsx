@@ -119,15 +119,20 @@ export default function RecommendationResourcesDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [pendingResourceId, setPendingResourceId] = useState<string | null>(null);
+  const [bulkLoadingAction, setBulkLoadingAction] = useState<string | null>(null);
 
   const { execute: execResource } = useMutation(
     (resId: string, actionName: string) => executeForResource(scenario, actionName, resId),
     { successMessage: 'Action submitted for resource.' },
   );
 
-  const { execute: execBulk, isLoading: isBulkLoading } = useMutation(
+  const { execute: execBulk } = useMutation(
     (actionName: string) => executeBulk(scenario, actionName),
-    { successMessage: 'Bulk action submitted for all resources.' },
+    {
+      successMessage: 'Bulk action submitted for all resources.',
+      onSuccess: () => setBulkLoadingAction(null),
+      onError: () => setBulkLoadingAction(null),
+    },
   );
 
   useEffect(() => {
@@ -142,7 +147,10 @@ export default function RecommendationResourcesDialog({
       .finally(() => setIsLoading(false));
   }, [open, scenario]);
 
-  const primaryAction = actions[0];
+  function bulkActionLabel(actionName?: string): string {
+    if (!actionName) return 'Execute All';
+    return actionName.replace(/\s+App$/i, '').trim() + ' All';
+  }
 
   return (
     <Dialog open={open} onOpenChange={(_, d) => { if (!d.open) onClose(); }}>
@@ -256,17 +264,26 @@ export default function RecommendationResourcesDialog({
                 </Text>
               )}
               <Button appearance="secondary" onClick={onClose}>Close</Button>
-              {primaryAction && resources.length > 0 && (
-                <Button
-                  appearance="primary"
-                  icon={isBulkLoading ? <Spinner size="tiny" /> : <PlayRegular />}
-                  disabled={isBulkLoading || isLoading}
-                  className={styles.bulkButton}
-                  onClick={() => void execBulk(primaryAction.actionType ?? primaryAction.actionName ?? '')}
-                >
-                  {isBulkLoading ? 'Executing…' : 'Execute All'}
-                </Button>
-              )}
+              {resources.length > 0 && actions.map((action, i) => {
+                const actionKey = action.actionType ?? action.actionName ?? String(i);
+                const isThisLoading = bulkLoadingAction === actionKey;
+                const anyBulkLoading = bulkLoadingAction !== null;
+                return (
+                  <Button
+                    key={actionKey}
+                    appearance={i === 0 ? 'primary' : 'outline'}
+                    icon={isThisLoading ? <Spinner size="tiny" /> : <PlayRegular />}
+                    disabled={anyBulkLoading || isLoading}
+                    className={styles.bulkButton}
+                    onClick={() => {
+                      setBulkLoadingAction(actionKey);
+                      void execBulk(actionKey);
+                    }}
+                  >
+                    {isThisLoading ? 'Executing…' : bulkActionLabel(action.actionName ?? action.actionType)}
+                  </Button>
+                );
+              })}
             </div>
           </DialogActions>
         </DialogBody>
