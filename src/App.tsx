@@ -78,7 +78,6 @@ const useStyles = makeStyles({
   footerLogo: {
     height: '16px',
     width: 'auto',
-    opacity: 0.7,
   },
   footerText: {
     fontSize: tokens.fontSizeBase100,
@@ -204,8 +203,8 @@ export default function App(): ReactElement {
         </main>
 
         <footer className={styles.footer}>
-          <img src={ppaLogo} alt="Power Platform Advocates" className={styles.footerLogo} />
           <Text className={styles.footerText}>Made with ❤️ by the Power Platform Advocates</Text>
+          <img src={ppaLogo} alt="Power Platform Advocates" className={styles.footerLogo} />
         </footer>
       </div>
       <Toaster toasterId="coe-toaster" />
