@@ -136,11 +136,9 @@ const useStyles = makeStyles({
     gap: tokens.spacingHorizontalS,
     flexWrap: 'wrap',
     paddingTop: tokens.spacingVerticalXS,
-    flex: 1,
-    alignContent: 'flex-start',
   },
   divider: {
-    marginTop: tokens.spacingVerticalXS,
+    marginTop: 'auto',
     marginBottom: tokens.spacingVerticalXS,
   },
   metaRow: {
