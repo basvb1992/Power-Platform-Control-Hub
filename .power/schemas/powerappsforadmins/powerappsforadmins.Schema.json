@@ -2423,10 +2423,10 @@
       }
     },
     "runtimeUrls": [
-      "https://11928b93-3523-e448-b606-cef29e612f19.05.common.usa002.azure-apihub.net/apim/powerappsforadmins"
+      "https://usa002-004.azure-apihub.net/apim/powerappsforadmins"
     ],
-    "primaryRuntimeUrl": "https://11928b93-3523-e448-b606-cef29e612f19.05.common.usa002.azure-apihub.net/apim/powerappsforadmins",
-    "doNotUseApiHubNetRuntimeUrl": "https://11928b93-3523-e448-b606-cef29e612f19.05.common.usa002.azure-apihub.net/apim/powerappsforadmins",
+    "primaryRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerappsforadmins",
+    "doNotUseApiHubNetRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerappsforadmins",
     "metadata": {
       "source": "marketplace",
       "brandColor": "#742774",
