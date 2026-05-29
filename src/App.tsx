@@ -34,7 +34,7 @@ import RecommendationsView from './components/RecommendationsView.tsx';
 import GovernanceView from './components/GovernanceView.tsx';
 import EnvironmentGroupsView from './components/EnvironmentGroupsView.tsx';
 import ConnectorsView from './components/ConnectorsView.tsx';
-import ppaLogo from './assets/ppa-logo.png';
+import ppaLogo from './assets/ppa-logo.png?inline';
 
 type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'envgroups' | 'connectors';
 const VALID_TABS: readonly TabValue[] = ['overview', 'resources', 'environments', 'recommendations', 'governance', 'envgroups', 'connectors'];
