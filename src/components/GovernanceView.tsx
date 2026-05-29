@@ -25,6 +25,7 @@ interface GovernanceViewProps {
   crossTenantReports: CrossTenantReport[];
   dlpPolicies: PolicyV2[];
   environments: Resource[];
+  resources: Resource[];
   isLoading: boolean;
   error: string | null;
   onRefreshAdmin?: () => Promise<void>;
@@ -255,6 +256,7 @@ export default function GovernanceView({
   crossTenantReports,
   dlpPolicies,
   environments,
+  resources,
   isLoading,
   error,
   onRefreshAdmin,
@@ -299,7 +301,7 @@ export default function GovernanceView({
         return renderBillingPoliciesTable(styles, billingPolicies);
       case 'dlpPolicies':
       default:
-        return <DlpPoliciesView dlpPolicies={dlpPolicies} environments={environments} isLoading={isLoading} onRefresh={refreshDlpPolicies} />;
+        return <DlpPoliciesView dlpPolicies={dlpPolicies} environments={environments} resources={resources} isLoading={isLoading} onRefresh={refreshDlpPolicies} />;
     }
   }, [
     activeTab,
@@ -312,6 +314,7 @@ export default function GovernanceView({
     isLoading,
     isTriggeringReport,
     refreshDlpPolicies,
+    resources,
     styles,
   ]);
 

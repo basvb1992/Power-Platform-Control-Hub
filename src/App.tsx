@@ -214,6 +214,7 @@ export default function App(): ReactElement {
               crossTenantReports={crossTenantReports}
               dlpPolicies={dlpPolicies}
               environments={environments}
+              resources={resources}
               isLoading={adminLoading}
               error={adminError}
               onRefreshAdmin={refreshAdmin}

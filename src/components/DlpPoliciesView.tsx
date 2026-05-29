@@ -8,16 +8,29 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Dropdown,
   Field,
   Input,
+  MessageBar,
+  MessageBarBody,
   Option,
   Spinner,
   Text,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { ArrowLeftRegular, AddRegular, DeleteRegular, EditRegular, WarningRegular, ProhibitedRegular, CheckmarkCircleRegular } from '@fluentui/react-icons';
+import {
+  ArrowLeftRegular,
+  AddRegular,
+  DeleteRegular,
+  EditRegular,
+  WarningRegular,
+  ProhibitedRegular,
+  CheckmarkCircleRegular,
+  InfoRegular,
+  LightbulbRegular,
+} from '@fluentui/react-icons';
 import type {
   ManagedPolicyV2,
   ManagedPolicyV2defaultConnectorsClassification,
@@ -35,6 +48,7 @@ interface DlpPoliciesViewProps {
   dlpPolicies: PolicyV2[];
   isLoading: boolean;
   environments: Resource[];
+  resources: Resource[];
   onRefresh: () => Promise<void>;
 }
 
@@ -42,7 +56,8 @@ type DlpPage =
   | { type: 'list' }
   | { type: 'create' }
   | { type: 'edit'; policy: PolicyV2 }
-  | { type: 'detail'; policy: PolicyV2 };
+  | { type: 'detail'; policy: PolicyV2 }
+  | { type: 'impact'; returnToEdit?: PolicyV2 };
 
 type ConnectorClassification = ManagedPolicyV2defaultConnectorsClassification;
 
@@ -167,6 +182,30 @@ function computeAdvisories(policy: PolicyV2): Advisory[] {
   return advisories;
 }
 
+function computeAdvisoriesFromItems(items: ConnectorItem[]): Advisory[] {
+  const byId = new Map<string, ConnectorClassification>();
+  for (const item of items) byId.set(item.id.toLowerCase(), item.classification);
+
+  const getClass = (rule: AdvisoryRule): ConnectorClassification | null => {
+    for (const [id, cls] of byId.entries())
+      if (connectorMatchesAdvisory(id, rule.id)) return cls;
+    return null;
+  };
+
+  const advisories: Advisory[] = [];
+  for (const rule of SHOULD_BE_CONFIDENTIAL) {
+    const current = getClass(rule);
+    if (current !== null && current !== 'Confidential')
+      advisories.push({ connectorName: rule.name, currentClassification: current, recommendedClassification: 'Confidential', reason: rule.reason });
+  }
+  for (const rule of SHOULD_BE_BLOCKED) {
+    const current = getClass(rule);
+    if (current !== null && current !== 'Blocked')
+      advisories.push({ connectorName: rule.name, currentClassification: current, recommendedClassification: 'Blocked', reason: rule.reason });
+  }
+  return advisories;
+}
+
 const useStyles = makeStyles({
   root: {
     display: 'flex',
@@ -205,6 +244,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalL,
+    width: '100%',
     maxWidth: '920px',
   },
   formSection: {
@@ -392,6 +432,50 @@ const useStyles = makeStyles({
     gap: tokens.spacingHorizontalS,
     marginBottom: tokens.spacingVerticalS,
   },
+  impactSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalM,
+  },
+  impactMetricRow: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: tokens.spacingHorizontalM,
+  },
+  impactMetric: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXS,
+    padding: tokens.spacingHorizontalM,
+    borderRadius: tokens.borderRadiusMedium,
+    backgroundColor: tokens.colorNeutralBackground2,
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
+  impactMetricValue: {
+    fontSize: tokens.fontSizeHero700,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorBrandForeground1,
+  },
+  impactMetricLabel: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
+  },
+  riskRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: tokens.spacingHorizontalM,
+    padding: `${tokens.spacingVerticalS} 0`,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    ':last-child': { borderBottom: 'none' },
+  },
+  riskConnectorName: {
+    fontWeight: tokens.fontWeightSemibold,
+    flex: 1,
+  },
+  riskReason: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
+  },
 });
 
 function formatDate(value?: string): string {
@@ -464,6 +548,7 @@ export default function DlpPoliciesView({
   dlpPolicies,
   isLoading,
   environments,
+  resources,
   onRefresh,
 }: DlpPoliciesViewProps): ReactElement {
   const styles = useStyles();
@@ -635,7 +720,11 @@ export default function DlpPoliciesView({
     {
       successMessage: 'DLP policy updated.',
       onSuccess: () => {
-        setPage((p) => p.type === 'edit' ? { type: 'detail', policy: p.policy } : p);
+        setPage((p) => {
+          if (p.type === 'edit') return { type: 'detail', policy: p.policy };
+          if (p.type === 'impact' && p.returnToEdit) return { type: 'detail', policy: p.returnToEdit };
+          return p;
+        });
         void onRefresh();
       },
     },
@@ -668,7 +757,11 @@ export default function DlpPoliciesView({
     const trimmed = displayName.trim();
     if (!trimmed) { setDisplayNameError('Display name is required.'); return; }
     setDisplayNameError('');
-    const target = page.type === 'edit' ? page.policy : null;
+    const target = page.type === 'edit'
+      ? page.policy
+      : page.type === 'impact'
+        ? page.returnToEdit ?? null
+        : null;
     if (!target) return;
     const payload: ManagedPolicyV2 = {
       displayName: trimmed,
@@ -877,9 +970,235 @@ export default function DlpPoliciesView({
                 onClick={isEdit ? handleEditSubmit : handleCreateSubmit}>
                 {isEdit ? (isUpdating ? 'Saving…' : 'Save Changes') : (isCreating ? 'Creating…' : 'Create Policy')}
               </Button>
+              <Button
+                appearance="subtle"
+                icon={<LightbulbRegular />}
+                disabled={isEdit ? isUpdating : isCreating}
+                onClick={() => setPage({ type: 'impact', returnToEdit: editPolicy ?? undefined })}
+              >
+                Preview Impact
+              </Button>
               <Button appearance="secondary" disabled={isEdit ? isUpdating : isCreating}
                 onClick={isEdit ? () => setPage({ type: 'detail', policy: editPolicy! }) : handleBackToList}>
                 Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  } else if (page.type === 'impact') {
+    const isFromEdit = Boolean(page.returnToEdit);
+    const blockedItems = connectorItems.filter((connector) => connector.classification === 'Blocked');
+    const confidentialItems = connectorItems.filter((connector) => connector.classification === 'Confidential');
+    const generalItems = connectorItems.filter((connector) => connector.classification === 'General');
+    const hasIsolationRisk = confidentialItems.length > 0 && generalItems.length > 0;
+    const liveAdvisories = computeAdvisoriesFromItems(connectorItems);
+
+    const affectedEnvIds = new Set(
+      envType === 'AllEnvironments'
+        ? environments.map((environment) => environment.name)
+        : envType === 'OnlyEnvironments' || envType === 'SingleEnvironment'
+          ? [selectedEnvironmentId].filter(Boolean)
+          : environments.map((environment) => environment.name)
+    );
+
+    const affectedFlows = resources.filter((resource) =>
+      resource.type.toLowerCase().includes('cloudflow')
+      || resource.type.toLowerCase().includes('agentflow')
+      || resource.type.toLowerCase().includes('m365agent')
+    ).filter((resource) => {
+      const environmentId = resource.properties.environmentId as string | undefined;
+      return !environmentId || affectedEnvIds.has(environmentId);
+    });
+
+    const affectedApps = resources.filter((resource) =>
+      resource.type.toLowerCase().includes('canvasapp')
+      || resource.type.toLowerCase().includes('modeldriven')
+    ).filter((resource) => {
+      const environmentId = resource.properties.environmentId as string | undefined;
+      return !environmentId || affectedEnvIds.has(environmentId);
+    });
+
+    renderedPage = (
+      <>
+        <div className={styles.header}>
+          <Button className={styles.backBtn} appearance="subtle" icon={<ArrowLeftRegular />}
+            onClick={() => setPage(isFromEdit ? { type: 'edit', policy: page.returnToEdit! } : { type: 'create' })}>
+            {isFromEdit ? 'Back to Edit Policy' : 'Back to New Policy'}
+          </Button>
+          <div className={styles.listHeader}>
+            <Text className={styles.pageTitle}>Impact Analysis</Text>
+            <Text className={styles.subtitle}>
+              Review how "{displayName || 'this policy'}" will affect your tenant before applying it.
+            </Text>
+          </div>
+        </div>
+
+        <div className={styles.body}>
+          <div className={styles.form}>
+            <Card>
+              <div className={styles.impactSection}>
+                <div className={styles.advisoryHeader}>
+                  <InfoRegular style={{ color: tokens.colorBrandForeground1 }} />
+                  <Text className={styles.sectionTitle}>Coverage</Text>
+                </div>
+                <div className={styles.impactMetricRow}>
+                  <div className={styles.impactMetric}>
+                    <Text className={styles.impactMetricValue}>{affectedEnvIds.size}</Text>
+                    <Text className={styles.impactMetricLabel}>Environments in scope</Text>
+                  </div>
+                  <div className={styles.impactMetric}>
+                    <Text className={styles.impactMetricValue}>{affectedFlows.length}</Text>
+                    <Text className={styles.impactMetricLabel}>Flows in scope</Text>
+                  </div>
+                  <div className={styles.impactMetric}>
+                    <Text className={styles.impactMetricValue}>{affectedApps.length}</Text>
+                    <Text className={styles.impactMetricLabel}>Apps in scope</Text>
+                  </div>
+                  <div className={styles.impactMetric}>
+                    <Text className={styles.impactMetricValue}>{connectorItems.length}</Text>
+                    <Text className={styles.impactMetricLabel}>Connectors classified</Text>
+                  </div>
+                </div>
+                <Text className={styles.helperText}>
+                  Scope: <strong>{getEnvironmentScopeLabel(envType)}</strong> · Default classification: <strong>{getClassificationLabel(defaultClass)}</strong>
+                </Text>
+              </div>
+            </Card>
+
+            {(blockedItems.length > 0 || hasIsolationRisk) && (
+              <Card>
+                <div className={styles.impactSection}>
+                  <Text className={styles.sectionTitle}>Risk Summary</Text>
+                  {blockedItems.length > 0 && (
+                    <MessageBar intent="error">
+                      <MessageBarBody>
+                        <strong>{blockedItems.length} connector{blockedItems.length !== 1 ? 's' : ''} will be blocked.</strong>{' '}
+                        Any flow or app using these connectors will be suspended in environments covered by this policy.
+                      </MessageBarBody>
+                    </MessageBar>
+                  )}
+                  {hasIsolationRisk && (
+                    <MessageBar intent="warning">
+                      <MessageBarBody>
+                        <strong>Isolation risk detected.</strong>{' '}
+                        This policy has both Confidential ({confidentialItems.length}) and General ({generalItems.length}) connectors.
+                        Flows that use connectors from both groups simultaneously will be suspended.
+                      </MessageBarBody>
+                    </MessageBar>
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {blockedItems.length > 0 && (
+              <Card>
+                <div className={styles.impactSection}>
+                  <div className={styles.advisoryHeader}>
+                    <ProhibitedRegular style={{ color: tokens.colorPaletteRedForeground1 }} />
+                    <Text className={styles.sectionTitle}>Blocked Connectors ({blockedItems.length})</Text>
+                  </div>
+                  <Text className={styles.helperText}>
+                    Flows and apps using any of these connectors will be suspended.
+                  </Text>
+                  <div>
+                    {blockedItems.map((connector) => (
+                      <div key={connector.id} className={styles.riskRow}>
+                        <div style={{ flex: 1 }}>
+                          <Text className={styles.riskConnectorName}>{connector.name}</Text>
+                        </div>
+                        <Badge appearance="tint" color="danger" size="small">Blocked</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {confidentialItems.length > 0 && (
+              <Card>
+                <div className={styles.impactSection}>
+                  <div className={styles.advisoryHeader}>
+                    <WarningRegular style={{ color: tokens.colorPaletteGoldForeground2 }} />
+                    <Text className={styles.sectionTitle}>Confidential Connectors ({confidentialItems.length})</Text>
+                  </div>
+                  <Text className={styles.helperText}>
+                    These connectors can only be used with other Confidential connectors in the same flow or app.
+                    {hasIsolationRisk ? ' Flows mixing these with General connectors will be suspended.' : ''}
+                  </Text>
+                  <div>
+                    {confidentialItems.map((connector) => (
+                      <div key={connector.id} className={styles.riskRow}>
+                        <Text className={styles.riskConnectorName} style={{ flex: 1 }}>{connector.name}</Text>
+                        <Badge appearance="tint" color="warning" size="small">Confidential</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {liveAdvisories.length > 0 && (
+              <Card>
+                <div className={styles.impactSection}>
+                  <div className={styles.advisoryHeader}>
+                    <LightbulbRegular style={{ color: tokens.colorBrandForeground1 }} />
+                    <Text className={styles.sectionTitle}>Best Practice Advisories ({liveAdvisories.length})</Text>
+                  </div>
+                  <Text className={styles.helperText}>
+                    These connectors are not classified per best practices. Apply them in the policy editor to reduce risk.
+                  </Text>
+                  <div>
+                    {liveAdvisories.map((advisory, index) => (
+                      <div key={`${advisory.connectorName}-${index}`} className={styles.riskRow}>
+                        <div style={{ flex: 1 }}>
+                          <Text className={styles.riskConnectorName}>{advisory.connectorName}</Text>
+                          <Text className={styles.riskReason}>{advisory.reason}</Text>
+                        </div>
+                        <div style={{ display: 'flex', gap: tokens.spacingHorizontalXS, alignItems: 'center', flexShrink: 0 }}>
+                          <Badge appearance="tint" color={getClassificationColor(advisory.currentClassification)} size="small">
+                            {getClassificationLabel(advisory.currentClassification)}
+                          </Badge>
+                          <Text>→</Text>
+                          <Badge appearance="tint" color={getClassificationColor(advisory.recommendedClassification)} size="small">
+                            {getClassificationLabel(advisory.recommendedClassification)}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            {blockedItems.length === 0 && !hasIsolationRisk && liveAdvisories.length === 0 && (
+              <Card>
+                <div className={styles.impactSection}>
+                  <div className={styles.advisoryHeader}>
+                    <CheckmarkCircleRegular style={{ color: tokens.colorPaletteGreenForeground1, fontSize: '20px' }} />
+                    <Text className={styles.sectionTitle}>No issues detected</Text>
+                  </div>
+                  <Text>This policy does not block any connectors and has no best-practice violations among the loaded connectors.</Text>
+                  <div className={styles.impactSection}>
+                    <Checkbox checked disabled label="No blocked connectors" />
+                    <Checkbox checked disabled label="No isolation risk detected" />
+                    <Checkbox checked disabled label="No best-practice advisory violations" />
+                  </div>
+                </div>
+              </Card>
+            )}
+
+            <div className={styles.actionBar}>
+              <Button appearance="primary"
+                icon={(isFromEdit ? isUpdating : isCreating) ? <Spinner size="tiny" /> : (isFromEdit ? <EditRegular /> : <AddRegular />)}
+                disabled={isFromEdit ? isUpdating : isCreating}
+                onClick={isFromEdit ? handleEditSubmit : handleCreateSubmit}>
+                {isFromEdit ? (isUpdating ? 'Saving…' : 'Save Changes') : (isCreating ? 'Creating…' : 'Create Policy')}
+              </Button>
+              <Button appearance="secondary"
+                onClick={() => setPage(isFromEdit ? { type: 'edit', policy: page.returnToEdit! } : { type: 'create' })}>
+                Edit Policy
               </Button>
             </div>
           </div>
