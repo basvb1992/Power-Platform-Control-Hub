@@ -14,7 +14,6 @@ import {
   MessageBar,
   MessageBarBody,
   Tooltip,
-  Divider,
   Dialog,
   DialogSurface,
   DialogBody,
@@ -909,7 +908,7 @@ export default function CloudFlowDetailPanel({
     return `https://make.powerautomate.com/environments/${envGuid}/flows/${flowName}`;
   })();
 
-  const [openSections, setOpenSections] = useState<string[]>(['details', 'analysis']);
+  const [openSections, setOpenSections] = useState<string[]>(['details', 'triggers', 'analysis']);
   const [flowDetails, setFlowDetails] = useState<AdminFlowWithDefinition | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(true);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -1386,99 +1385,110 @@ export default function CloudFlowDetailPanel({
                         {flowName}
                       </span>
                     </div>
+                  </div>
+                )}
+              </AccordionPanel>
+            </AccordionItem>
 
+            {/* ── Triggers & Actions ── */}
+            <AccordionItem value="triggers">
+              <AccordionHeader expandIconPosition="end" icon={<FlowRegular />}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
+                  Triggers &amp; Actions
+                  {!detailsLoading && totalActions > 0 && (
+                    <Badge appearance="filled" size="small" color="informative">{totalActions}</Badge>
+                  )}
+                </span>
+              </AccordionHeader>
+              <AccordionPanel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL, paddingBottom: tokens.spacingVerticalL }}>
                     {/* Trigger */}
                     {triggersSummary.length > 0 && (
-                      <>
-                        <Divider />
-                        <div>
-                          <Text className={styles.sectionTitle}>Trigger</Text>
-                          <div className={styles.triggerList}>
-                            {triggersSummary.map((t, i) => {
-                              const label = TRIGGER_TYPE_LABELS[t.type ?? ''] ?? t.type ?? 'Unknown trigger';
-                              const isConnectorTrigger = (t.type ?? '').toLowerCase().includes('apiconnection') || (t.type ?? '').toLowerCase().includes('openapiconnection');
-                              const isRecurrence = t.type === 'Recurrence';
-                              return (
-                                <div key={i} className={styles.triggerItem}>
-                                  <FlowRegular fontSize={16} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                    <Text style={{ fontWeight: tokens.fontWeightSemibold }}>{label}</Text>
-                                    {isRecurrence && recurrenceLabel && (
-                                      <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
-                                        ⏱ {recurrenceLabel}
-                                      </Text>
-                                    )}
-                                    {isConnectorTrigger && t.kind && (
-                                      <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
-                                        {`Trigger kind: ${t.kind}`}
-                                      </Text>
-                                    )}
-                                  </div>
+                      <div>
+                        <Text className={styles.sectionTitle}>Trigger</Text>
+                        <div className={styles.triggerList}>
+                          {triggersSummary.map((t, i) => {
+                            const label = TRIGGER_TYPE_LABELS[t.type ?? ''] ?? t.type ?? 'Unknown trigger';
+                            const isConnectorTrigger = (t.type ?? '').toLowerCase().includes('apiconnection') || (t.type ?? '').toLowerCase().includes('openapiconnection');
+                            const isRecurrence = t.type === 'Recurrence';
+                            return (
+                              <div key={i} className={styles.triggerItem}>
+                                <FlowRegular fontSize={16} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                  <Text style={{ fontWeight: tokens.fontWeightSemibold }}>{label}</Text>
+                                  {isRecurrence && recurrenceLabel && (
+                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                                      ⏱ {recurrenceLabel}
+                                    </Text>
+                                  )}
+                                  {isConnectorTrigger && t.kind && (
+                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                                      {`Trigger kind: ${t.kind}`}
+                                    </Text>
+                                  )}
                                 </div>
-                              );
-                            })}
-                          </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      </>
+                      </div>
                     )}
 
                     {/* Connectors & Actions */}
                     {(Object.keys(richGroups).length > 0 || richControlFlow.length > 0) && (
-                      <>
-                        <Divider />
-                        <div>
-                          <Text className={styles.sectionTitle}>
-                            Connectors &amp; Actions ({totalActions} action{totalActions !== 1 ? 's' : ''})
-                          </Text>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
-                            {/* Connector groups */}
-                            {Object.values(richGroups).map((group, i) => (
-                              <div key={i} className={styles.connectorCard}>
-                                <div className={styles.connectorCardHeader}>
-                                  <PlugConnectorIcon />
-                                  <Text style={{ fontWeight: tokens.fontWeightSemibold, flex: 1 }}>{group.connector}</Text>
-                                  <Badge appearance="filled" color="informative" size="small">
-                                    {group.actions.length} action{group.actions.length !== 1 ? 's' : ''}
-                                  </Badge>
-                                </div>
-                                {group.actions.map((action, j) => (
-                                  <div key={j} className={styles.connectorActionRow}>
-                                    <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{action.name}</Text>
-                                    {action.operationId && (
-                                      <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, fontFamily: 'monospace', flexShrink: 0 }}>
-                                        {action.operationId}
-                                      </Text>
-                                    )}
-                                  </div>
-                                ))}
+                      <div>
+                        <Text className={styles.sectionTitle}>
+                          Connectors &amp; Actions ({totalActions} action{totalActions !== 1 ? 's' : ''})
+                        </Text>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
+                          {Object.values(richGroups).map((group, i) => (
+                            <div key={i} className={styles.connectorCard}>
+                              <div className={styles.connectorCardHeader}>
+                                <PlugConnectorIcon />
+                                <Text style={{ fontWeight: tokens.fontWeightSemibold, flex: 1 }}>{group.connector}</Text>
+                                <Badge appearance="filled" color="informative" size="small">
+                                  {group.actions.length} action{group.actions.length !== 1 ? 's' : ''}
+                                </Badge>
                               </div>
-                            ))}
-                            {/* Control flow */}
-                            {richControlFlow.length > 0 && (
-                              <div className={styles.connectorCard}>
-                                <div className={styles.connectorCardHeader}>
-                                  <FlowRegular fontSize={14} style={{ color: tokens.colorNeutralForeground3 }} />
-                                  <Text style={{ fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, flex: 1 }}>Control flow</Text>
-                                  <Badge appearance="tint" color="subtle" size="small">
-                                   {richControlFlow.length} action{richControlFlow.length !== 1 ? 's' : ''}
-                                  </Badge>
+                              {group.actions.map((action, j) => (
+                                <div key={j} className={styles.connectorActionRow}>
+                                  <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{action.name}</Text>
+                                  {action.operationId && (
+                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, fontFamily: 'monospace', flexShrink: 0 }}>
+                                      {action.operationId}
+                                    </Text>
+                                  )}
                                 </div>
-                                {[...new Map(richControlFlow.map((a) => [`${a.type}|${a.name}`, a])).values()].map((a, j) => (
-                                  <div key={j} className={styles.connectorActionRow}>
-                                    <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{a.name || a.type}</Text>
-                                    {a.name && a.type && a.name !== a.type && (
-                                      <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, flexShrink: 0 }}>{a.type}</Text>
-                                    )}
-                                  </div>
-                                ))}
+                              ))}
+                            </div>
+                          ))}
+                          {richControlFlow.length > 0 && (
+                            <div className={styles.connectorCard}>
+                              <div className={styles.connectorCardHeader}>
+                                <FlowRegular fontSize={14} style={{ color: tokens.colorNeutralForeground3 }} />
+                                <Text style={{ fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, flex: 1 }}>Control flow</Text>
+                                <Badge appearance="tint" color="subtle" size="small">
+                                  {richControlFlow.length} action{richControlFlow.length !== 1 ? 's' : ''}
+                                </Badge>
                               </div>
-                            )}
-                          </div>
+                              {[...new Map(richControlFlow.map((a) => [`${a.type}|${a.name}`, a])).values()].map((a, j) => (
+                                <div key={j} className={styles.connectorActionRow}>
+                                  <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{a.name || a.type}</Text>
+                                  {a.name && a.type && a.name !== a.type && (
+                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, flexShrink: 0 }}>{a.type}</Text>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      </>
+                      </div>
                     )}
-                  </div>
-                )}
+
+                    {!detailsLoading && triggersSummary.length === 0 && totalActions === 0 && (
+                      <Text style={{ color: tokens.colorNeutralForeground3 }}>No trigger or action data available.</Text>
+                    )}
+                </div>
               </AccordionPanel>
             </AccordionItem>
 
