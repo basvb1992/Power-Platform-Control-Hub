@@ -28,9 +28,13 @@ A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [P
 - Role assignments list (owner, co-owner, viewer)
 - 🔒 Quarantine / Unquarantine actions
 - ➕ Add owner (searches AAD users)
-
 **⚡ Cloud Flow / Agent Flow / M365 Agent Flow detail panel**:
-- Flow analysis: trigger type, action count, complexity score, nested conditions, error handling checks
+- **Triggers & Actions** accordion section with a recursive tree view:
+  - Conditions shown with **True** / **False** branches side-by-side
+  - Loops (`Apply to each`, `Do until`), scopes, and switch/case blocks rendered as collapsible containers with nested children
+  - Connector actions display the resolved connector name + humanised operation
+  - Trigger display: connector name, human-readable trigger event, and internal trigger key (for connector triggers); schedule details (recurrence); or kind label (manual/instant)
+- **Best Practice Analysis**: 22 checks across trigger naming, undocumented actions, error handling, nested conditions, hardcoded values, missing timeout/retry, and more
 - ▶️ Enable / ⏹️ Disable / 🗑️ Delete actions
 - Owner resolution
 - ➕ Add owner action
@@ -39,7 +43,9 @@ A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [P
 
 - Full-page list of all tenant DLP policies (V2 API)
 - **➕ Create page**: two-stage flow — basic settings (name, scope, default classification) then a connector classification stage that loads all connectors from a selected environment, appends the 4 hardcoded connectors required by the API (Spatial Services, HTTP Request, HTTP Webhook, HTTP), and lets you classify connectors into Confidential / General / Blocked buckets
-- **📄 Detail page**: connector groups accordion, environments list, metadata, delete action
+- **📄 Detail page** (Flow-style layout): compact header with policy name + badges, action bar (Edit / Delete), collapsible accordion sections for Policy Details, Connector Groups, Environments, and Advisories
+- **✨ Apply Best Practices**: analyses the current policy against a set of advisory rules (e.g. HTTP connector should be Blocked, SharePoint should be Confidential) and proposes changes in a confirmation dialog; after approval the updated policy is shown for review before saving
+- Advisories displayed as single-line rows (connector name + classification badges + reason)
 - Follows the [known DLP API limitations](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations) — connector groups are always submitted explicitly (no auto-population)
 
 ### 🗂️ Environment Groups
@@ -80,7 +86,7 @@ CoE-Code/
 │   │   ├── canvasAppAnalyzer.ts       # 24 best-practice checks for canvas apps
 │   │   ├── canvasAppAdminService.ts   # Canvas app governance via Power Apps for Admins
 │   │   ├── flowManagementService.ts   # Flow enable/disable/delete
-│   │   ├── flowAnalyzer.ts            # Flow complexity analysis
+│   │   ├── flowAnalyzer.ts            # 22 best-practice checks for cloud/agent flows
 │   │   ├── governanceMutations.ts     # Env group / policy / rule set write ops
 │   │   ├── environmentMutations.ts    # Environment write ops
 │   │   ├── ownerCache.ts              # AAD user display name resolution
@@ -107,7 +113,10 @@ CoE-Code/
 ├── vite.config.ts
 ├── package.json
 ├── tsconfig.app.json
-└── power.config.json                  # Code App + connector connection references
+├── power.config.json                  # Code App + connector connection references
+└── deploy/
+    ├── Deploy.ps1                     # Multi-environment deploy script
+    └── env-config.json                # Connection IDs per environment (gitignored)
 ```
 
 **Data flow:**
