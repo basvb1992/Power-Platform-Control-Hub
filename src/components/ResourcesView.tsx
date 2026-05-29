@@ -132,6 +132,7 @@ const DETAIL_PANEL_TYPES = new Set([
   'microsoft.powerautomate/agentflows',
   'microsoft.powerautomate/m365agentflows',
   'microsoft.powerapps/apps',
+  'microsoft.powerapps/canvasapps',
 ]);
 
 export default function ResourcesView({
@@ -223,7 +224,7 @@ export default function ResourcesView({
   // Full-page detail view
   if (detailResource) {
     const typeLower = detailResource.type.toLowerCase();
-    if (typeLower === 'microsoft.powerapps/apps') {
+    if (typeLower === 'microsoft.powerapps/apps' || typeLower === 'microsoft.powerapps/canvasapps') {
       return (
         <CanvasAppDetailPanel
           resource={detailResource}

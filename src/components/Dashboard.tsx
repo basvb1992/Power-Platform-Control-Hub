@@ -43,6 +43,7 @@ const DETAIL_PANEL_TYPES = new Set([
   'microsoft.powerautomate/agentflows',
   'microsoft.powerautomate/m365agentflows',
   'microsoft.powerapps/apps',
+  'microsoft.powerapps/canvasapps',
 ]);
 
 interface DashboardProps {
@@ -392,7 +393,7 @@ export default function Dashboard({
   // Full-page detail panels
   if (detailResource) {
     const typeLower = detailResource.type.toLowerCase();
-    if (typeLower === 'microsoft.powerapps/apps') {
+    if (typeLower === 'microsoft.powerapps/apps' || typeLower === 'microsoft.powerapps/canvasapps') {
       return <CanvasAppDetailPanel resource={detailResource} onClose={() => setDetailResource(null)} />;
     }
     if (DETAIL_PANEL_TYPES.has(typeLower)) {
