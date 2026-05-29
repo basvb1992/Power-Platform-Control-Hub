@@ -18,6 +18,9 @@ power.config.json
 # Generated connector service files — regenerate with `npx power-apps add-data-source`
 src/generated/
 
+# Deploy environment config — contains connection IDs, do not commit
+deploy/env-config.json
+
 # Editor
 .vscode/
 .idea/
