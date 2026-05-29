@@ -36,6 +36,9 @@ import {
   CheckmarkCircleRegular,
   InfoRegular,
   CheckmarkRegular,
+  ShieldLockRegular,
+  PlugConnectedRegular,
+  GlobeRegular,
 } from '@fluentui/react-icons';
 import type {
   ManagedPolicyV2,
@@ -223,9 +226,27 @@ const useStyles = makeStyles({
   },
   header: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalM,
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalXL}`,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     flexShrink: 0,
+    backgroundColor: tokens.colorNeutralBackground1,
+    flexWrap: 'wrap',
+  },
+  headerMeta: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    flex: 1,
+    minWidth: 0,
+  },
+  detailPageTitle: {
+    fontSize: tokens.fontSizeBase500,
+    fontWeight: tokens.fontWeightSemibold,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
   },
   titleRow: {
     display: 'flex',
@@ -236,6 +257,33 @@ const useStyles = makeStyles({
   },
   backBtn: {
     alignSelf: 'flex-start',
+  },
+  detailActionBar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalXL}`,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    flexShrink: 0,
+    flexWrap: 'wrap',
+  },
+  detailLabel: {
+    fontSize: tokens.fontSizeBase200,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorNeutralForeground3,
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.04em',
+    paddingTop: '2px',
+  },
+  detailValue: {
+    fontSize: tokens.fontSizeBase300,
+    color: tokens.colorNeutralForeground1,
+  },
+  detailGrid: {
+    display: 'grid',
+    gridTemplateColumns: '180px 1fr',
+    gap: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL}`,
+    alignItems: 'start',
   },
   body: {
     display: 'flex',
@@ -1283,204 +1331,216 @@ export default function DlpPoliciesView({
   } else if (page.type === 'detail' && currentPolicy) {
     renderedPage = (
       <>
+        {/* Compact header row matching Flow detail style */}
         <div className={styles.header}>
-          <Button className={styles.backBtn} appearance="subtle" icon={<ArrowLeftRegular />} onClick={() => setPage({ type: 'list' })}>
+          <Button
+            appearance="subtle"
+            icon={<ArrowLeftRegular />}
+            onClick={() => setPage({ type: 'list' })}
+            size="small"
+          >
             Back to DLP Policies
           </Button>
-          <div className={styles.titleRow}>
-            <div className={styles.titleMeta}>
-              <Text className={styles.pageTitle}>{currentPolicy.displayName || currentPolicy.name}</Text>
-              <Badge appearance="tint" color="informative">{getEnvironmentScopeLabel(currentPolicy.environmentType)}</Badge>
-              <Badge appearance="tint" color={getClassificationColor(currentPolicy.defaultConnectorsClassification)}>
+          <ShieldLockRegular fontSize={20} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+          <div className={styles.headerMeta}>
+            <div className={styles.titleRow}>
+              <Text className={styles.detailPageTitle}>{currentPolicy.displayName || currentPolicy.name}</Text>
+              <Badge appearance="tint" color="informative" size="small">{getEnvironmentScopeLabel(currentPolicy.environmentType)}</Badge>
+              <Badge appearance="tint" color={getClassificationColor(currentPolicy.defaultConnectorsClassification)} size="small">
                 {getClassificationLabel(currentPolicy.defaultConnectorsClassification)}
               </Badge>
-            </div>
-            <div style={{ display: 'flex', gap: tokens.spacingHorizontalS }}>
-              <Button
-                appearance="primary"
-                icon={<EditRegular />}
-                onClick={() => initEditMode(currentPolicy)}
-              >
-                Edit Policy
-              </Button>
-              <Button
-                appearance="subtle"
-                icon={<DeleteRegular />}
-                disabled={isDeleting}
-                onClick={() => setDeleteTarget(currentPolicy)}
-              >
-              Delete
-            </Button>
             </div>
           </div>
         </div>
 
-        <div className={styles.body}>
-          <div className={styles.infoGrid}>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Created by</Text>
-              <Text>{getPrincipalName(currentPolicy.createdBy)}</Text>
-            </div>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Created</Text>
-              <Text>{formatDate(currentPolicy.createdTime)}</Text>
-            </div>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Last modified by</Text>
-              <Text>{getPrincipalName(currentPolicy.lastModifiedBy)}</Text>
-            </div>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Last modified</Text>
-              <Text>{formatDate(currentPolicy.lastModifiedTime)}</Text>
-            </div>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Environment type</Text>
-              <Text>{getEnvironmentScopeLabel(currentPolicy.environmentType)}</Text>
-            </div>
-            <div className={styles.infoCell}>
-              <Text weight="semibold">Is legacy</Text>
-              <Text>{currentPolicy.isLegacySchemaVersion ? 'Yes' : 'No'}</Text>
-            </div>
+        {/* Action bar */}
+        <div className={styles.detailActionBar}>
+          <Button
+            appearance="primary"
+            icon={<EditRegular />}
+            size="small"
+            onClick={() => initEditMode(currentPolicy)}
+          >
+            Edit Policy
+          </Button>
+          <div style={{ marginLeft: 'auto' }}>
+            <Button
+              appearance="subtle"
+              icon={<DeleteRegular />}
+              size="small"
+              disabled={isDeleting}
+              style={{ color: tokens.colorStatusDangerForeground1 }}
+              onClick={() => setDeleteTarget(currentPolicy)}
+            >
+              Delete
+            </Button>
           </div>
+        </div>
 
-          <Card>
-            <div className={styles.formSection}>
-              <Text className={styles.sectionTitle}>Connector Groups</Text>
-              <Accordion multiple defaultOpenItems={CONNECTOR_CLASSIFICATIONS.filter((c) => {
-                const group = currentPolicy.connectorGroups?.find((e) => e.classification === c);
-                return (group?.connectors ?? []).length > 0;
-              })}>
-                {CONNECTOR_CLASSIFICATIONS.map((classification) => {
-                  const group = currentPolicy.connectorGroups?.find((entry) => entry.classification === classification);
-                  const connectors = group?.connectors ?? [];
+        {/* Scrollable accordion body */}
+        <div className={styles.body}>
+          <Accordion multiple collapsible defaultOpenItems={['details', 'connectors', 'advisories']}>
 
-                  return (
-                    <AccordionItem key={classification} value={classification}>
-                      <AccordionHeader>
-                        <div className={styles.titleRow}>
-                          <Text weight="semibold">{getClassificationLabel(classification)}</Text>
-                          <Badge appearance="tint" color={getClassificationColor(classification)}>{connectors.length} connector{connectors.length === 1 ? '' : 's'}</Badge>
-                        </div>
-                      </AccordionHeader>
-                      <AccordionPanel>
-                        {connectors.length === 0 ? (
-                          <Text className={styles.helperText}>No connectors assigned</Text>
-                        ) : (
-                          <div className={styles.connectorList}>
-                            {connectors.map((connector) => (
-                              <Badge key={`${classification}-${connector.id}`} className={styles.connectorTag} appearance="outline" color="informative">
-                                {connector.name || connector.id}
-                              </Badge>
-                            ))}
+            {/* Policy Details */}
+            <AccordionItem value="details">
+              <AccordionHeader expandIconPosition="end" icon={<InfoRegular />}>Policy Details</AccordionHeader>
+              <AccordionPanel>
+                <div className={styles.detailGrid} style={{ paddingBottom: tokens.spacingVerticalL }}>
+                  <span className={styles.detailLabel}>Created by</span>
+                  <span className={styles.detailValue}>{getPrincipalName(currentPolicy.createdBy)}</span>
+                  <span className={styles.detailLabel}>Created</span>
+                  <span className={styles.detailValue}>{formatDate(currentPolicy.createdTime)}</span>
+                  <span className={styles.detailLabel}>Modified by</span>
+                  <span className={styles.detailValue}>{getPrincipalName(currentPolicy.lastModifiedBy)}</span>
+                  <span className={styles.detailLabel}>Last modified</span>
+                  <span className={styles.detailValue}>{formatDate(currentPolicy.lastModifiedTime)}</span>
+                  <span className={styles.detailLabel}>Environment type</span>
+                  <span className={styles.detailValue}>{getEnvironmentScopeLabel(currentPolicy.environmentType)}</span>
+                  <span className={styles.detailLabel}>Legacy schema</span>
+                  <span className={styles.detailValue}>{currentPolicy.isLegacySchemaVersion ? 'Yes' : 'No'}</span>
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+
+            {/* Connector Groups */}
+            <AccordionItem value="connectors">
+              <AccordionHeader expandIconPosition="end" icon={<PlugConnectedRegular />}>Connector Groups</AccordionHeader>
+              <AccordionPanel>
+                <Accordion multiple defaultOpenItems={CONNECTOR_CLASSIFICATIONS.filter((c) => {
+                  const group = currentPolicy.connectorGroups?.find((e) => e.classification === c);
+                  return (group?.connectors ?? []).length > 0;
+                })}>
+                  {CONNECTOR_CLASSIFICATIONS.map((classification) => {
+                    const group = currentPolicy.connectorGroups?.find((entry) => entry.classification === classification);
+                    const connectors = group?.connectors ?? [];
+                    return (
+                      <AccordionItem key={classification} value={classification}>
+                        <AccordionHeader>
+                          <div className={styles.titleRow}>
+                            <Text weight="semibold">{getClassificationLabel(classification)}</Text>
+                            <Badge appearance="tint" color={getClassificationColor(classification)} size="small">{connectors.length} connector{connectors.length === 1 ? '' : 's'}</Badge>
                           </div>
+                        </AccordionHeader>
+                        <AccordionPanel>
+                          {connectors.length === 0 ? (
+                            <Text className={styles.helperText}>No connectors assigned</Text>
+                          ) : (
+                            <div className={styles.connectorList}>
+                              {connectors.map((connector) => (
+                                <Badge key={`${classification}-${connector.id}`} className={styles.connectorTag} appearance="outline" color="informative">
+                                  {connector.name || connector.id}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                        </AccordionPanel>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              </AccordionPanel>
+            </AccordionItem>
+
+            {/* Environments (only when not AllEnvironments) */}
+            {currentPolicy.environmentType !== 'AllEnvironments' && (
+              <AccordionItem value="environments">
+                <AccordionHeader expandIconPosition="end" icon={<GlobeRegular />}>Environments</AccordionHeader>
+                <AccordionPanel>
+                  {currentPolicy.environments?.length ? (
+                    <div className={styles.connectorList}>
+                      {currentPolicy.environments.map((environment) => (
+                        <Badge key={environment.id} appearance="outline" color="brand">{getPolicyEnvironmentBadgeLabel(environment)}</Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <Text className={styles.helperText}>No environments assigned.</Text>
+                  )}
+                </AccordionPanel>
+              </AccordionItem>
+            )}
+
+            {/* Advisories */}
+            {(() => {
+              const advisories = computeAdvisories(currentPolicy);
+              const confidentialAdvisories = advisories.filter((a) => a.recommendedClassification === 'Confidential');
+              const blockedAdvisories = advisories.filter((a) => a.recommendedClassification === 'Blocked');
+              const advisoryIcon = advisories.length === 0
+                ? <CheckmarkCircleRegular style={{ color: tokens.colorStatusSuccessForeground1 }} />
+                : <WarningRegular style={{ color: tokens.colorStatusWarningForeground1 }} />;
+              const advisoryTitle = advisories.length === 0
+                ? 'Advisories — Policy looks healthy'
+                : `${advisories.length} Advisor${advisories.length === 1 ? 'y' : 'ies'} — Click Edit Policy to apply`;
+              return (
+                <AccordionItem value="advisories">
+                  <AccordionHeader expandIconPosition="end" icon={advisoryIcon}>{advisoryTitle}</AccordionHeader>
+                  <AccordionPanel>
+                    {advisories.length === 0 ? (
+                      <Text className={styles.helperText}>No recommendations — this policy follows best practices.</Text>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM }}>
+                        {confidentialAdvisories.length > 0 && (
+                          <Accordion multiple defaultOpenItems={['confidential']}>
+                            <AccordionItem value="confidential">
+                              <AccordionHeader>
+                                <div className={styles.advisoryHeader}>
+                                  <WarningRegular style={{ color: tokens.colorStatusWarningForeground1 }} />
+                                  <Text weight="semibold">Move to Confidential (Business) — {confidentialAdvisories.length} connector{confidentialAdvisories.length !== 1 ? 's' : ''}</Text>
+                                </div>
+                              </AccordionHeader>
+                              <AccordionPanel>
+                                <Text className={styles.advisoryReason}>These Microsoft connectors handle business data and should not share a group with non-business connectors.</Text>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
+                                  {confidentialAdvisories.map((a) => (
+                                    <div key={a.connectorName} className={styles.advisoryRow}>
+                                      <div className={styles.advisoryBadges}>
+                                        <Text weight="semibold">{a.connectorName}</Text>
+                                        <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                                        <Text>→</Text>
+                                        <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                                      </div>
+                                      <Text className={styles.advisoryReason}>{a.reason}</Text>
+                                    </div>
+                                  ))}
+                                </div>
+                              </AccordionPanel>
+                            </AccordionItem>
+                          </Accordion>
                         )}
-                      </AccordionPanel>
-                    </AccordionItem>
-                  );
-                })}
-              </Accordion>
-            </div>
-          </Card>
-
-          {currentPolicy.environmentType !== 'AllEnvironments' && (
-            <Card>
-              <div className={styles.formSection}>
-                <Text className={styles.sectionTitle}>Environments</Text>
-                {currentPolicy.environments?.length ? (
-                  <div className={styles.connectorList}>
-                    {currentPolicy.environments.map((environment) => (
-                      <Badge key={environment.id} appearance="outline" color="brand">{getPolicyEnvironmentBadgeLabel(environment)}</Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <Text className={styles.helperText}>No environments assigned.</Text>
-                )}
-              </div>
-            </Card>
-          )}
-
-          {(() => {
-            const advisories = computeAdvisories(currentPolicy);
-            if (advisories.length === 0) return (
-              <Card>
-                <div className={styles.advisoryHeader}>
-                  <CheckmarkCircleRegular style={{ color: tokens.colorStatusSuccessForeground1, fontSize: '1.2rem' }} />
-                  <Text weight="semibold">No advisories — policy looks healthy</Text>
-                </div>
-              </Card>
-            );
-            const confidentialAdvisories = advisories.filter((a) => a.recommendedClassification === 'Confidential');
-            const blockedAdvisories = advisories.filter((a) => a.recommendedClassification === 'Blocked');
-            return (
-              <Card>
-                <div className={styles.formSection}>
-                  <div className={styles.advisoryHeader}>
-                    <WarningRegular style={{ color: tokens.colorStatusWarningForeground1, fontSize: '1.2rem' }} />
-                    <Text className={styles.sectionTitle}>{advisories.length} Advisor{advisories.length === 1 ? 'y' : 'ies'}</Text>
-                    <Text className={styles.helperText}>— Click <strong>Edit Policy</strong> to apply recommendations</Text>
-                  </div>
-
-                  {confidentialAdvisories.length > 0 && (
-                    <Accordion multiple defaultOpenItems={['confidential']}>
-                      <AccordionItem value="confidential">
-                        <AccordionHeader>
-                          <div className={styles.advisoryHeader}>
-                            <WarningRegular style={{ color: tokens.colorStatusWarningForeground1 }} />
-                            <Text weight="semibold">Move to Confidential (Business) — {confidentialAdvisories.length} connector{confidentialAdvisories.length !== 1 ? 's' : ''}</Text>
-                          </div>
-                        </AccordionHeader>
-                        <AccordionPanel>
-                          <Text className={styles.advisoryReason}>These Microsoft connectors handle business data and should not share a group with non-business connectors.</Text>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
-                            {confidentialAdvisories.map((a) => (
-                              <div key={a.connectorName} className={styles.advisoryRow}>
-                                <div className={styles.advisoryBadges}>
-                                  <Text weight="semibold">{a.connectorName}</Text>
-                                  <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
-                                  <Text>→</Text>
-                                  <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                        {blockedAdvisories.length > 0 && (
+                          <Accordion multiple defaultOpenItems={['blocked']}>
+                            <AccordionItem value="blocked">
+                              <AccordionHeader>
+                                <div className={styles.advisoryHeader}>
+                                  <ProhibitedRegular style={{ color: tokens.colorStatusDangerForeground1 }} />
+                                  <Text weight="semibold">Consider Blocking — {blockedAdvisories.length} connector{blockedAdvisories.length !== 1 ? 's' : ''}</Text>
                                 </div>
-                                <Text className={styles.advisoryReason}>{a.reason}</Text>
-                              </div>
-                            ))}
-                          </div>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    </Accordion>
-                  )}
-
-                  {blockedAdvisories.length > 0 && (
-                    <Accordion multiple defaultOpenItems={['blocked']}>
-                      <AccordionItem value="blocked">
-                        <AccordionHeader>
-                          <div className={styles.advisoryHeader}>
-                            <ProhibitedRegular style={{ color: tokens.colorStatusDangerForeground1 }} />
-                            <Text weight="semibold">Consider Blocking — {blockedAdvisories.length} connector{blockedAdvisories.length !== 1 ? 's' : ''}</Text>
-                          </div>
-                        </AccordionHeader>
-                        <AccordionPanel>
-                          <Text className={styles.advisoryReason}>These consumer/personal connectors are commonly blocked in enterprise tenants to prevent data exfiltration.</Text>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
-                            {blockedAdvisories.map((a) => (
-                              <div key={a.connectorName} className={styles.advisoryRow}>
-                                <div className={styles.advisoryBadges}>
-                                  <Text weight="semibold">{a.connectorName}</Text>
-                                  <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
-                                  <Text>→</Text>
-                                  <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                              </AccordionHeader>
+                              <AccordionPanel>
+                                <Text className={styles.advisoryReason}>These consumer/personal connectors are commonly blocked in enterprise tenants to prevent data exfiltration.</Text>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
+                                  {blockedAdvisories.map((a) => (
+                                    <div key={a.connectorName} className={styles.advisoryRow}>
+                                      <div className={styles.advisoryBadges}>
+                                        <Text weight="semibold">{a.connectorName}</Text>
+                                        <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                                        <Text>→</Text>
+                                        <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                                      </div>
+                                      <Text className={styles.advisoryReason}>{a.reason}</Text>
+                                    </div>
+                                  ))}
                                 </div>
-                                <Text className={styles.advisoryReason}>{a.reason}</Text>
-                              </div>
-                            ))}
-                          </div>
-                        </AccordionPanel>
-                      </AccordionItem>
-                    </Accordion>
-                  )}
-                </div>
-              </Card>
-            );
-          })()}
+                              </AccordionPanel>
+                            </AccordionItem>
+                          </Accordion>
+                        )}
+                      </div>
+                    )}
+                  </AccordionPanel>
+                </AccordionItem>
+              );
+            })()}
+          </Accordion>
         </div>
       </>
     );
