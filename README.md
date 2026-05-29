@@ -1,66 +1,66 @@
-# Power Platform Control Hub
+# 🚀 Power Platform Control Hub
 
 A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api) and several Power Platform admin connectors to surface a real-time view of all resources across your tenant — canvas apps, model-driven apps, cloud flows, agent flows, code apps, Copilot Studio agents, and environments — without requiring Dataverse or the CoE Starter Kit solution.
 
-Authentication is handled entirely by the Power Apps host. No app registration or MSAL configuration is required.
+🔐 Authentication is handled entirely by the Power Apps host. No app registration or MSAL configuration is required.
 
 ---
 
-## Features
+## ✨ Features
 
-### Navigation tabs
+### 🗂️ Navigation tabs
 
 | Tab | What it shows |
 |---|---|
-| **Overview** | Metric cards per resource type + recently created resources table |
-| **Resources** | Sortable, searchable, filterable table of all resources across all environments. Click any canvas app, cloud flow, or agent flow to open a detail panel. |
-| **Environments** | Card grid of every environment with type badge, managed-environment indicator, region, and resource count |
-| **Recommendations** | Advisor recommendations from the admin API |
-| **Tenant Policies** | DLP policies (list, create, detail), billing policies, and cross-tenant connection reports |
-| **Environment Groups** | Environment groups, rule-based policies, and rule sets (CRUD) |
-| **Connectors** | Per-environment connections, connectors, and Power Pages websites |
+| 🏠 **Overview** | Metric cards per resource type + recently created resources table |
+| 📋 **Resources** | Sortable, searchable, filterable table of all resources across all environments. Click any canvas app, cloud flow, or agent flow to open a detail panel. |
+| 🌍 **Environments** | Card grid of every environment with type badge, managed-environment indicator, region, and resource count |
+| 💡 **Recommendations** | Advisor recommendations from the admin API |
+| 🛡️ **Tenant Policies** | DLP policies (list, create, detail), billing policies, and cross-tenant connection reports |
+| 🗂️ **Environment Groups** | Environment groups, rule-based policies, and rule sets (CRUD) |
+| 🔌 **Connectors** | Per-environment connections, connectors, and Power Pages websites |
 
-### Resource detail panels
+### 🔍 Resource detail panels
 
-**Canvas App detail panel** (click any canvas app in Resources):
+**🎨 Canvas App detail panel** (click any canvas app in Resources):
 - Best-practice analysis: 24 checks across nested galleries, delegation risks, hardcoded URLs/emails, media size, OnError handling, and more
 - Governance data: sharing stats (users + groups), active connections, bypass consent flag, premium/on-premises connectors
 - Role assignments list (owner, co-owner, viewer)
-- Quarantine / Unquarantine actions
-- Add owner (searches AAD users)
+- 🔒 Quarantine / Unquarantine actions
+- ➕ Add owner (searches AAD users)
 
-**Cloud Flow / Agent Flow / M365 Agent Flow detail panel**:
+**⚡ Cloud Flow / Agent Flow / M365 Agent Flow detail panel**:
 - Flow analysis: trigger type, action count, complexity score, nested conditions, error handling checks
-- Enable / Disable / Delete actions
+- ▶️ Enable / ⏹️ Disable / 🗑️ Delete actions
 - Owner resolution
-- Add owner action
+- ➕ Add owner action
 
-### DLP Policy management
+### 🛡️ DLP Policy management
 
 - Full-page list of all tenant DLP policies (V2 API)
-- **Create page**: two-stage flow — basic settings (name, scope, default classification) then a connector classification stage that loads all connectors from a selected environment, appends the 4 hardcoded connectors required by the API (Spatial Services, HTTP Request, HTTP Webhook, HTTP), and lets you drag connectors into Confidential / General / Blocked buckets
-- **Detail page**: connector groups accordion, environments list, metadata, delete action
+- **➕ Create page**: two-stage flow — basic settings (name, scope, default classification) then a connector classification stage that loads all connectors from a selected environment, appends the 4 hardcoded connectors required by the API (Spatial Services, HTTP Request, HTTP Webhook, HTTP), and lets you classify connectors into Confidential / General / Blocked buckets
+- **📄 Detail page**: connector groups accordion, environments list, metadata, delete action
 - Follows the [known DLP API limitations](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations) — connector groups are always submitted explicitly (no auto-population)
 
-### Environment Groups
+### 🗂️ Environment Groups
 
 - Create, edit, and delete environment groups
 - Manage environment membership per group
 - Rule-based policies: create, assign to groups, edit, extract rule sets
 - Rule sets: full CRUD with JSON-based parameter editing
 
-### Additional UX
+### 🎨 Additional UX
 
-- Light / dark mode toggle
-- Responsive layout (mobile hamburger menu)
+- 🌙 Light / dark mode toggle
+- 📱 Responsive layout (mobile hamburger menu)
 - Fluent UI v9 — consistent with Microsoft 365 design language
-- Accessible (WCAG-compliant contrast, ARIA labels, keyboard navigation)
-- Toast notifications for all write actions
+- ♿ Accessible (WCAG-compliant contrast, ARIA labels, keyboard navigation)
+- 🔔 Toast notifications for all write actions
 - Inline error messages with expandable details
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 CoE-Code/
@@ -118,7 +118,7 @@ CoE-Code/
 
 ---
 
-## Prerequisites
+## 🛠️ Prerequisites
 
 | Tool | Minimum version |
 |---|---|
@@ -129,7 +129,7 @@ CoE-Code/
 
 ---
 
-## Connector Setup
+## 🔌 Connector Setup
 
 This app requires **four connectors**. For each one, create a connection in [make.powerapps.com](https://make.powerapps.com) (**Connections → New connection**), note the Connection ID from the URL, then run `add-data-source`.
 
@@ -160,7 +160,7 @@ The `src/generated/` folder is **gitignored** — every collaborator must run `a
 
 ---
 
-## Local Development
+## 💻 Local Development
 
 ```bash
 npx power-apps run
@@ -170,7 +170,7 @@ This starts a Vite dev server and opens Power Apps in local mode. The app connec
 
 ---
 
-## Deploy to Power Apps
+## 🚢 Deploy to Power Apps
 
 ```bash
 npx power-apps push --solution-id <your-solution-id>
@@ -180,7 +180,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
-## Enable Code Apps on Your Environment
+## ⚙️ Enable Code Apps on Your Environment
 
 1. Go to [Power Platform admin center](https://admin.powerplatform.microsoft.com).
 2. **Manage → Environments → \<your environment\>**.
@@ -189,7 +189,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
-## Tech Stack
+## 📦 Tech Stack
 
 | Package | Purpose |
 |---|---|
@@ -203,7 +203,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
-## Limitations & Known Issues
+## ⚠️ Limitations & Known Issues
 
 - The Inventory API returns up to **1 000 resources** per query. For larger tenants, pagination via `skipToken` may be needed.
 - The app requires the signed-in user to be a **Power Platform tenant admin** to read cross-environment data.
@@ -215,7 +215,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
-## Related Resources
+## 📚 Related Resources
 
 - [Power Apps Code Apps overview](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview)
 - [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api)
