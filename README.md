@@ -1,6 +1,6 @@
-# CoE Dashboard — Power Apps Code App
+# Power Platform Control Hub
 
-A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Admin V2 connector](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/) to surface a real-time view of all Power Platform resources across your tenant — canvas apps, model-driven apps, cloud flows, Copilot Studio agents, agent flows, code apps, and environments — without needing Dataverse or the CoE Starter Kit solution.
+A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api) and several Power Platform admin connectors to surface a real-time view of all resources across your tenant — canvas apps, model-driven apps, cloud flows, agent flows, code apps, Copilot Studio agents, and environments — without requiring Dataverse or the CoE Starter Kit solution.
 
 Authentication is handled entirely by the Power Apps host. No app registration or MSAL configuration is required.
 
@@ -8,21 +8,55 @@ Authentication is handled entirely by the Power Apps host. No app registration o
 
 ## Features
 
-| View | What it shows |
+### Navigation tabs
+
+| Tab | What it shows |
 |---|---|
-| **Overview** | Six metric cards (one per resource type) + lazily-loaded recently created resources |
-| **Resources** | Full sortable, searchable, filterable table of all resources across all environments |
+| **Overview** | Metric cards per resource type + recently created resources table |
+| **Resources** | Sortable, searchable, filterable table of all resources across all environments. Click any canvas app, cloud flow, or agent flow to open a detail panel. |
 | **Environments** | Card grid of every environment with type badge, managed-environment indicator, region, and resource count |
 | **Recommendations** | Advisor recommendations from the admin API |
-| **Governance** | Environment groups, billing policies, cross-tenant connection reports, and role assignments |
+| **Tenant Policies** | DLP policies (list, create, detail), billing policies, and cross-tenant connection reports |
+| **Environment Groups** | Environment groups, rule-based policies, and rule sets (CRUD) |
 | **Connectors** | Per-environment connections, connectors, and Power Pages websites |
 
-Additional UX:
-- Clickable metric tiles navigate to a filtered Resources view
-- Infinite scroll on recently created resources table
-- In-app refresh button
-- Responsive grid layout
-- Built with [Fluent UI v9](https://react.fluentui.dev/) — consistent with the Microsoft 365 design language
+### Resource detail panels
+
+**Canvas App detail panel** (click any canvas app in Resources):
+- Best-practice analysis: 24 checks across nested galleries, delegation risks, hardcoded URLs/emails, media size, OnError handling, and more
+- Governance data: sharing stats (users + groups), active connections, bypass consent flag, premium/on-premises connectors
+- Role assignments list (owner, co-owner, viewer)
+- Quarantine / Unquarantine actions
+- Add owner (searches AAD users)
+
+**Cloud Flow / Agent Flow / M365 Agent Flow detail panel**:
+- Flow analysis: trigger type, action count, complexity score, nested conditions, error handling checks
+- Enable / Disable / Delete actions
+- Owner resolution
+- Add owner action
+
+### DLP Policy management
+
+- Full-page list of all tenant DLP policies (V2 API)
+- **Create page**: two-stage flow — basic settings (name, scope, default classification) then a connector classification stage that loads all connectors from a selected environment, appends the 4 hardcoded connectors required by the API (Spatial Services, HTTP Request, HTTP Webhook, HTTP), and lets you drag connectors into Confidential / General / Blocked buckets
+- **Detail page**: connector groups accordion, environments list, metadata, delete action
+- Follows the [known DLP API limitations](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations) — connector groups are always submitted explicitly (no auto-population)
+
+### Environment Groups
+
+- Create, edit, and delete environment groups
+- Manage environment membership per group
+- Rule-based policies: create, assign to groups, edit, extract rule sets
+- Rule sets: full CRUD with JSON-based parameter editing
+
+### Additional UX
+
+- Light / dark mode toggle
+- Responsive layout (mobile hamburger menu)
+- Fluent UI v9 — consistent with Microsoft 365 design language
+- Accessible (WCAG-compliant contrast, ARIA labels, keyboard navigation)
+- Toast notifications for all write actions
+- Inline error messages with expandable details
 
 ---
 
@@ -31,42 +65,55 @@ Additional UX:
 ```
 CoE-Code/
 ├── src/
-│   ├── App.tsx                    # Root: tab navigation, layout
+│   ├── App.tsx                        # Root: tab navigation, theme, layout
 │   ├── types/
-│   │   ├── inventory.ts           # TypeScript interfaces for inventory responses
-│   │   └── admin.ts               # TypeScript interfaces for admin API responses
-│   ├── services/
-│   │   ├── inventoryApi.ts        # Resource/environment queries via connector
-│   │   └── adminApi.ts            # Admin data (recommendations, governance, connectors)
+│   │   ├── inventory.ts               # Resource, Environment, ResourceCounts
+│   │   └── admin.ts                   # Governance, DLP, billing, connector types
 │   ├── hooks/
-│   │   ├── useInventory.ts        # Data-fetching hook for inventory
-│   │   └── useAdminData.ts        # Data-fetching hook for admin data
-│   ├── generated/                 # Auto-generated connector service files (gitignored)
+│   │   ├── useInventory.ts            # Fetches resources & environments
+│   │   └── useAdminData.ts            # Fetches admin data (DLP, groups, policies…)
+│   ├── services/
+│   │   ├── inventoryApi.ts            # Inventory API calls
+│   │   ├── adminApi.ts                # Admin V2 API calls (connectors, groups…)
+│   │   ├── dlpService.ts              # DLP policy CRUD (Power Platform for Admins)
+│   │   ├── canvasAppService.ts        # Canvas app export + msapp ZIP parsing
+│   │   ├── canvasAppAnalyzer.ts       # 24 best-practice checks for canvas apps
+│   │   ├── canvasAppAdminService.ts   # Canvas app governance via Power Apps for Admins
+│   │   ├── flowManagementService.ts   # Flow enable/disable/delete
+│   │   ├── flowAnalyzer.ts            # Flow complexity analysis
+│   │   ├── governanceMutations.ts     # Env group / policy / rule set write ops
+│   │   ├── environmentMutations.ts    # Environment write ops
+│   │   ├── ownerCache.ts              # AAD user display name resolution
+│   │   └── settingsService.ts        # App settings persistence
+│   ├── components/
+│   │   ├── Dashboard.tsx              # Overview / metric cards
+│   │   ├── ResourcesView.tsx          # Resources table + detail panel routing
+│   │   ├── CanvasAppDetailPanel.tsx   # Canvas app detail + analysis
+│   │   ├── CloudFlowDetailPanel.tsx   # Cloud/agent flow detail + analysis
+│   │   ├── EnvironmentsView.tsx       # Environment cards
+│   │   ├── EnvironmentDetailView.tsx  # Single environment detail
+│   │   ├── RecommendationsView.tsx    # Advisor recommendations
+│   │   ├── GovernanceView.tsx         # Tenant Policies tab (DLP, billing, reports)
+│   │   ├── DlpPoliciesView.tsx        # Full-page DLP list / create / detail
+│   │   ├── EnvironmentGroupsView.tsx  # Environment Groups tab
+│   │   ├── ConnectorsView.tsx         # Connectors / connections tab
+│   │   └── ConfirmDialog.tsx          # Reusable confirmation dialog
+│   ├── generated/                     # Auto-generated connector clients (gitignored)
 │   │   ├── models/
-│   │   │   └── PowerPlatformforAdminsV2Model.ts
-│   │   ├── services/
-│   │   │   └── PowerPlatformforAdminsV2Service.ts
-│   │   └── index.ts
-│   └── components/
-│       ├── Dashboard.tsx          # Overview / metric cards
-│       ├── ResourcesView.tsx      # Sortable resources table
-│       ├── EnvironmentsView.tsx   # Environment cards
-│       ├── RecommendationsView.tsx
-│       ├── GovernanceView.tsx
-│       └── ConnectorsView.tsx
-├── public/
-│   └── favicon.svg
+│   │   └── services/
+│   └── utils/
+│       └── errorUtils.ts              # Error message extraction helpers
 ├── index.html
-├── vite.config.ts                 # Vite + Power Apps vite plugin
+├── vite.config.ts
 ├── package.json
 ├── tsconfig.app.json
-└── README.md
+└── power.config.json                  # Code App + connector connection references
 ```
 
 **Data flow:**
 1. The Power Apps host handles authentication — the app renders immediately with no login screen.
-2. On mount, `useInventory` and `useAdminData` call the generated `PowerPlatformforAdminsV2Service` methods directly.
-3. The connector passes calls through the Power Apps host to the Power Platform Admin V2 API.
+2. `useInventory` and `useAdminData` call the generated connector service clients on mount.
+3. Connector calls are proxied through the Power Apps host to the respective admin APIs.
 4. Results are stored in React state and rendered by the view components.
 
 ---
@@ -78,67 +125,62 @@ CoE-Code/
 | [Node.js](https://nodejs.org/) (LTS) | 18 |
 | [Git](https://git-scm.com/) | any |
 | Power Platform environment with **code apps enabled** | — |
-| Power Platform admin account | — |
+| Power Platform **tenant admin** account | — |
 
 ---
 
 ## Connector Setup
 
-This app uses the **Power Platform Admin V2** connector (`shared_powerplatformadminv2`). The generated service files are gitignored and must be recreated after cloning.
+This app requires **four connectors**. For each one, create a connection in [make.powerapps.com](https://make.powerapps.com) (**Connections → New connection**), note the Connection ID from the URL, then run `add-data-source`.
 
-### 1 — Create a connection
+| Connector | API ID | Docs |
+|---|---|---|
+| Power Platform Admin V2 | `shared_powerplatformadminv2` | [Reference](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/) |
+| Power Platform for Admins | `shared_powerplatformforadmins` | [Reference](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/) |
+| Power Apps for Admins | `shared_powerappsforadmins` | [Reference](https://learn.microsoft.com/en-us/connectors/powerappsforadmins/) |
+| Flow Management | `shared_flowmanagement` | [Reference](https://learn.microsoft.com/en-us/connectors/flowmanagement/) |
 
-1. Go to [make.powerapps.com](https://make.powerapps.com) and select your environment.
-2. Navigate to **Connections → New connection**.
-3. Search for **Power Platform for Admins V2** and create the connection.
-4. Note the **Connection ID** from the URL (the GUID after `/connections/`).
-
-### 2 — Initialise the Code App and add the connector
+### Steps after cloning
 
 ```bash
 # Install dependencies
 npm install
 
-# Initialise the Power Apps Code App (creates power.config.json)
-npx power-apps init --display-name "CoE Dashboard"
+# Initialise the Code App (creates power.config.json if missing)
+npx power-apps init --display-name "Power Platform Control Hub"
 
-# Add the Admin V2 connector using your connection ID
-npx power-apps add-data-source -a "shared_powerplatformadminv2" -c <your-connection-id>
-# When asked "Are you using a connection reference instead of a connection ID?" → select No
+# Add each connector (answer "No" when asked about connection references)
+npx power-apps add-data-source -a shared_powerplatformadminv2    -c <connection-id>
+npx power-apps add-data-source -a shared_powerplatformforadmins  -c <connection-id>
+npx power-apps add-data-source -a shared_powerappsforadmins      -c <connection-id>
+npx power-apps add-data-source -a shared_flowmanagement          -c <connection-id>
 ```
 
-This generates `src/generated/` with the typed service client. The folder is gitignored — re-run the command after every fresh clone.
+The `src/generated/` folder is **gitignored** — every collaborator must run `add-data-source` after cloning to regenerate the typed service clients.
 
 ---
 
 ## Local Development
 
 ```bash
-# Start the local dev server
-npm run dev
+npx power-apps run
 ```
 
-Open the **Local Play** URL printed by Vite (typically `http://localhost:5173`) in the same browser profile as your Power Platform tenant.
+This starts a Vite dev server and opens Power Apps in local mode. The app connects to your real tenant data with hot reload enabled.
 
 ---
 
-## Build & Deploy to Power Apps
+## Deploy to Power Apps
 
 ```bash
-# Type-check and build
-npm run build
-
-# Push to your Power Platform environment
-npx power-apps push
+npx power-apps push --solution-id <your-solution-id>
 ```
 
-When the push succeeds, the CLI prints a Power Apps URL where you can play, share, or manage the app.
+The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
 ## Enable Code Apps on Your Environment
-
-If code apps are not yet enabled:
 
 1. Go to [Power Platform admin center](https://admin.powerplatform.microsoft.com).
 2. **Manage → Environments → \<your environment\>**.
@@ -157,22 +199,28 @@ If code apps are not yet enabled:
 | [@microsoft/power-apps-vite](https://www.npmjs.com/package/@microsoft/power-apps-vite) | Vite plugin for Power Apps integration |
 | [@fluentui/react-components v9](https://react.fluentui.dev/) | Fluent UI component library |
 | [@fluentui/react-icons v2](https://github.com/microsoft/fluentui-system-icons) | Fluent UI icons |
+| [jszip](https://stuk.github.io/jszip/) | msapp ZIP parsing for canvas app analysis |
 
 ---
 
 ## Limitations & Known Issues
 
-- The Admin V2 connector returns up to **1 000 resources** per query. For larger tenants, pagination via `skipToken` may be needed.
-- The app requires the signed-in user to be a **Power Platform admin** or **environment admin** to read cross-environment data.
+- The Inventory API returns up to **1 000 resources** per query. For larger tenants, pagination via `skipToken` may be needed.
+- The app requires the signed-in user to be a **Power Platform tenant admin** to read cross-environment data.
+- **DLP policy connector groups do not auto-populate** — when creating or updating a policy, all connector assignments must be explicitly provided. The create page handles this by loading connectors from a selected environment. See [known issues](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations).
+- Canvas app definition export (msapp) uses an undocumented API and may be blocked by CORS or DLP policies in some tenants. Governance data (from the Power Apps for Admins connector) still loads in that case.
 - Code apps are **not** supported in the Power Apps mobile app or Power Apps for Windows.
 - Code apps **do not** support Power Platform Git integration.
-- The `src/generated/` folder is gitignored — every collaborator must run `npx power-apps add-data-source` after cloning.
+- The `src/generated/` folder is gitignored — every collaborator must run `npx power-apps add-data-source` for all four connectors after cloning.
 
 ---
 
 ## Related Resources
 
 - [Power Apps Code Apps overview](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview)
-- [Power Platform Admin V2 connector reference](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/)
 - [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api)
-- [PowerAppsCodeApps GitHub repository (samples & templates)](https://github.com/microsoft/PowerAppsCodeApps)
+- [Power Platform Admin V2 connector](https://learn.microsoft.com/en-us/connectors/powerplatformadminv2/)
+- [Power Platform for Admins connector](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/)
+- [Power Apps for Admins connector](https://learn.microsoft.com/en-us/connectors/powerappsforadmins/)
+- [Flow Management connector](https://learn.microsoft.com/en-us/connectors/flowmanagement/)
+- [PowerAppsCodeApps GitHub repository](https://github.com/microsoft/PowerAppsCodeApps)
