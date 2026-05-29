@@ -1364,7 +1364,7 @@ export default function CloudFlowDetailPanel({
                                   <FlowRegular fontSize={14} style={{ color: tokens.colorNeutralForeground3 }} />
                                   <Text style={{ fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, flex: 1 }}>Control flow</Text>
                                   <Badge appearance="tint" color="subtle" size="small">
-                                    {richControlFlow.length} step{richControlFlow.length !== 1 ? 's' : ''}
+                                   {richControlFlow.length} action{richControlFlow.length !== 1 ? 's' : ''}
                                   </Badge>
                                 </div>
                                 {[...new Map(richControlFlow.map((a) => [`${a.type}|${a.name}`, a])).values()].map((a, j) => (

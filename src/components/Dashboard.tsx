@@ -9,6 +9,8 @@ import {
   Spinner,
   MessageBar,
   MessageBarBody,
+  Input,
+  Button,
 } from '@fluentui/react-components';
 import { extractMessage } from '../utils/errorUtils.ts';
 import {
@@ -22,9 +24,26 @@ import {
   ArrowSortUpRegular,
   ArrowSortDownRegular,
   ArrowSortRegular,
+  SearchRegular,
+  OpenRegular,
+  DeleteRegular,
 } from '@fluentui/react-icons';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_SHORT_LABELS, getTypeBadgeColor } from '../types/inventory.ts';
+import CanvasAppDetailPanel from './CanvasAppDetailPanel.tsx';
+import CloudFlowDetailPanel from './CloudFlowDetailPanel.tsx';
+import ConfirmDialog from './ConfirmDialog.tsx';
+import { useMutation } from '../hooks/useMutation.tsx';
+import { deleteCopilotAgent } from '../services/resourceMutations.ts';
+import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
+
+const DELETABLE_TYPES = new Set(['microsoft.copilotstudio/agents']);
+const DETAIL_PANEL_TYPES = new Set([
+  'microsoft.powerautomate/cloudflows',
+  'microsoft.powerautomate/agentflows',
+  'microsoft.powerautomate/m365agentflows',
+  'microsoft.powerapps/apps',
+]);
 
 interface DashboardProps {
   resources: Resource[];
@@ -177,6 +196,25 @@ const useStyles = makeStyles({
     alignItems: 'center',
     height: '100%',
   },
+  toolbar: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+    flexShrink: 0,
+  },
+  count: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
+    whiteSpace: 'nowrap',
+    marginLeft: 'auto',
+  },
+  tdText: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    display: 'block',
+  },
 });
 
 const METRIC_ITEMS = [
@@ -238,8 +276,29 @@ export default function Dashboard({
   onNavigateToResources,
 }: DashboardProps): ReactElement {
   const styles = useStyles();
+  const [search, setSearch] = useState('');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLTableRowElement>(null);
+  const [detailResource, setDetailResource] = useState<Resource | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Resource | null>(null);
+  const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
+  const [deletedNames, setDeletedNames] = useState<Set<string>>(new Set());
+  const pendingDeleteRef = useRef<string | null>(null);
+
+  useEffect(() => { void fetchTombstonedIds().then(setDeletedNames); }, []);
+
+  const { execute: execDeleteAgent } = useMutation(deleteCopilotAgent, {
+    successMessage: 'Copilot agent deleted.',
+    onSuccess: () => setPendingResourceName(null),
+    onError: () => {
+      if (pendingDeleteRef.current) {
+        removeTombstone(pendingDeleteRef.current);
+        setDeletedNames((prev) => { const n = new Set(prev); n.delete(pendingDeleteRef.current!); return n; });
+        pendingDeleteRef.current = null;
+      }
+      setPendingResourceName(null);
+    },
+  });
 
   type SortCol = 'name' | 'type' | 'environment' | 'region' | 'created';
   const [sortCol, setSortCol] = useState<SortCol>('created');
@@ -255,7 +314,13 @@ export default function Dashboard({
   };
 
   const sortedResources = useMemo(() => {
-    const arr = [...resources];
+    const term = search.toLowerCase();
+    const arr = resources.filter((r) => {
+      if (deletedNames.has(r.name)) return false;
+      if (!term) return true;
+      const name = (r.properties.displayName ?? r.name).toLowerCase();
+      return name.includes(term) || (r.environmentName ?? '').toLowerCase().includes(term);
+    });
     arr.sort((a, b) => {
       let av = '';
       let bv = '';
@@ -324,10 +389,31 @@ export default function Dashboard({
     );
   }
 
+  // Full-page detail panels
+  if (detailResource) {
+    const typeLower = detailResource.type.toLowerCase();
+    if (typeLower === 'microsoft.powerapps/apps') {
+      return <CanvasAppDetailPanel resource={detailResource} onClose={() => setDetailResource(null)} />;
+    }
+    if (DETAIL_PANEL_TYPES.has(typeLower)) {
+      return (
+        <CloudFlowDetailPanel
+          resource={detailResource}
+          onClose={() => setDetailResource(null)}
+          onDeleted={(name) => {
+            setDeletedNames((prev) => new Set([...prev, name]));
+            setDetailResource(null);
+          }}
+        />
+      );
+    }
+  }
+
   const visible = sortedResources.slice(0, visibleCount);
   const hasMore = visibleCount < sortedResources.length;
 
   return (
+    <>
     <div className={styles.root}>
       <div className={styles.scrollable}>
         <div className={styles.topSection}>
@@ -352,16 +438,28 @@ export default function Dashboard({
         </div>
 
         <div className={styles.tableSection}>
-          <Text className={styles.sectionTitle}>Recently Created</Text>
+          <div className={styles.toolbar}>
+            <Text className={styles.sectionTitle}>Recently Created</Text>
+            <Input
+              placeholder="Search by name or environment…"
+              value={search}
+              onChange={(_, data) => { setSearch(data.value); setVisibleCount(PAGE_SIZE); }}
+              contentBefore={<SearchRegular />}
+              size="small"
+              style={{ minWidth: '220px' }}
+            />
+            <Text className={styles.count}>{sortedResources.length} result(s)</Text>
+          </div>
 
           <Card className={styles.tableCard}>
         <table className={styles.table}>
           <colgroup>
+            <col style={{ width: '26%' }} />
+            <col style={{ width: '110px' }} />
             <col style={{ width: '28%' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '30%' }} />
-            <col style={{ width: '11%' }} />
-            <col style={{ width: '11%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '44px' }} />
           </colgroup>
           <thead>
             <tr>
@@ -385,51 +483,83 @@ export default function Dashboard({
                   </span>
                 </th>
               ))}
+              <th className={styles.th}></th>
             </tr>
           </thead>
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td className={styles.td} colSpan={5} style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
-                  No resources found
+                <td className={styles.td} colSpan={6} style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
+                  {search ? 'No resources match your search.' : 'No resources found'}
                 </td>
               </tr>
             ) : (
               <>
                 {visible.map((r, i) => {
                   const name = r.properties.displayName ?? r.name;
+                  const typeLower = r.type.toLowerCase();
                   const isLast = i === visible.length - 1 && !hasMore;
                   const tdClass = isLast ? `${styles.td} ${styles.tdLast}` : styles.td;
                   return (
                     <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
-                      <td className={tdClass} title={name}>{name}</td>
+                      <td className={tdClass} title={name}>
+                        <span className={styles.tdText}>{name}</span>
+                      </td>
                       <td className={tdClass}>
                         <Badge
                           appearance="tint"
-                          color={getTypeBadgeColor(r.type.toLowerCase())}
+                          color={getTypeBadgeColor(typeLower)}
                           size="small"
                           style={{ whiteSpace: 'nowrap' }}
                         >
-                          {RESOURCE_TYPE_SHORT_LABELS[r.type.toLowerCase()] ?? RESOURCE_TYPE_LABELS[r.type.toLowerCase()] ?? r.type}
+                          {RESOURCE_TYPE_SHORT_LABELS[typeLower] ?? RESOURCE_TYPE_LABELS[typeLower] ?? r.type}
                         </Badge>
                       </td>
                       <td className={tdClass} title={!r.environmentName ? 'Environment not available in API for this resource type' : r.environmentName}>
-                        {r.environmentName ?? <span style={{ color: tokens.colorNeutralForeground4 }}>Not available</span>}
+                        {r.environmentName
+                          ? <span className={styles.tdText}>{r.environmentName}</span>
+                          : <span className={styles.tdText} style={{ color: tokens.colorNeutralForeground4 }}>Not available</span>}
                       </td>
-                      <td className={tdClass}>{r.environmentRegion ?? r.location ?? '—'}</td>
                       <td className={tdClass}>
-                        {r.properties.createdAt
-                          ? new Date(r.properties.createdAt).toLocaleDateString()
-                          : '—'}
+                        <span className={styles.tdText}>{r.environmentRegion ?? r.location ?? '—'}</span>
+                      </td>
+                      <td className={tdClass}>
+                        <span className={styles.tdText}>
+                          {r.properties.createdAt
+                            ? new Date(r.properties.createdAt).toLocaleDateString()
+                            : '—'}
+                        </span>
+                      </td>
+                      <td className={tdClass}>
+                        {DELETABLE_TYPES.has(typeLower) && (
+                          <Button
+                            appearance="subtle"
+                            size="small"
+                            icon={<DeleteRegular />}
+                            title="Delete"
+                            disabled={pendingResourceName === r.name}
+                            style={{ color: tokens.colorStatusDangerForeground1 }}
+                            onClick={() => setConfirmDelete(r)}
+                          />
+                        )}
+                        {DETAIL_PANEL_TYPES.has(typeLower) && (
+                          <Button
+                            appearance="subtle"
+                            size="small"
+                            icon={<OpenRegular />}
+                            title="View details"
+                            onClick={() => setDetailResource(r)}
+                          />
+                        )}
                       </td>
                     </tr>
                   );
                 })}
                 {hasMore && (
                   <tr ref={sentinelRef} className={styles.sentinel}>
-                    <td colSpan={5}>
+                    <td colSpan={6}>
                       <div className={styles.loadingMore}>
-                        <Spinner size="tiny" label={`Loading more… (${visibleCount} / ${resources.length})`} />
+                        <Spinner size="tiny" label={`Loading more… (${visibleCount} / ${sortedResources.length})`} />
                       </div>
                     </td>
                   </tr>
@@ -442,5 +572,29 @@ export default function Dashboard({
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      open={Boolean(confirmDelete)}
+      title="Delete Copilot Agent"
+      message={`Are you sure you want to delete "${confirmDelete?.properties.displayName ?? confirmDelete?.name}"? This action cannot be undone.`}
+      confirmLabel="Delete"
+      onConfirm={() => {
+        if (!confirmDelete) return;
+        const name = confirmDelete.name;
+        pendingDeleteRef.current = name;
+        setPendingResourceName(name);
+        void addTombstone({
+          resourceId: confirmDelete.name,
+          resourceType: confirmDelete.type ?? 'bot',
+          environmentId: (confirmDelete.properties?.environmentId as string | undefined) ?? '',
+          displayName: confirmDelete.properties?.displayName ?? confirmDelete.name,
+        });
+        setDeletedNames((prev) => new Set([...prev, name]));
+        setConfirmDelete(null);
+        void execDeleteAgent(confirmDelete.id ?? '', name);
+      }}
+      onCancel={() => setConfirmDelete(null)}
+    />
+  </>
   );
 }

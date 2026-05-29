@@ -17,7 +17,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { ArrowLeftRegular, AddRegular, DeleteRegular } from '@fluentui/react-icons';
+import { ArrowLeftRegular, AddRegular, DeleteRegular, EditRegular, WarningRegular, ProhibitedRegular, CheckmarkCircleRegular } from '@fluentui/react-icons';
 import type {
   ManagedPolicyV2,
   ManagedPolicyV2defaultConnectorsClassification,
@@ -27,7 +27,7 @@ import type {
 import type { Connection } from '../types/admin.ts';
 import type { Resource } from '../types/inventory.ts';
 import { fetchConnectors } from '../services/adminApi.ts';
-import { createDlpPolicy, deleteDlpPolicy } from '../services/dlpService.ts';
+import { createDlpPolicy, deleteDlpPolicy, updateDlpPolicy } from '../services/dlpService.ts';
 import { useMutation } from '../hooks/useMutation.tsx';
 import ConfirmDialog from './ConfirmDialog.tsx';
 
@@ -41,6 +41,7 @@ interface DlpPoliciesViewProps {
 type DlpPage =
   | { type: 'list' }
   | { type: 'create' }
+  | { type: 'edit'; policy: PolicyV2 }
   | { type: 'detail'; policy: PolicyV2 };
 
 type ConnectorClassification = ManagedPolicyV2defaultConnectorsClassification;
@@ -95,6 +96,76 @@ const HIDDEN_CONNECTORS: Array<Omit<ConnectorItem, 'classification'>> = [
     type: 'Microsoft.PowerApps/apis',
   },
 ];
+
+interface AdvisoryRule { id: string; name: string; reason: string }
+interface Advisory { connectorName: string; currentClassification: ConnectorClassification; recommendedClassification: ConnectorClassification; reason: string }
+
+const SHOULD_BE_CONFIDENTIAL: AdvisoryRule[] = [
+  { id: 'shared_sharepointonline',        name: 'SharePoint',               reason: 'Contains business documents and sensitive organisational data' },
+  { id: 'shared_onedriveforbusiness',     name: 'OneDrive for Business',    reason: 'Stores business files — should stay within corporate boundary' },
+  { id: 'shared_dynamicscrmonline',       name: 'Dynamics 365',             reason: 'Contains CRM and business-critical operational data' },
+  { id: 'shared_commondataserviceforapps',name: 'Microsoft Dataverse',      reason: 'Primary store for structured business data in Power Platform' },
+  { id: 'shared_commondataservice',       name: 'Common Data Service',      reason: 'Stores structured business data' },
+  { id: 'shared_sql',                     name: 'SQL Server',               reason: 'Often contains sensitive business and customer records' },
+  { id: 'shared_teams',                   name: 'Microsoft Teams',          reason: 'Contains internal business communications and meetings' },
+  { id: 'shared_office365',              name: 'Office 365 Outlook',       reason: 'Business email — mixing with non-business connectors risks data leaks' },
+  { id: 'shared_office365users',          name: 'Office 365 Users',         reason: 'Exposes organisational user directory information' },
+  { id: 'shared_azuread',                 name: 'Azure Active Directory',   reason: 'Identity and access management data should be treated as confidential' },
+  { id: 'shared_powerbi',                 name: 'Power BI',                 reason: 'Contains business intelligence reports and underlying datasets' },
+  { id: 'shared_keyvault',                name: 'Azure Key Vault',          reason: 'Stores secrets, certificates, and credentials' },
+  { id: 'shared_azureblob',               name: 'Azure Blob Storage',       reason: 'May contain sensitive business files and backups' },
+  { id: 'shared_visualstudioteamservices',name: 'Azure DevOps',             reason: 'Contains source code, pipelines, and project data' },
+  { id: 'shared_microsoftforms',          name: 'Microsoft Forms',          reason: 'May collect sensitive business information via forms' },
+  { id: 'shared_microsoftgraph',          name: 'Microsoft Graph',          reason: 'Broad access to Microsoft 365 data across the organisation' },
+  { id: 'shared_approvals',              name: 'Approvals',                reason: 'Used for business workflows — should be in the same group as other business connectors' },
+];
+
+const SHOULD_BE_BLOCKED: AdvisoryRule[] = [
+  { id: 'shared_dropbox',    name: 'Dropbox',        reason: 'Personal cloud storage — high risk of uncontrolled data exfiltration' },
+  { id: 'shared_twitter',    name: 'Twitter / X',    reason: 'Public social media — business data could be posted publicly' },
+  { id: 'shared_facebook',   name: 'Facebook',       reason: 'Personal social network — risk of data leakage to external platform' },
+  { id: 'shared_gmail',      name: 'Gmail',          reason: 'Personal email — bypasses corporate email DLP controls' },
+  { id: 'shared_googledrive',name: 'Google Drive',   reason: 'Unmanaged cloud storage — business data can leave the corporate tenant' },
+  { id: 'shared_instagram',  name: 'Instagram',      reason: 'Consumer social media platform — not appropriate for business data' },
+  { id: 'shared_youtube',    name: 'YouTube',        reason: 'Consumer platform — no business justification for data integration' },
+];
+
+function connectorMatchesAdvisory(connectorId: string, advisoryId: string): boolean {
+  const norm = connectorId.toLowerCase();
+  const adv = advisoryId.toLowerCase();
+  return norm === adv || norm.endsWith('/' + adv) || norm.includes(adv);
+}
+
+function computeAdvisories(policy: PolicyV2): Advisory[] {
+  // Build id→classification and name→classification maps
+  const byId = new Map<string, ConnectorClassification>();
+  const byName = new Map<string, ConnectorClassification>();
+  for (const group of policy.connectorGroups ?? []) {
+    const cls = group.classification as ConnectorClassification;
+    for (const c of group.connectors ?? []) {
+      if (c.id)   byId.set(c.id.toLowerCase(), cls);
+      if (c.name) byName.set(c.name.toLowerCase(), cls);
+    }
+  }
+  const defaultClass = (policy.defaultConnectorsClassification ?? 'General') as ConnectorClassification;
+  const getClass = (rule: AdvisoryRule): ConnectorClassification => {
+    for (const [id, cls] of byId.entries()) if (connectorMatchesAdvisory(id, rule.id)) return cls;
+    return byName.get(rule.name.toLowerCase()) ?? defaultClass;
+  };
+
+  const advisories: Advisory[] = [];
+  for (const rule of SHOULD_BE_CONFIDENTIAL) {
+    const current = getClass(rule);
+    if (current !== 'Confidential')
+      advisories.push({ connectorName: rule.name, currentClassification: current, recommendedClassification: 'Confidential', reason: rule.reason });
+  }
+  for (const rule of SHOULD_BE_BLOCKED) {
+    const current = getClass(rule);
+    if (current !== 'Blocked')
+      advisories.push({ connectorName: rule.name, currentClassification: current, recommendedClassification: 'Blocked', reason: rule.reason });
+  }
+  return advisories;
+}
 
 const useStyles = makeStyles({
   root: {
@@ -295,6 +366,31 @@ const useStyles = makeStyles({
   divider: {
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     paddingBottom: tokens.spacingVerticalM,
+  },
+  advisoryRow: {
+    display: 'grid',
+    gridTemplateColumns: '200px 1fr',
+    gap: tokens.spacingHorizontalM,
+    alignItems: 'start',
+    padding: `${tokens.spacingVerticalS} 0`,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+    ':last-child': { borderBottom: 'none' },
+  },
+  advisoryBadges: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    flexWrap: 'wrap',
+  },
+  advisoryReason: {
+    color: tokens.colorNeutralForeground3,
+    fontSize: tokens.fontSizeBase200,
+  },
+  advisoryHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    marginBottom: tokens.spacingVerticalS,
   },
 });
 
@@ -534,6 +630,56 @@ export default function DlpPoliciesView({
     },
   });
 
+  const { execute: execUpdateDlp, isLoading: isUpdating } = useMutation(
+    (args: { name: string; data: ManagedPolicyV2 }) => updateDlpPolicy(args.name, args.data),
+    {
+      successMessage: 'DLP policy updated.',
+      onSuccess: () => {
+        setPage((p) => p.type === 'edit' ? { type: 'detail', policy: p.policy } : p);
+        void onRefresh();
+      },
+    },
+  );
+
+  function initEditMode(policy: PolicyV2) {
+    setDisplayName(policy.displayName ?? '');
+    setEnvType((policy.environmentType as ManagedPolicyV2environmentType | undefined) ?? 'AllEnvironments');
+    setDefaultClass((policy.defaultConnectorsClassification as ConnectorClassification | undefined) ?? 'General');
+    // Populate connectorItems from the policy's existing connectorGroups
+    const items: ConnectorItem[] = [];
+    for (const group of policy.connectorGroups ?? []) {
+      const cls = group.classification as ConnectorClassification;
+      for (const c of group.connectors ?? []) {
+        const id = c.id ?? '';
+        if (!id) continue;
+        items.push({ id, name: c.name || id, type: c.type ?? 'Microsoft.PowerApps/apis', classification: cls });
+      }
+    }
+    items.sort((a, b) => a.name.localeCompare(b.name));
+    setConnectorItems(items);
+    setConnectorSearch('');
+    setConnectorSourceEnvironmentId('policy');
+    setConnectorLoadError('');
+    setDisplayNameError('');
+    setPage({ type: 'edit', policy });
+  }
+
+  function handleEditSubmit() {
+    const trimmed = displayName.trim();
+    if (!trimmed) { setDisplayNameError('Display name is required.'); return; }
+    setDisplayNameError('');
+    const target = page.type === 'edit' ? page.policy : null;
+    if (!target) return;
+    const payload: ManagedPolicyV2 = {
+      displayName: trimmed,
+      environmentType: envType,
+      defaultConnectorsClassification: defaultClass,
+      environments: target.environments ?? [],
+      connectorGroups: getConnectorGroups(connectorItems),
+    };
+    void execUpdateDlp({ name: target.name, data: payload });
+  }
+
   function handleCreateSubmit() {
     const trimmedDisplayName = displayName.trim();
     if (!trimmedDisplayName) {
@@ -562,15 +708,18 @@ export default function DlpPoliciesView({
 
   let renderedPage: ReactElement;
 
-  if (page.type === 'create') {
+  if (page.type === 'create' || page.type === 'edit') {
+    const isEdit = page.type === 'edit';
+    const editPolicy = isEdit ? page.policy : null;
     renderedPage = (
       <>
         <div className={styles.header}>
-          <Button className={styles.backBtn} appearance="subtle" icon={<ArrowLeftRegular />} onClick={handleBackToList}>
-            Back to DLP Policies
+          <Button className={styles.backBtn} appearance="subtle" icon={<ArrowLeftRegular />}
+            onClick={isEdit ? () => setPage({ type: 'detail', policy: editPolicy! }) : handleBackToList}>
+            {isEdit ? 'Back to Policy' : 'Back to DLP Policies'}
           </Button>
           <div className={styles.listHeader}>
-            <Text className={styles.pageTitle}>New DLP Policy</Text>
+            <Text className={styles.pageTitle}>{isEdit ? `Edit: ${editPolicy?.displayName ?? editPolicy?.name}` : 'New DLP Policy'}</Text>
           </div>
         </div>
 
@@ -722,10 +871,14 @@ export default function DlpPoliciesView({
             ) : null}
 
             <div className={styles.actionBar}>
-              <Button appearance="primary" icon={isCreating ? <Spinner size="tiny" /> : <AddRegular />} disabled={isCreating} onClick={handleCreateSubmit}>
-                {isCreating ? 'Creating…' : 'Create Policy'}
+              <Button appearance="primary"
+                icon={(isEdit ? isUpdating : isCreating) ? <Spinner size="tiny" /> : (isEdit ? <EditRegular /> : <AddRegular />)}
+                disabled={isEdit ? isUpdating : isCreating}
+                onClick={isEdit ? handleEditSubmit : handleCreateSubmit}>
+                {isEdit ? (isUpdating ? 'Saving…' : 'Save Changes') : (isCreating ? 'Creating…' : 'Create Policy')}
               </Button>
-              <Button appearance="secondary" disabled={isCreating} onClick={handleBackToList}>
+              <Button appearance="secondary" disabled={isEdit ? isUpdating : isCreating}
+                onClick={isEdit ? () => setPage({ type: 'detail', policy: editPolicy! }) : handleBackToList}>
                 Cancel
               </Button>
             </div>
@@ -748,14 +901,23 @@ export default function DlpPoliciesView({
                 {getClassificationLabel(currentPolicy.defaultConnectorsClassification)}
               </Badge>
             </div>
-            <Button
-              appearance="subtle"
-              icon={<DeleteRegular />}
-              disabled={isDeleting}
-              onClick={() => setDeleteTarget(currentPolicy)}
-            >
+            <div style={{ display: 'flex', gap: tokens.spacingHorizontalS }}>
+              <Button
+                appearance="primary"
+                icon={<EditRegular />}
+                onClick={() => initEditMode(currentPolicy)}
+              >
+                Edit Policy
+              </Button>
+              <Button
+                appearance="subtle"
+                icon={<DeleteRegular />}
+                disabled={isDeleting}
+                onClick={() => setDeleteTarget(currentPolicy)}
+              >
               Delete
             </Button>
+            </div>
           </div>
         </div>
 
@@ -833,6 +995,73 @@ export default function DlpPoliciesView({
               </div>
             </Card>
           )}
+
+          {(() => {
+            const advisories = computeAdvisories(currentPolicy);
+            if (advisories.length === 0) return (
+              <Card>
+                <div className={styles.advisoryHeader}>
+                  <CheckmarkCircleRegular style={{ color: tokens.colorStatusSuccessForeground1, fontSize: '1.2rem' }} />
+                  <Text weight="semibold">No advisories — policy looks healthy</Text>
+                </div>
+              </Card>
+            );
+            const confidentialAdvisories = advisories.filter((a) => a.recommendedClassification === 'Confidential');
+            const blockedAdvisories = advisories.filter((a) => a.recommendedClassification === 'Blocked');
+            return (
+              <Card>
+                <div className={styles.formSection}>
+                  <div className={styles.advisoryHeader}>
+                    <WarningRegular style={{ color: tokens.colorStatusWarningForeground1, fontSize: '1.2rem' }} />
+                    <Text className={styles.sectionTitle}>{advisories.length} Advisor{advisories.length === 1 ? 'y' : 'ies'}</Text>
+                    <Text className={styles.helperText}>— Click <strong>Edit Policy</strong> to apply recommendations</Text>
+                  </div>
+
+                  {confidentialAdvisories.length > 0 && (
+                    <>
+                      <div className={styles.advisoryHeader}>
+                        <WarningRegular style={{ color: tokens.colorStatusWarningForeground1 }} />
+                        <Text weight="semibold">Move to Confidential (Business) — {confidentialAdvisories.length} connector{confidentialAdvisories.length !== 1 ? 's' : ''}</Text>
+                      </div>
+                      <Text className={styles.advisoryReason}>These Microsoft connectors handle business data and should not share a group with non-business connectors.</Text>
+                      {confidentialAdvisories.map((a) => (
+                        <div key={a.connectorName} className={styles.advisoryRow}>
+                          <div className={styles.advisoryBadges}>
+                            <Text weight="semibold">{a.connectorName}</Text>
+                            <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                            <Text>→</Text>
+                            <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                          </div>
+                          <Text className={styles.advisoryReason}>{a.reason}</Text>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {blockedAdvisories.length > 0 && (
+                    <>
+                      <div className={styles.advisoryHeader} style={{ marginTop: confidentialAdvisories.length > 0 ? tokens.spacingVerticalM : undefined }}>
+                        <ProhibitedRegular style={{ color: tokens.colorStatusDangerForeground1 }} />
+                        <Text weight="semibold">Consider Blocking — {blockedAdvisories.length} connector{blockedAdvisories.length !== 1 ? 's' : ''}</Text>
+                      </div>
+                      <Text className={styles.advisoryReason}>These consumer/personal connectors are commonly blocked in enterprise tenants to prevent data exfiltration.</Text>
+                      {blockedAdvisories.map((a) => (
+                        <div key={a.connectorName} className={styles.advisoryRow}>
+                          <div className={styles.advisoryBadges}>
+                            <Text weight="semibold">{a.connectorName}</Text>
+                            <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                            <Text>→</Text>
+                            <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                          </div>
+                          <Text className={styles.advisoryReason}>{a.reason}</Text>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </Card>
+            );
+          })()}
         </div>
       </>
     );

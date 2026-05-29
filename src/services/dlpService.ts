@@ -19,6 +19,11 @@ export async function createDlpPolicy(data: ManagedPolicyV2): Promise<PolicyV2> 
   return unwrap(result);
 }
 
+export async function updateDlpPolicy(policyName: string, data: ManagedPolicyV2): Promise<PolicyV2> {
+  const result = await PowerPlatformforAdminsService.UpdatePolicyV2(policyName, data);
+  return unwrap(result);
+}
+
 export async function deleteDlpPolicy(policyName: string): Promise<void> {
   const result = await PowerPlatformforAdminsService.DeletePolicyV2(policyName);
   unwrap(result);

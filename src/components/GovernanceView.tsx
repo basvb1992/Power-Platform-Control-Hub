@@ -70,6 +70,7 @@ const useStyles = makeStyles({
     gap: tokens.spacingVerticalM,
     minHeight: 0,
     flex: 1,
+    overflow: 'hidden',
   },
   tableWrapper: {
     flex: 1,
