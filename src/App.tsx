@@ -106,6 +106,7 @@ export default function App(): ReactElement {
     environments,
     counts,
     isLoading: dataLoading,
+    loadingLabel,
     error: dataError,
     refresh,
   } = useInventory();
@@ -151,7 +152,9 @@ export default function App(): ReactElement {
             </TabList>
           </div>
           <div className={styles.navRight}>
-            {(dataLoading || adminLoading) && <Spinner size="tiny" />}
+            {(dataLoading || adminLoading) && (
+              <Spinner size="tiny" label={loadingLabel ?? undefined} labelPosition="after" />
+            )}
             <Button
               appearance="subtle"
               icon={isDark ? <WeatherSunnyRegular /> : <WeatherMoonRegular />}

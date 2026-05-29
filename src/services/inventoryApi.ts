@@ -41,17 +41,54 @@ function normalizeResource(resource: ResourceItem): Resource {
   };
 }
 
-async function queryInventory(body: ResourceQueryRequest): Promise<ResourceQueryResponse> {
+async function queryInventoryPage(body: ResourceQueryRequest): Promise<ResourceQueryResponse> {
   const result = await PowerPlatformforAdminsV2Service.QueryResources(API_VERSION, body);
   return unwrapOperationResult(result);
 }
 
 /**
+ * Fetches all pages for a query, following skipToken continuation tokens.
+ * Calls onProgress(pageIndex, totalSoFar) after each page if provided.
+ */
+async function queryInventoryAll(
+  body: ResourceQueryRequest,
+  onProgress?: (page: number, count: number) => void,
+): Promise<ResourceItem[]> {
+  const allItems: ResourceItem[] = [];
+  let skipToken: string | undefined;
+  let page = 1;
+
+  do {
+    const pageBody: ResourceQueryRequest = {
+      ...body,
+      Options: skipToken
+        ? { Top: 1000, SkipToken: skipToken }       // omit Skip when using SkipToken
+        : { Top: 1000, Skip: 0, SkipToken: '' },
+    };
+
+    const response = await queryInventoryPage(pageBody);
+    const items = response.data ?? [];
+    allItems.push(...items);
+    onProgress?.(page, allItems.length);
+
+    // resultTruncated '0' means more data available; '1' (or missing) means done
+    const hasMore = response.resultTruncated === '0' && !!response.skipToken;
+    skipToken = hasMore ? response.skipToken : undefined;
+    page++;
+  } while (skipToken);
+
+  return allItems;
+}
+
+/**
  * Fetches all non-environment Power Platform resources (canvas apps, model-driven
  * apps, cloud flows, agents, agent flows, app builder apps, M365 agent flows,
- * and code apps) enriched with environment info.
+ * and code apps) enriched with environment info. Automatically follows skipToken
+ * pagination to retrieve more than 1 000 resources.
  */
-export async function fetchResources(): Promise<Resource[]> {
+export async function fetchResources(
+  onProgress?: (page: number, count: number) => void,
+): Promise<Resource[]> {
   const body: ResourceQueryRequest = {
     Options: { Top: 1000, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
@@ -90,14 +127,14 @@ export async function fetchResources(): Promise<Resource[]> {
     ],
   };
 
-  const result = await queryInventory(body);
-  return (result.data ?? []).map(normalizeResource);
+  const items = await queryInventoryAll(body, onProgress);
+  return items.map(normalizeResource);
 }
 
-/** Fetches all Power Platform environments. */
+/** Fetches all Power Platform environments, paginating if needed. */
 export async function fetchEnvironments(): Promise<Resource[]> {
   const body: ResourceQueryRequest = {
-    Options: { Top: 500, Skip: 0, SkipToken: '' },
+    Options: { Top: 1000, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
     Clauses: [
       c({ $type: 'where', FieldName: 'type', Operator: '==', Values: ["'microsoft.powerplatform/environments'"] }),
@@ -106,8 +143,8 @@ export async function fetchEnvironments(): Promise<Resource[]> {
     ],
   };
 
-  const result = await queryInventory(body);
-  return (result.data ?? []).map(normalizeResource);
+  const items = await queryInventoryAll(body);
+  return items.map(normalizeResource);
 }
 
 /** Computes resource counts from an already-fetched resource array. */

@@ -12,6 +12,7 @@ export interface UseInventoryResult {
   environments: Resource[];
   counts: ResourceCounts | null;
   isLoading: boolean;
+  loadingLabel: string | null;
   error: string | null;
   refresh: () => Promise<void>;
 }
@@ -21,15 +22,19 @@ export function useInventory(): UseInventoryResult {
   const [environments, setEnvironments] = useState<Resource[]>([]);
   const [counts, setCounts] = useState<ResourceCounts | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setIsLoading(true);
+    setLoadingLabel('Loading resources…');
     setError(null);
 
     try {
       const [fetchedResources, fetchedEnvironments] = await Promise.all([
-        fetchResources(),
+        fetchResources((page, count) => {
+          if (page > 1) setLoadingLabel(`Loading resources… (${count.toLocaleString()} so far)`);
+        }),
         fetchEnvironments(),
       ]);
 
@@ -42,6 +47,7 @@ export function useInventory(): UseInventoryResult {
       );
     } finally {
       setIsLoading(false);
+      setLoadingLabel(null);
     }
   }, []);
 
@@ -49,5 +55,5 @@ export function useInventory(): UseInventoryResult {
     void refresh();
   }, [refresh]);
 
-  return { resources, environments, counts, isLoading, error, refresh };
+  return { resources, environments, counts, isLoading, loadingLabel, error, refresh };
 }

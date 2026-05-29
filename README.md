@@ -205,7 +205,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ## ⚠️ Limitations & Known Issues
 
-- The Inventory API returns up to **1 000 resources** per query. For larger tenants, pagination via `skipToken` may be needed.
+- The Inventory API is automatically paginated via `skipToken` — all pages are fetched transparently, so tenants with thousands of resources are fully supported.
 - The app requires the signed-in user to be a **Power Platform tenant admin** to read cross-environment data.
 - **DLP policy connector groups do not auto-populate** — when creating or updating a policy, all connector assignments must be explicitly provided. The create page handles this by loading connectors from a selected environment. See [known issues](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations).
 - Canvas app definition export (msapp) uses an undocumented API and may be blocked by CORS or DLP policies in some tenants. Governance data (from the Power Apps for Admins connector) still loads in that case.
