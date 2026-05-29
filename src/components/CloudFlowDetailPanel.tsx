@@ -64,6 +64,7 @@ import type { AnalysisResult, AnalysisSeverity } from '../services/flowAnalyzer.
 import { useToastController, Toast, ToastTitle, ToastBody } from '@fluentui/react-components';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { extractMessage } from '../utils/errorUtils.ts';
+import { getContext } from '@microsoft/power-apps/app';
 
 
 
@@ -1058,6 +1059,36 @@ export default function CloudFlowDetailPanel({
     }
   }
 
+  async function handleAddSelfAsOwner() {
+    const ctx = await getContext();
+    const objectId = ctx.user.objectId;
+    if (!objectId) {
+      dispatchToast(
+        <Toast><ToastTitle>Cannot determine your user identity</ToastTitle><ToastBody>Your AAD object ID is not available in this session.</ToastBody></Toast>,
+        { intent: 'warning' }
+      );
+      return;
+    }
+    setActionLoading('addSelf');
+    try {
+      await modifyFlowOwners(envId, flowName, {
+        put: [{ properties: { principal: { id: objectId, type: 'User' } } }],
+      });
+      dispatchToast(
+        <Toast><ToastTitle>Added as owner</ToastTitle><ToastBody>You have been added as an owner of "{displayName}".</ToastBody></Toast>,
+        { intent: 'success' }
+      );
+      refreshOwners();
+    } catch (e) {
+      dispatchToast(
+        <Toast><ToastTitle>Failed to add yourself as owner</ToastTitle><ToastBody>{e instanceof Error ? e.message : 'Unknown error'}</ToastBody></Toast>,
+        { intent: 'error' }
+      );
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const props = flowDetails?.properties;
   const triggersSummary = props?.definitionSummary?.triggers ?? [];
   const actionsSummary = props?.definitionSummary?.actions ?? [];
@@ -1203,6 +1234,16 @@ export default function CloudFlowDetailPanel({
             size="small"
             title="Refresh"
           />
+          <Button
+            appearance="subtle"
+            icon={actionLoading === 'addSelf' ? <Spinner size="tiny" /> : <PersonAddRegular />}
+            disabled={actionLoading !== null}
+            onClick={() => void handleAddSelfAsOwner()}
+            size="small"
+            title="Add yourself as owner of this flow"
+          >
+            Add Yourself As Owner
+          </Button>
           <Button
             appearance="subtle"
             icon={<PersonAddRegular />}
