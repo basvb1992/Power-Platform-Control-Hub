@@ -1395,8 +1395,8 @@ export default function CloudFlowDetailPanel({
               <AccordionHeader expandIconPosition="end" icon={<FlowRegular />}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Triggers &amp; Actions
-                  {!detailsLoading && totalActions > 0 && (
-                    <Badge appearance="filled" size="small" color="informative">{totalActions}</Badge>
+                  {!detailsLoading && (triggersSummary.length + totalActions) > 0 && (
+                    <Badge appearance="filled" size="small" color="informative">{triggersSummary.length + totalActions}</Badge>
                   )}
                 </span>
               </AccordionHeader>
