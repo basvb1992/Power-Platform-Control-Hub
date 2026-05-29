@@ -732,36 +732,46 @@ function AddOwnerDialog({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Reset state when dialog opens
   useEffect(() => {
     if (!open) return;
     setSearch('');
     setSelectedUser(null);
     setSaveError(null);
     setLoadError(null);
-    setLoadingUsers(true);
-    // Load without server-side filter — the #EXT# contains() filter causes OData encoding issues
-    // Filter out external/guest accounts client-side instead
-    AaduserService.getAll({ top: 500, orderBy: ['displayname asc'] })
-      .then((res) => {
-        if (res.success && res.data) {
-          setUsers(res.data.filter(u => !u.userprincipalname?.includes('#EXT#')));
-        } else {
-          setLoadError(res.error?.message ?? 'Failed to load users');
-        }
-      })
-      .catch((e: unknown) => {
-        setLoadError(e instanceof Error ? e.message : 'Failed to load users');
-      })
-      .finally(() => setLoadingUsers(false));
+    setUsers([]);
   }, [open]);
 
-  const filteredUsers = users.filter((u) => {
-    if (!search.trim()) return true;
-    const q = search.toLowerCase();
-    return (u.displayname ?? '').toLowerCase().includes(q)
-      || (u.mail ?? '').toLowerCase().includes(q)
-      || (u.userprincipalname ?? '').toLowerCase().includes(q);
-  });
+  // Debounced server-side search — fires when user types ≥2 chars
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) {
+      setUsers([]);
+      return;
+    }
+    setLoadingUsers(true);
+    setLoadError(null);
+    const escaped = q.replace(/'/g, "''");
+    const filter = `startswith(displayname,'${escaped}') or startswith(userprincipalname,'${escaped}') or startswith(mail,'${escaped}')`;
+    const timer = setTimeout(() => {
+      AaduserService.getAll({ filter, top: 50, orderBy: ['displayname asc'] })
+        .then((res) => {
+          if (res.success && res.data) {
+            // Filter out external/guest accounts client-side
+            setUsers(res.data.filter(u => !u.userprincipalname?.includes('#EXT#')));
+          } else {
+            setLoadError(res.error?.message ?? 'Failed to search users');
+          }
+        })
+        .catch((e: unknown) => {
+          setLoadError(e instanceof Error ? e.message : 'Failed to search users');
+        })
+        .finally(() => setLoadingUsers(false));
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const filteredUsers = users;
 
   async function handleAdd() {
     if (!selectedUser) return;
@@ -805,18 +815,20 @@ function AddOwnerDialog({
                 style={{ width: '100%' }}
               />
               {loadingUsers ? (
-                <Spinner size="small" label="Loading users…" />
+                <Spinner size="small" label="Searching users…" />
               ) : loadError ? (
                 <MessageBar intent="error">
-                  <MessageBarBody>Failed to load users: {loadError}</MessageBarBody>
+                  <MessageBarBody>Search failed: {loadError}</MessageBarBody>
                 </MessageBar>
               ) : (
                 <div className={styles.userList}>
-                  {filteredUsers.length === 0 ? (
+                  {search.trim().length < 2 ? (
                     <div style={{ padding: tokens.spacingVerticalM, textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
-                      <Text style={{ fontSize: tokens.fontSizeBase200 }}>
-                        {search.trim() ? `No users found matching "${search}"` : 'No users found'}
-                      </Text>
+                      <Text style={{ fontSize: tokens.fontSizeBase200 }}>Type at least 2 characters to search</Text>
+                    </div>
+                  ) : filteredUsers.length === 0 ? (
+                    <div style={{ padding: tokens.spacingVerticalM, textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
+                      <Text style={{ fontSize: tokens.fontSizeBase200 }}>No users found matching &ldquo;{search}&rdquo;</Text>
                     </div>
                   ) : filteredUsers.map((u) => {
                     const isSelected = selectedUser?.aaduserid === u.aaduserid;
