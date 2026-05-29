@@ -9,6 +9,12 @@ import {
   Button,
   Card,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
   Dropdown,
   Field,
   Input,
@@ -29,7 +35,7 @@ import {
   ProhibitedRegular,
   CheckmarkCircleRegular,
   InfoRegular,
-  LightbulbRegular,
+  CheckmarkRegular,
 } from '@fluentui/react-icons';
 import type {
   ManagedPolicyV2,
@@ -563,6 +569,7 @@ export default function DlpPoliciesView({
   const [isLoadingConnectors, setIsLoadingConnectors] = useState(false);
   const [displayNameError, setDisplayNameError] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<PolicyV2 | null>(null);
+  const [showBestPracticesConfirm, setShowBestPracticesConfirm] = useState(false);
 
   const sortedPolicies = useMemo(
     () => [...dlpPolicies].sort((left, right) => (left.displayName || left.name).localeCompare(right.displayName || right.name)),
@@ -971,11 +978,11 @@ export default function DlpPoliciesView({
               </Button>
               <Button
                 appearance="subtle"
-                icon={<LightbulbRegular />}
-                disabled={isEdit ? isUpdating : isCreating}
-                onClick={() => setPage({ type: 'impact', returnToEdit: editPolicy ?? undefined })}
+                icon={<CheckmarkRegular />}
+                disabled={(isEdit ? isUpdating : isCreating) || connectorItems.length === 0}
+                onClick={() => setShowBestPracticesConfirm(true)}
               >
-                Preview Impact
+                Apply Best Practices
               </Button>
               <Button appearance="secondary" disabled={isEdit ? isUpdating : isCreating}
                 onClick={isEdit ? () => setPage({ type: 'detail', policy: editPolicy! }) : handleBackToList}>
@@ -984,10 +991,78 @@ export default function DlpPoliciesView({
             </div>
           </div>
         </div>
+
+        {/* Best Practices confirmation dialog */}
+        {(() => {
+          const pendingChanges = computeAdvisoriesFromItems(connectorItems);
+          return (
+            <Dialog open={showBestPracticesConfirm} onOpenChange={(_, d) => { if (!d.open) setShowBestPracticesConfirm(false); }}>
+              <DialogSurface style={{ maxWidth: '560px', width: '100%' }}>
+                <DialogBody>
+                  <DialogTitle>Apply Best Practices</DialogTitle>
+                  <DialogContent>
+                    {pendingChanges.length === 0 ? (
+                      <Text style={{ color: tokens.colorNeutralForeground2 }}>
+                        ✅ All loaded connectors already follow best practices — no changes needed.
+                      </Text>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM }}>
+                        <Text style={{ color: tokens.colorNeutralForeground2 }}>
+                          The following {pendingChanges.length} connector{pendingChanges.length !== 1 ? 's' : ''} will be reclassified:
+                        </Text>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, maxHeight: '320px', overflowY: 'auto' }}>
+                          {pendingChanges.map((adv, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS, padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalS}`, borderRadius: tokens.borderRadiusMedium, backgroundColor: tokens.colorNeutralBackground2 }}>
+                              <Badge appearance="tint" color={adv.currentClassification === 'Confidential' ? 'warning' : adv.currentClassification === 'Blocked' ? 'danger' : 'informative'} size="small">
+                                {adv.currentClassification}
+                              </Badge>
+                              <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>→</Text>
+                              <Badge appearance="filled" color={adv.recommendedClassification === 'Confidential' ? 'warning' : adv.recommendedClassification === 'Blocked' ? 'danger' : 'informative'} size="small">
+                                {adv.recommendedClassification}
+                              </Badge>
+                              <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300, fontWeight: tokens.fontWeightSemibold }}>{adv.connectorName}</Text>
+                            </div>
+                          ))}
+                        </div>
+                        <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                          These changes will be applied to the editor. You can review and adjust before saving.
+                        </Text>
+                      </div>
+                    )}
+                  </DialogContent>
+                  <DialogActions>
+                    <Button appearance="secondary" onClick={() => setShowBestPracticesConfirm(false)}>Cancel</Button>
+                    {pendingChanges.length > 0 && (
+                      <Button
+                        appearance="primary"
+                        icon={<CheckmarkRegular />}
+                        onClick={() => {
+                          setConnectorItems(prev => prev.map(item => {
+                            for (const rule of SHOULD_BE_CONFIDENTIAL)
+                              if (connectorMatchesAdvisory(item.id, rule.id) && item.classification !== 'Confidential')
+                                return { ...item, classification: 'Confidential' as ConnectorClassification };
+                            for (const rule of SHOULD_BE_BLOCKED)
+                              if (connectorMatchesAdvisory(item.id, rule.id) && item.classification !== 'Blocked')
+                                return { ...item, classification: 'Blocked' as ConnectorClassification };
+                            return item;
+                          }));
+                          setShowBestPracticesConfirm(false);
+                        }}
+                      >
+                        Apply {pendingChanges.length} Change{pendingChanges.length !== 1 ? 's' : ''}
+                      </Button>
+                    )}
+                  </DialogActions>
+                </DialogBody>
+              </DialogSurface>
+            </Dialog>
+          );
+        })()}
       </>
     );
   } else if (page.type === 'impact') {
-    const isFromEdit = Boolean(page.returnToEdit);
+    const returnToEdit = page.returnToEdit;
+    const isFromEdit = Boolean(returnToEdit);
     const blockedItems = connectorItems.filter((connector) => connector.classification === 'Blocked');
     const confidentialItems = connectorItems.filter((connector) => connector.classification === 'Confidential');
     const generalItems = connectorItems.filter((connector) => connector.classification === 'General');
@@ -1023,7 +1098,7 @@ export default function DlpPoliciesView({
       <>
         <div className={styles.header}>
           <Button className={styles.backBtn} appearance="subtle" icon={<ArrowLeftRegular />}
-            onClick={() => setPage(isFromEdit ? { type: 'edit', policy: page.returnToEdit! } : { type: 'create' })}>
+            onClick={() => setPage(isFromEdit ? { type: 'edit', policy: returnToEdit! } : { type: 'create' })}>
             {isFromEdit ? 'Back to Edit Policy' : 'Back to New Policy'}
           </Button>
           <div className={styles.listHeader}>
@@ -1142,7 +1217,7 @@ export default function DlpPoliciesView({
               <Card>
                 <div className={styles.impactSection}>
                   <div className={styles.advisoryHeader}>
-                    <LightbulbRegular style={{ color: tokens.colorBrandForeground1 }} />
+                    <InfoRegular style={{ color: tokens.colorBrandForeground1 }} />
                     <Text className={styles.sectionTitle}>Best Practice Advisories ({liveAdvisories.length})</Text>
                   </div>
                   <Text className={styles.helperText}>
@@ -1196,7 +1271,7 @@ export default function DlpPoliciesView({
                 {isFromEdit ? (isUpdating ? 'Saving…' : 'Save Changes') : (isCreating ? 'Creating…' : 'Create Policy')}
               </Button>
               <Button appearance="secondary"
-                onClick={() => setPage(isFromEdit ? { type: 'edit', policy: page.returnToEdit! } : { type: 'create' })}>
+                onClick={() => setPage(isFromEdit ? { type: 'edit', policy: returnToEdit! } : { type: 'create' })}>
                 Edit Policy
               </Button>
             </div>
