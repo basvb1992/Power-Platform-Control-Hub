@@ -43,6 +43,7 @@ import {
   PlugConnectedRegular,
   PersonAddRegular,
   SearchRegular,
+  OpenRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import type { FlowPermission } from '../generated/models/PowerAutomateManagementModel.ts';
@@ -565,10 +566,12 @@ function AnalysisSection({
   results,
   isLoading,
   hasDefinition,
+  flowTypeLabel = 'Flow',
 }: {
   results: AnalysisResult[];
   isLoading: boolean;
   hasDefinition: boolean;
+  flowTypeLabel?: string;
 }): ReactElement {
   const styles = useStyles();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -579,7 +582,7 @@ function AnalysisSection({
     return (
       <div className={styles.emptyState}>
         <InfoRegular fontSize={32} />
-        <Text>Flow definition not available — it may not have been returned by the API.</Text>
+        <Text>{flowTypeLabel} definition not available — the API did not return it for this flow type.</Text>
       </div>
     );
   }
@@ -865,6 +868,14 @@ export default function CloudFlowDetailPanel({
       case 'microsoft.powerautomate/m365agentflows': return 'M365 Agent Flow';
       default: return 'Cloud Flow';
     }
+  })();
+
+  // Build the Power Automate deep-link URL.
+  // envId may be "Default-<tenantGuid>" or a bare GUID — the make.powerautomate.com URL needs just the GUID.
+  const flowUrl = (() => {
+    const envGuid = envId.startsWith('Default-') ? envId.slice('Default-'.length) : envId;
+    if (!envGuid || !flowName) return null;
+    return `https://make.powerautomate.com/environments/${envGuid}/flows/${flowName}`;
   })();
 
   const [openSections, setOpenSections] = useState<string[]>(['details', 'analysis']);
@@ -1202,6 +1213,20 @@ export default function CloudFlowDetailPanel({
             Add Owner
           </Button>
           <div style={{ marginLeft: 'auto' }}>
+            {flowUrl && (
+              <Button
+                appearance="subtle"
+                icon={<OpenRegular />}
+                as="a"
+                href={flowUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                size="small"
+                title={`Open ${flowTypeLabel} in Power Automate`}
+              >
+                Open in Power Automate
+              </Button>
+            )}
             <Button
               appearance="subtle"
               icon={actionLoading === 'delete' ? <Spinner size="tiny" /> : <DeleteRegular />}
@@ -1410,6 +1435,7 @@ export default function CloudFlowDetailPanel({
                     results={analysisResults}
                     isLoading={detailsLoading}
                     hasDefinition={Boolean(flowDetails?.properties?.definition)}
+                    flowTypeLabel={flowTypeLabel}
                   />
                 </div>
               </AccordionPanel>

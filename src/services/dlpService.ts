@@ -2,6 +2,8 @@ import { PowerPlatformforAdminsService } from '../generated/services/PowerPlatfo
 import type { IOperationResult } from '@microsoft/power-apps/data';
 import type { ManagedPolicyV2, PolicyV2 } from '../generated/models/PowerPlatformforAdminsModel.ts';
 
+const DLP_API_VERSION = '2016-11-01';
+
 function unwrap<T>(result: IOperationResult<T>): T {
   if (!result.success || result.error) throw new Error(result.error?.message ?? 'Operation failed');
   return result.data;
@@ -10,7 +12,7 @@ function unwrap<T>(result: IOperationResult<T>): T {
 export type { PolicyV2 };
 
 export async function fetchDlpPolicies(): Promise<PolicyV2[]> {
-  const result = await PowerPlatformforAdminsService.ListPoliciesV2();
+  const result = await PowerPlatformforAdminsService.ListPoliciesV2(DLP_API_VERSION);
   return unwrap(result).value ?? [];
 }
 
@@ -20,7 +22,7 @@ export async function createDlpPolicy(data: ManagedPolicyV2): Promise<PolicyV2> 
 }
 
 export async function updateDlpPolicy(policyName: string, data: ManagedPolicyV2): Promise<PolicyV2> {
-  const result = await PowerPlatformforAdminsService.UpdatePolicyV2(policyName, data);
+  const result = await PowerPlatformforAdminsService.UpdatePolicyV2(policyName, data, DLP_API_VERSION);
   return unwrap(result);
 }
 

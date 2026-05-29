@@ -2,6 +2,8 @@ import type { PowerApp, ConnectionReference } from '../generated/models/PowerApp
 import { PowerAppsforAdminsService } from '../generated/services/PowerAppsforAdminsService.ts';
 import type { IOperationResult } from '@microsoft/power-apps/data';
 
+const POWERAPPS_API_VERSION = '2021-02-01';
+
 function unwrap<T>(result: IOperationResult<T>): T {
   if (!result.success || result.error) {
     throw new Error(result.error?.message ?? 'Operation failed');
@@ -46,7 +48,7 @@ export async function getCanvasAppAdminInfo(
   environmentId: string,
   appId: string,
 ): Promise<CanvasAppAdminInfo> {
-  const result = await PowerAppsforAdminsService.Get_AdminApp(environmentId, appId);
+  const result = await PowerAppsforAdminsService.Get_AdminApp(environmentId, appId, POWERAPPS_API_VERSION);
   const app: PowerApp = unwrap(result);
   const p = app.properties ?? {};
 
@@ -78,7 +80,7 @@ export async function getAppRoleAssignments(
   environmentId: string,
   appId: string,
 ): Promise<AppRoleAssignment[]> {
-  const result = await PowerAppsforAdminsService.Get_AdminAppRoleAssignment(environmentId, appId);
+  const result = await PowerAppsforAdminsService.Get_AdminAppRoleAssignment(environmentId, appId, POWERAPPS_API_VERSION);
   const raw = unwrap(result) as { value?: Array<Record<string, unknown>> };
   const items = raw?.value ?? [];
 
