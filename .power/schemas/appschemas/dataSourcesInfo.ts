@@ -12,13 +12,6 @@ export const dataSourcesInfo = {
     "dataSourceType": "Dataverse",
     "apis": {}
   },
-  "ppa_resourcetombstones": {
-    "tableId": "",
-    "version": "",
-    "primaryKey": "ppa_resourcetombstoneid",
-    "dataSourceType": "Dataverse",
-    "apis": {}
-  },
   "flowmanagement": {
     "tableId": "",
     "version": "",
