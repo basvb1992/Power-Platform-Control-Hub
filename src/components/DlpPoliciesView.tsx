@@ -367,6 +367,9 @@ const useStyles = makeStyles({
     display: 'flex',
     flexWrap: 'wrap',
     gap: tokens.spacingHorizontalS,
+    maxHeight: '160px',
+    overflowY: 'auto',
+    paddingRight: tokens.spacingHorizontalXS,
   },
   accordion: {
     display: 'flex',
@@ -1417,17 +1420,19 @@ export default function DlpPoliciesView({
                         <Text weight="semibold">Move to Confidential (Business) — {confidentialAdvisories.length} connector{confidentialAdvisories.length !== 1 ? 's' : ''}</Text>
                       </div>
                       <Text className={styles.advisoryReason}>These Microsoft connectors handle business data and should not share a group with non-business connectors.</Text>
-                      {confidentialAdvisories.map((a) => (
-                        <div key={a.connectorName} className={styles.advisoryRow}>
-                          <div className={styles.advisoryBadges}>
-                            <Text weight="semibold">{a.connectorName}</Text>
-                            <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
-                            <Text>→</Text>
-                            <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                      <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS }}>
+                        {confidentialAdvisories.map((a) => (
+                          <div key={a.connectorName} className={styles.advisoryRow}>
+                            <div className={styles.advisoryBadges}>
+                              <Text weight="semibold">{a.connectorName}</Text>
+                              <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                              <Text>→</Text>
+                              <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                            </div>
+                            <Text className={styles.advisoryReason}>{a.reason}</Text>
                           </div>
-                          <Text className={styles.advisoryReason}>{a.reason}</Text>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </>
                   )}
 
@@ -1438,17 +1443,19 @@ export default function DlpPoliciesView({
                         <Text weight="semibold">Consider Blocking — {blockedAdvisories.length} connector{blockedAdvisories.length !== 1 ? 's' : ''}</Text>
                       </div>
                       <Text className={styles.advisoryReason}>These consumer/personal connectors are commonly blocked in enterprise tenants to prevent data exfiltration.</Text>
-                      {blockedAdvisories.map((a) => (
-                        <div key={a.connectorName} className={styles.advisoryRow}>
-                          <div className={styles.advisoryBadges}>
-                            <Text weight="semibold">{a.connectorName}</Text>
-                            <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
-                            <Text>→</Text>
-                            <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                      <div style={{ maxHeight: '240px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS }}>
+                        {blockedAdvisories.map((a) => (
+                          <div key={a.connectorName} className={styles.advisoryRow}>
+                            <div className={styles.advisoryBadges}>
+                              <Text weight="semibold">{a.connectorName}</Text>
+                              <Badge appearance="tint" color={getClassificationColor(a.currentClassification)} size="small">{getClassificationLabel(a.currentClassification)}</Badge>
+                              <Text>→</Text>
+                              <Badge appearance="tint" color={getClassificationColor(a.recommendedClassification)} size="small">{getClassificationLabel(a.recommendedClassification)}</Badge>
+                            </div>
+                            <Text className={styles.advisoryReason}>{a.reason}</Text>
                           </div>
-                          <Text className={styles.advisoryReason}>{a.reason}</Text>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </>
                   )}
                 </div>
