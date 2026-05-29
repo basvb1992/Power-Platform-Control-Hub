@@ -6,7 +6,9 @@ import type {
   CrossTenantConnectionReport,
   EnvironmentGroup as GeneratedEnvironmentGroup,
   GetConnectorByIdResponse,
+  Policy as GeneratedPolicy,
   Principal,
+  RuleSetDto,
   WebsiteDto,
 } from '../generated/models/PowerPlatformforAdminsV2Model.ts';
 import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
@@ -16,8 +18,11 @@ import type {
   Connection,
   CrossTenantReport,
   EnvironmentGroup,
+  GovernanceRuleSet,
+  PolicyRuleAssignment,
   PowerPagesWebsite,
   RoleAssignment,
+  RuleBasedPolicy,
 } from '../types/admin.ts';
 
 const API_VERSION = '2024-10-01';
@@ -68,7 +73,7 @@ function mapBillingPolicy(policy: BillingPolicyResponseModel): BillingPolicy {
   return {
     id: policy.id ?? '',
     name: policy.name ?? '',
-    status: policy.status ?? 'Unknown',
+    status: (policy.status ?? 'Disabled') as BillingPolicy['status'],
     location: policy.location ?? '',
     billingInstrument: {
       subscriptionId: policy.billingInstrument?.subscriptionId ?? '',
@@ -151,10 +156,10 @@ function mapWebsite(website: WebsiteDto): PowerPagesWebsite {
     customHostNames: website.customHostNames,
     subdomain: website.subdomain,
     packageInstallStatus: website.packageInstallStatus ?? '',
-    type: website.type ?? '',
+    type: (website.type ?? 'Trial') as 'Trial' | 'Production',
     trialExpiringInDays: website.trialExpiringInDays,
     packageVersion: website.packageVersion,
-    siteVisibility: website.siteVisibility ?? '',
+    siteVisibility: (website.siteVisibility ?? 'private') as 'public' | 'private',
     status: website.status ?? '',
   };
 }
@@ -230,4 +235,58 @@ export async function addEnvironmentToGroup(groupId: string, environmentId: stri
 export async function removeEnvironmentFromGroup(groupId: string, environmentId: string): Promise<void> {
   const result = await PowerPlatformforAdminsV2Service.RemoveEnvironmentFromGroup(groupId, environmentId, API_VERSION);
   unwrapOperationResult(result);
+}
+
+function mapRuleBasedPolicy(p: GeneratedPolicy): RuleBasedPolicy {
+  return {
+    id: p.id ?? '',
+    name: p.name ?? '',
+    lastModified: p.lastModified ?? '',
+    ruleSetCount: p.ruleSetCount ?? 0,
+    ruleSets: (p.ruleSets ?? []).map((rs) => ({
+      id: rs.id ?? '',
+      version: rs.version ?? '',
+      inputs: rs.inputs ?? {},
+    })),
+  };
+}
+
+export async function fetchRuleBasedPolicies(): Promise<RuleBasedPolicy[]> {
+  const result = await PowerPlatformforAdminsV2Service.ListRuleBasedPolicies(API_VERSION);
+  return (unwrapOperationResult(result).value ?? []).map(mapRuleBasedPolicy);
+}
+
+export async function fetchAllRuleAssignments(): Promise<PolicyRuleAssignment[]> {
+  const result = await PowerPlatformforAdminsV2Service.ListRuleAssignments(true, API_VERSION);
+  return (unwrapOperationResult(result).value ?? [])
+    .filter((a) => a.policyId && a.resourceId)
+    .map((a) => ({
+      policyId: a.policyId!,
+      resourceId: a.resourceId!,
+      resourceType: (a.resourceType ?? 'NotSpecified') as PolicyRuleAssignment['resourceType'],
+      ruleSetCount: a.ruleSetCount ?? 0,
+    }));
+}
+
+function mapGovernanceRuleSet(rs: RuleSetDto): GovernanceRuleSet {
+  return {
+    id: rs.id ?? '',
+    lastModified: rs.lastModified ?? '',
+    environmentFilterType: rs.environmentFilter?.type ?? '',
+    environmentFilterValues: (rs.environmentFilter?.values ?? []).map((v) => ({
+      id: v.id ?? '',
+      type: v.type ?? '',
+      name: v.name ?? '',
+    })),
+    parameters: (rs.parameters ?? []).map((p) => ({
+      type: p.type ?? '',
+      resourceType: p.resourceType ?? '',
+      rules: (p.value ?? []).map((r) => ({ id: r.id ?? '', value: r.value ?? '' })),
+    })),
+  };
+}
+
+export async function fetchRuleSets(): Promise<GovernanceRuleSet[]> {
+  const result = await PowerPlatformforAdminsV2Service.GetRuleSetListForTenant(API_VERSION);
+  return (unwrapOperationResult(result).value ?? []).map(mapGovernanceRuleSet);
 }

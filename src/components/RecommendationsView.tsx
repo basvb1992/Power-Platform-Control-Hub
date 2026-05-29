@@ -15,9 +15,7 @@ import {
   SearchRegular,
   LightbulbRegular,
   ClockRegular,
-  ArrowClockwiseRegular,
   BoxRegular,
-  PlayRegular,
   ListRegular,
 } from '@fluentui/react-icons';
 import type { AdvisorRecommendation } from '../types/admin.ts';
@@ -37,12 +35,16 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalXL,
     height: '100%',
     overflow: 'hidden',
+    '@media (max-width: 768px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   toolbar: {
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
     flexShrink: 0,
+    flexWrap: 'wrap',
   },
   title: {
     fontSize: tokens.fontSizeBase500,
@@ -63,6 +65,9 @@ const useStyles = makeStyles({
     paddingBottom: tokens.spacingVerticalL,
     alignContent: 'start',
     alignItems: 'start',
+    '@media (max-width: 480px)': {
+      gridTemplateColumns: '1fr',
+    },
   },
   card: {
     display: 'flex',
@@ -150,8 +155,17 @@ const useStyles = makeStyles({
 
 function formatScenarioName(value: string): string {
   return value
+    // Replace underscores/hyphens with spaces
+    .replace(/[_-]/g, ' ')
+    // Split lowercase prepositions embedded between words (e.g. "Accessfor Agents" or "AccessforAgents")
+    .replace(/([A-Za-z])(for|on|with|by|in|to|at|of)([A-Z])/g, '$1 $2 $3')
+    // Standard camelCase split: lowercase→uppercase and UPPER→Uppercase
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
     .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
+    // Safety net: fix any remaining "letterPrep" patterns (e.g. "Accessfor" not caught above)
+    .replace(/([a-z])(for|on|with|by|in|to|at|of)\b/gi, '$1 $2')
+    // Collapse multiple spaces
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -241,11 +255,6 @@ export default function RecommendationsView({
                     <ClockRegular style={{ fontSize: '0.85rem' }} />
                     <Text style={{ fontSize: tokens.fontSizeBase200 }}>Last refreshed</Text>
                     <Text className={styles.dateValue}>{formatDate(rec.details.lastRefreshedTimestamp)}</Text>
-                  </div>
-                  <div className={styles.dateRow}>
-                    <ArrowClockwiseRegular style={{ fontSize: '0.85rem' }} />
-                    <Text style={{ fontSize: tokens.fontSizeBase200 }}>Next refresh</Text>
-                    <Text className={styles.dateValue}>{formatDate(rec.details.expectedNextRefreshTimestamp)}</Text>
                   </div>
                 </div>
               </div>

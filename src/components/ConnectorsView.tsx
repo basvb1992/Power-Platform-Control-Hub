@@ -41,6 +41,9 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalXL,
     height: '100%',
     overflow: 'hidden',
+    '@media (max-width: 768px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   toolbar: {
     display: 'flex',
@@ -64,6 +67,7 @@ const useStyles = makeStyles({
   tableWrapper: {
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'auto',
     border: `1px solid ${tokens.colorNeutralStroke2}`,
     borderRadius: tokens.borderRadiusMedium,
     backgroundColor: tokens.colorNeutralBackground1,
@@ -71,6 +75,7 @@ const useStyles = makeStyles({
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    minWidth: '600px',
   },
   th: {
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
@@ -83,6 +88,25 @@ const useStyles = makeStyles({
     borderBottom: `2px solid ${tokens.colorNeutralStroke2}`,
     backgroundColor: tokens.colorNeutralBackground3,
     whiteSpace: 'nowrap',
+  },
+  thSortable: {
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    textAlign: 'left',
+    fontSize: tokens.fontSizeBase200,
+    fontWeight: tokens.fontWeightSemibold,
+    color: tokens.colorNeutralForeground3,
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+    borderBottom: `2px solid ${tokens.colorNeutralStroke2}`,
+    backgroundColor: tokens.colorNeutralBackground3,
+    whiteSpace: 'nowrap',
+    cursor: 'pointer',
+    userSelect: 'none',
+    ':hover': { color: tokens.colorNeutralForeground1 },
+  },
+  count: {
+    fontSize: tokens.fontSizeBase200,
+    color: tokens.colorNeutralForeground3,
   },
   td: {
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
@@ -118,7 +142,7 @@ export default function ConnectorsView({
 }: ConnectorsViewProps): ReactElement {
   const styles = useStyles();
   const [selectedEnvironmentId, setSelectedEnvironmentId] = useState('');
-  const [activeTab, setActiveTab] = useState<ConnectorsTab>('connections');
+  const [activeTab, setActiveTab] = useState<ConnectorsTab>('connectors');
   const [connectionsByEnvironment, setConnectionsByEnvironment] = useState<Record<string, Connection[]>>({});
   const [connectorsByEnvironment, setConnectorsByEnvironment] = useState<Record<string, Connection[]>>({});
   const [websitesByEnvironment, setWebsitesByEnvironment] = useState<Record<string, PowerPagesWebsite[]>>({});
@@ -128,6 +152,8 @@ export default function ConnectorsView({
   const [pendingConnectionId, setPendingConnectionId] = useState<string | null>(null);
   const [publisherFilter, setPublisherFilter] = useState('');
   const [tierFilter, setTierFilter] = useState('');
+  const [sortField, setSortField] = useState<'displayName' | 'publisher' | 'tier' | 'createdTime'>('displayName');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
   const { execute: execDeleteConnection } = useMutation(deleteConnection, {
     successMessage: 'Connection deleted.',
@@ -235,14 +261,6 @@ export default function ConnectorsView({
     setTierFilter('');
   }, [selectedEnvironmentId, activeTab]);
 
-  const connectorPublishers = useMemo(() => {
-    const pubs = new Set<string>();
-    for (const c of connectorsByEnvironment[selectedEnvironmentId] ?? []) {
-      if (c.properties.publisher) pubs.add(c.properties.publisher);
-    }
-    return Array.from(pubs).sort();
-  }, [connectorsByEnvironment, selectedEnvironmentId]);
-
   const connectorTiers = useMemo(() => {
     const tiers = new Set<string>();
     for (const c of connectorsByEnvironment[selectedEnvironmentId] ?? []) {
@@ -251,14 +269,36 @@ export default function ConnectorsView({
     return Array.from(tiers).sort();
   }, [connectorsByEnvironment, selectedEnvironmentId]);
 
+  function handleConnectorSort(field: typeof sortField) {
+    if (sortField === field) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    else { setSortField(field); setSortDir('asc'); }
+  }
+
+  function sortIndicator(field: typeof sortField) {
+    if (sortField !== field) return ' ↕';
+    return sortDir === 'asc' ? ' ↑' : ' ↓';
+  }
+
   const displayedConnections = useMemo(() => {
     if (activeTab !== 'connectors') return currentConnections;
-    return currentConnections.filter((c) => {
-      const matchesPublisher = !publisherFilter || c.properties.publisher === publisherFilter;
+    const filtered = currentConnections.filter((c) => {
+      const pub = (c.properties.publisher ?? '').toLowerCase();
+      const matchesPublisher = !publisherFilter
+        || (publisherFilter === 'microsoft' && pub.includes('microsoft'))
+        || (publisherFilter === 'thirdparty' && !pub.includes('microsoft'));
       const matchesTier = !tierFilter || c.properties.tier === tierFilter;
       return matchesPublisher && matchesTier;
     });
-  }, [activeTab, currentConnections, publisherFilter, tierFilter]);
+    return [...filtered].sort((a, b) => {
+      let aVal = '', bVal = '';
+      if (sortField === 'displayName') { aVal = a.properties.displayName ?? ''; bVal = b.properties.displayName ?? ''; }
+      else if (sortField === 'publisher') { aVal = a.properties.publisher ?? ''; bVal = b.properties.publisher ?? ''; }
+      else if (sortField === 'tier') { aVal = a.properties.tier ?? ''; bVal = b.properties.tier ?? ''; }
+      else { aVal = a.properties.createdTime ?? ''; bVal = b.properties.createdTime ?? ''; }
+      const cmp = aVal.localeCompare(bVal);
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [activeTab, currentConnections, publisherFilter, tierFilter, sortField, sortDir]);
 
   const selectedEnvironmentValue = selectedEnvironmentLabel || undefined;
 
@@ -339,11 +379,23 @@ export default function ConnectorsView({
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={styles.th}>Display Name</th>
-              <th className={styles.th}>Publisher</th>
+              <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('displayName') : undefined}>
+                Display Name{activeTab === 'connectors' && sortIndicator('displayName')}
+              </th>
+              <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('publisher') : undefined}>
+                Publisher{activeTab === 'connectors' && sortIndicator('publisher')}
+              </th>
               <th className={styles.th}>Custom API</th>
-              <th className={styles.th}>Created</th>
-              <th className={styles.th}>Type (Tier)</th>
+              <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('createdTime') : undefined}>
+                Created{activeTab === 'connectors' && sortIndicator('createdTime')}
+              </th>
+              <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('tier') : undefined}>
+                Type (Tier){activeTab === 'connectors' && sortIndicator('tier')}
+              </th>
               {activeTab === 'connections' && <th className={styles.th} style={{ width: '60px' }}></th>}
             </tr>
           </thead>
@@ -410,17 +462,22 @@ export default function ConnectorsView({
     <div className={styles.root}>
       <div className={styles.toolbar}>
         <Text className={styles.title}>Connectors</Text>
-        {activeTab === 'connectors' && connectorPublishers.length > 0 && (
+        {activeTab === 'connectors' && (
+          <Text className={styles.count}>{displayedConnections.length} connector(s)</Text>
+        )}
+        {activeTab === 'connections' && currentConnections.length > 0 && (
+          <Text className={styles.count}>{currentConnections.length} connection(s)</Text>
+        )}
+        {activeTab === 'connectors' && (
           <Dropdown
             placeholder="All publishers"
-            value={publisherFilter || undefined}
+            value={publisherFilter === 'microsoft' ? 'Microsoft' : publisherFilter === 'thirdparty' ? 'Third Party' : undefined}
             selectedOptions={publisherFilter ? [publisherFilter] : []}
             onOptionSelect={(_, data) => setPublisherFilter(data.optionValue === publisherFilter ? '' : (data.optionValue ?? ''))}
-            style={{ minWidth: '180px' }}
+            style={{ minWidth: '160px' }}
           >
-            {connectorPublishers.map((pub) => (
-              <Option key={pub} value={pub}>{pub}</Option>
-            ))}
+            <Option value="microsoft">Microsoft</Option>
+            <Option value="thirdparty">Third Party</Option>
           </Dropdown>
         )}
         {activeTab === 'connectors' && connectorTiers.length > 0 && (
@@ -456,11 +513,11 @@ export default function ConnectorsView({
           selectedValue={activeTab}
           onTabSelect={(_, data) => setActiveTab(data.value as ConnectorsTab)}
         >
-          <Tab value="connections" icon={<PlugConnectedRegular />}>
-            Connections
-          </Tab>
           <Tab value="connectors" icon={<TableRegular />}>
             Connectors
+          </Tab>
+          <Tab value="connections" icon={<PlugConnectedRegular />}>
+            Connections
           </Tab>
           <Tab value="websites" icon={<GlobeRegular />}>
             Power Pages Websites

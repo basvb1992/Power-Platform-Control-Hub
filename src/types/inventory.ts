@@ -58,6 +58,28 @@ export const RESOURCE_TYPE_LABELS: Record<string, string> = {
   'microsoft.powerplatform/environments': 'Environment',
 };
 
+/** Shorter badge labels so they always fit on one line. */
+export const RESOURCE_TYPE_SHORT_LABELS: Record<string, string> = {
+  'microsoft.powerapps/canvasapps': 'Canvas App',
+  'microsoft.powerapps/modeldrivenapps': 'Model-Driven',
+  'microsoft.powerautomate/cloudflows': 'Cloud Flow',
+  'microsoft.copilotstudio/agents': 'Agent',
+  'microsoft.powerautomate/agentflows': 'Agent Flow',
+  'microsoft.powerapps/apps': 'App Builder',
+  'microsoft.powerautomate/m365agentflows': 'M365 Flow',
+  'microsoft.powerapps/codeapps': 'Code App',
+};
+
+type BadgeColor = 'brand' | 'informative' | 'success' | 'warning' | 'severe' | 'important' | 'danger';
+
+export function getTypeBadgeColor(type: string): BadgeColor {
+  const t = type.toLowerCase();
+  if (t === 'microsoft.copilotstudio/agents') return 'success';
+  if (t.includes('flow')) return 'informative';
+  if (t.includes('apps') || t.includes('codeapps') || t.includes('canvasapps') || t.includes('modeldrivenapps')) return 'brand';
+  return 'brand';
+}
+
 export const RESOURCE_TYPES_FILTER = [
   { key: 'all', label: 'All Types' },
   { key: 'microsoft.powerapps/canvasapps', label: 'Canvas Apps' },

@@ -16,8 +16,8 @@ export async function enableEnvironment(environmentId: string): Promise<void> {
   unwrapOperationResult(result);
 }
 
-export async function disableEnvironment(environmentId: string): Promise<void> {
-  const result = await PowerPlatformforAdminsV2Service.DisableEnvironment(environmentId, API);
+export async function disableEnvironment(environmentId: string, reason = 'UserRequested'): Promise<void> {
+  const result = await PowerPlatformforAdminsV2Service.DisableEnvironment(environmentId, API, undefined, undefined, { reason });
   unwrapOperationResult(result);
 }
 

@@ -67,6 +67,9 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalXL,
     height: '100%',
     overflow: 'hidden',
+    '@media (max-width: 768px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   toolbar: {
     display: 'flex',
@@ -93,6 +96,9 @@ const useStyles = makeStyles({
     paddingBottom: tokens.spacingVerticalL,
     alignContent: 'start',
     alignItems: 'start',
+    '@media (max-width: 480px)': {
+      gridTemplateColumns: '1fr',
+    },
   },
   card: {
     display: 'flex',

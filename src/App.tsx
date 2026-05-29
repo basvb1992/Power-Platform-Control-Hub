@@ -23,6 +23,7 @@ import {
   GridRegular,
   WeatherMoonRegular,
   WeatherSunnyRegular,
+  LayerRegular,
 } from '@fluentui/react-icons';
 import { useAdminData } from './hooks/useAdminData.ts';
 import { useInventory } from './hooks/useInventory.ts';
@@ -31,10 +32,11 @@ import ResourcesView from './components/ResourcesView.tsx';
 import EnvironmentsView from './components/EnvironmentsView.tsx';
 import RecommendationsView from './components/RecommendationsView.tsx';
 import GovernanceView from './components/GovernanceView.tsx';
+import EnvironmentGroupsView from './components/EnvironmentGroupsView.tsx';
 import ConnectorsView from './components/ConnectorsView.tsx';
 import ppaLogo from './assets/ppa-logo.png';
 
-type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'connectors';
+type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'envgroups' | 'connectors';
 
 const useStyles = makeStyles({
   shell: {
@@ -110,10 +112,13 @@ export default function App(): ReactElement {
 
   const {
     recommendations,
-    roleAssignments,
     envGroups,
     billingPolicies,
     crossTenantReports,
+    ruleBasedPolicies,
+    ruleAssignments,
+    ruleSets,
+    dlpPolicies,
     isLoading: adminLoading,
     error: adminError,
     refresh: refreshAdmin,
@@ -140,7 +145,8 @@ export default function App(): ReactElement {
               <Tab value="resources" icon={<TableRegular />}>Resources</Tab>
               <Tab value="environments" icon={<GlobeRegular />}>Environments</Tab>
               <Tab value="recommendations" icon={<LightbulbRegular />}>Recommendations</Tab>
-              <Tab value="governance" icon={<ShieldRegular />}>Governance</Tab>
+              <Tab value="governance" icon={<ShieldRegular />}>Tenant Policies</Tab>
+              <Tab value="envgroups" icon={<LayerRegular />}>Environment Groups</Tab>
               <Tab value="connectors" icon={<PlugConnectedRegular />}>Connectors</Tab>
             </TabList>
           </div>
@@ -199,10 +205,22 @@ export default function App(): ReactElement {
           )}
           {activeTab === 'governance' && (
             <GovernanceView
-              roleAssignments={roleAssignments}
-              envGroups={envGroups}
               billingPolicies={billingPolicies}
               crossTenantReports={crossTenantReports}
+              dlpPolicies={dlpPolicies}
+              environments={environments}
+              isLoading={adminLoading}
+              error={adminError}
+              onRefreshAdmin={refreshAdmin}
+            />
+          )}
+          {activeTab === 'envgroups' && (
+            <EnvironmentGroupsView
+              environments={environments}
+              envGroups={envGroups}
+              ruleBasedPolicies={ruleBasedPolicies}
+              ruleAssignments={ruleAssignments}
+              ruleSets={ruleSets}
               isLoading={adminLoading}
               error={adminError}
               onRefreshAdmin={refreshAdmin}

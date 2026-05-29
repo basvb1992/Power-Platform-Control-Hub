@@ -13,10 +13,13 @@ import {
   MessageBar,
   MessageBarBody,
 } from '@fluentui/react-components';
-import { DeleteRegular, SearchRegular, ArrowClockwiseRegular } from '@fluentui/react-icons';
+import { DeleteRegular, SearchRegular, ArrowClockwiseRegular, OpenRegular } from '@fluentui/react-icons';
+import CloudFlowDetailPanel from './CloudFlowDetailPanel.tsx';
+import CanvasAppDetailPanel from './CanvasAppDetailPanel.tsx';
 import type { Resource } from '../types/inventory.ts';
-import { RESOURCE_TYPE_LABELS, RESOURCE_TYPES_FILTER } from '../types/inventory.ts';
+import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_SHORT_LABELS, RESOURCE_TYPES_FILTER, getTypeBadgeColor } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
+import { extractMessage } from '../utils/errorUtils.ts';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent } from '../services/resourceMutations.ts';
 import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
@@ -39,6 +42,9 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalXL,
     height: '100%',
     overflow: 'hidden',
+    '@media (max-width: 768px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   toolbar: {
     display: 'flex',
@@ -60,6 +66,7 @@ const useStyles = makeStyles({
   tableWrapper: {
     flex: 1,
     overflowY: 'auto',
+    overflowX: 'auto',
     border: `1px solid ${tokens.colorNeutralStroke2}`,
     borderRadius: tokens.borderRadiusMedium,
     backgroundColor: tokens.colorNeutralBackground1,
@@ -67,6 +74,8 @@ const useStyles = makeStyles({
   table: {
     width: '100%',
     borderCollapse: 'collapse',
+    tableLayout: 'fixed',
+    minWidth: '640px',
   },
   th: {
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
@@ -88,6 +97,13 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground1,
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     verticalAlign: 'middle',
+    overflow: 'hidden',
+  },
+  tdText: {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    display: 'block',
   },
   centered: {
     display: 'flex',
@@ -111,6 +127,13 @@ const DELETABLE_TYPES = new Set([
   'microsoft.copilotstudio/agents',
 ]);
 
+const DETAIL_PANEL_TYPES = new Set([
+  'microsoft.powerautomate/cloudflows',
+  'microsoft.powerautomate/agentflows',
+  'microsoft.powerautomate/m365agentflows',
+  'microsoft.powerapps/apps',
+]);
+
 export default function ResourcesView({
   resources,
   isLoading,
@@ -126,6 +149,7 @@ export default function ResourcesView({
   const [confirmDelete, setConfirmDelete] = useState<Resource | null>(null);
   const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
   const [deletedNames, setDeletedNames] = useState<Set<string>>(new Set());
+  const [detailResource, setDetailResource] = useState<Resource | null>(null);
 
   // Load tombstones from Dataverse (+ localStorage fallback) on mount
   useEffect(() => {
@@ -196,6 +220,36 @@ export default function ResourcesView({
     );
   }
 
+  // Full-page detail view
+  if (detailResource) {
+    const typeLower = detailResource.type.toLowerCase();
+    if (typeLower === 'microsoft.powerapps/apps') {
+      return (
+        <CanvasAppDetailPanel
+          resource={detailResource}
+          onClose={() => setDetailResource(null)}
+        />
+      );
+    }
+    // Cloud flows, agent flows, and M365 agent flows all use the same panel
+    if (
+      typeLower === 'microsoft.powerautomate/cloudflows' ||
+      typeLower === 'microsoft.powerautomate/agentflows' ||
+      typeLower === 'microsoft.powerautomate/m365agentflows'
+    ) {
+      return (
+        <CloudFlowDetailPanel
+          resource={detailResource}
+          onClose={() => setDetailResource(null)}
+          onDeleted={(name) => {
+            setDeletedNames((prev) => new Set([...prev, name]));
+            setDetailResource(null);
+          }}
+        />
+      );
+    }
+  }
+
   return (
     <div className={styles.root}>
       <div className={styles.toolbar}>
@@ -231,12 +285,20 @@ export default function ResourcesView({
 
       {error && (
         <MessageBar intent="error">
-          <MessageBarBody>{error}</MessageBarBody>
+          <MessageBarBody>{extractMessage(error)}</MessageBarBody>
         </MessageBar>
       )}
 
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
+          <colgroup>
+            <col style={{ width: '30%' }} />
+            <col style={{ width: '120px' }} />
+            <col style={{ width: '27%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '90px' }} />
+            <col style={{ width: '44px' }} />
+          </colgroup>
           <thead>
             <tr>
               <th className={styles.th} onClick={() => handleSort('name')}>
@@ -254,7 +316,7 @@ export default function ResourcesView({
               <th className={styles.th} onClick={() => handleSort('created')}>
                 Created{sortIndicator('created')}
               </th>
-              <th className={styles.th} style={{ width: '60px' }}></th>
+              <th className={styles.th}></th>
             </tr>
           </thead>
           <tbody>
@@ -269,40 +331,66 @@ export default function ResourcesView({
                 </td>
               </tr>
             ) : (
-              sorted.map((r, i) => (
-                <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
-                  <td className={styles.td}>
-                    {r.properties.displayName ?? r.name}
-                  </td>
-                  <td className={styles.td}>
-                    <Badge appearance="outline" size="small">
-                      {RESOURCE_TYPE_LABELS[r.type.toLowerCase()] ?? r.type}
-                    </Badge>
-                  </td>
-                  <td className={styles.td}>{r.environmentName ?? '—'}</td>
-                  <td className={styles.td}>
-                    {r.environmentRegion ?? r.location ?? '—'}
-                  </td>
-                  <td className={styles.td}>
-                    {r.properties.createdAt
-                      ? new Date(r.properties.createdAt).toLocaleDateString()
-                      : '—'}
-                  </td>
-                  <td className={styles.td}>
-                    {DELETABLE_TYPES.has(r.type.toLowerCase()) && (
-                      <Button
-                        appearance="subtle"
+              sorted.map((r, i) => {
+                const displayName = r.properties.displayName ?? r.name;
+                const envName = r.environmentName;
+                const typeLower = r.type.toLowerCase();
+                return (
+                  <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
+                    <td className={styles.td} title={displayName}>
+                      <span className={styles.tdText}>{displayName}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <Badge
+                        appearance="tint"
+                        color={getTypeBadgeColor(typeLower)}
                         size="small"
-                        icon={<DeleteRegular />}
-                        title="Delete"
-                        disabled={pendingResourceName === r.name}
-                        style={{ color: tokens.colorStatusDangerForeground1 }}
-                        onClick={() => setConfirmDelete(r)}
-                      />
-                    )}
-                  </td>
-                </tr>
-              ))
+                        style={{ whiteSpace: 'nowrap' }}
+                      >
+                        {RESOURCE_TYPE_SHORT_LABELS[typeLower] ?? RESOURCE_TYPE_LABELS[typeLower] ?? r.type}
+                      </Badge>
+                    </td>
+                    <td className={styles.td} title={envName ?? 'Environment not available in API for this resource type'}>
+                      {envName
+                        ? <span className={styles.tdText}>{envName}</span>
+                        : <span className={styles.tdText} style={{ color: tokens.colorNeutralForeground4 }}>Not available</span>
+                      }
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.tdText}>{r.environmentRegion ?? r.location ?? '—'}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.tdText}>
+                        {r.properties.createdAt
+                          ? new Date(r.properties.createdAt).toLocaleDateString()
+                          : '—'}
+                      </span>
+                    </td>
+                    <td className={styles.td}>
+                      {DELETABLE_TYPES.has(typeLower) && (
+                        <Button
+                          appearance="subtle"
+                          size="small"
+                          icon={<DeleteRegular />}
+                          title="Delete"
+                          disabled={pendingResourceName === r.name}
+                          style={{ color: tokens.colorStatusDangerForeground1 }}
+                          onClick={() => setConfirmDelete(r)}
+                        />
+                      )}
+                      {DETAIL_PANEL_TYPES.has(typeLower) && (
+                        <Button
+                          appearance="subtle"
+                          size="small"
+                          icon={<OpenRegular />}
+                          title="View details"
+                          onClick={() => setDetailResource(r)}
+                        />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>

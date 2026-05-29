@@ -43,6 +43,7 @@ interface RecommendationResourcesDialogProps {
 const useStyles = makeStyles({
   tableWrapper: {
     overflowY: 'auto',
+    overflowX: 'auto',
     maxHeight: '50vh',
     minHeight: '120px',
   },
@@ -66,9 +67,11 @@ const useStyles = makeStyles({
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
     flex: 1,
+    flexWrap: 'nowrap',
   },
   bulkButton: {
-    marginLeft: 'auto',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
 });
 
@@ -88,21 +91,17 @@ function formatDate(value?: string): string {
 }
 
 async function executeForResource(scenario: string, actionName: string, resourceId: string) {
-  const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(
-    { scenario, actionParameters: { resourceId: [resourceId] } },
-    actionName,
-    API_VERSION,
-  );
+  // actionParameters must be a JSON array of parameter dicts per API contract
+  const body = { scenario, actionParameters: [{ resourceId }] } as unknown as Parameters<typeof PowerPlatformforAdminsV2Service.ExecuteRecommendationAction>[0];
+  const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(body, actionName, API_VERSION);
   if (!result.success || result.error) throw new Error(result.error?.message ?? 'Action failed');
   return result.data;
 }
 
 async function executeBulk(scenario: string, actionName: string) {
-  const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(
-    { scenario, actionParameters: {} },
-    actionName,
-    API_VERSION,
-  );
+  // Empty array = apply action to all resources
+  const body = { scenario, actionParameters: [] } as unknown as Parameters<typeof PowerPlatformforAdminsV2Service.ExecuteRecommendationAction>[0];
+  const result = await PowerPlatformforAdminsV2Service.ExecuteRecommendationAction(body, actionName, API_VERSION);
   if (!result.success || result.error) throw new Error(result.error?.message ?? 'Action failed');
   return result.data;
 }
@@ -149,7 +148,12 @@ export default function RecommendationResourcesDialog({
 
   function bulkActionLabel(actionName?: string): string {
     if (!actionName) return 'Execute All';
-    return actionName.replace(/\s+App$/i, '').trim() + ' All';
+    // "Enable X for agents" / "Enable X on canvas apps" → "Enable X All"
+    const prepMatch = actionName.match(/^(.+?)\s+(?:for|on|to)\s+.+$/i);
+    if (prepMatch) return `${prepMatch[1]} All`;
+    // "Delete App" → "Delete All Apps", "Quarantine App" → "Quarantine All Apps"
+    if (/\bApps?$/i.test(actionName)) return actionName.replace(/\bApps?$/i, 'All Apps');
+    return `${actionName} All`;
   }
 
   return (
@@ -235,7 +239,7 @@ export default function RecommendationResourcesDialog({
                                     appearance="outline"
                                     size="small"
                                     icon={isPending ? <Spinner size="tiny" /> : <PlayRegular />}
-                                    disabled={isPending || isBulkLoading}
+                                    disabled={isPending || bulkLoadingAction !== null}
                                     onClick={async () => {
                                       setPendingResourceId(key);
                                       await execResource(r.resourceId ?? '', a.actionType ?? a.actionName ?? '');
@@ -259,31 +263,33 @@ export default function RecommendationResourcesDialog({
           <DialogActions>
             <div className={styles.footer}>
               {!isLoading && resources.length > 0 && (
-                <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, flexShrink: 0 }}>
                   {resources.length} resource(s)
                 </Text>
               )}
-              <Button appearance="secondary" onClick={onClose}>Close</Button>
-              {resources.length > 0 && actions.map((action, i) => {
-                const actionKey = action.actionType ?? action.actionName ?? String(i);
-                const isThisLoading = bulkLoadingAction === actionKey;
-                const anyBulkLoading = bulkLoadingAction !== null;
-                return (
-                  <Button
-                    key={actionKey}
-                    appearance={i === 0 ? 'primary' : 'outline'}
-                    icon={isThisLoading ? <Spinner size="tiny" /> : <PlayRegular />}
-                    disabled={anyBulkLoading || isLoading}
-                    className={styles.bulkButton}
-                    onClick={() => {
-                      setBulkLoadingAction(actionKey);
-                      void execBulk(actionKey);
-                    }}
-                  >
-                    {isThisLoading ? 'Executing…' : bulkActionLabel(action.actionName ?? action.actionType)}
-                  </Button>
-                );
-              })}
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: tokens.spacingHorizontalM, flexShrink: 0, alignItems: 'center' }}>
+                <Button appearance="secondary" onClick={onClose}>Close</Button>
+                {resources.length > 0 && actions.map((action, i) => {
+                  const actionKey = action.actionType ?? action.actionName ?? String(i);
+                  const isThisLoading = bulkLoadingAction === actionKey;
+                  const anyBulkLoading = bulkLoadingAction !== null;
+                  return (
+                    <Button
+                      key={actionKey}
+                      appearance={i === 0 ? 'primary' : 'outline'}
+                      icon={isThisLoading ? <Spinner size="tiny" /> : <PlayRegular />}
+                      disabled={anyBulkLoading || isLoading}
+                      className={styles.bulkButton}
+                      onClick={() => {
+                        setBulkLoadingAction(actionKey);
+                        void execBulk(actionKey);
+                      }}
+                    >
+                      {isThisLoading ? 'Executing…' : bulkActionLabel(action.actionName ?? action.actionType)}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
           </DialogActions>
         </DialogBody>

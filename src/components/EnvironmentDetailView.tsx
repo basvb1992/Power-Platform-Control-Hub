@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactElement } from 'react';
 import {
   makeStyles,
@@ -19,9 +19,14 @@ import {
   MenuList,
   MenuItem,
   MenuPopover,
+  Switch,
+  Spinner,
+  MessageBar,
+  MessageBarBody,
+  Tab,
+  TabList,
 } from '@fluentui/react-components';
 import {
-  ArrowLeftRegular,
   SearchRegular,
   GlobeRegular,
   CalendarRegular,
@@ -40,9 +45,11 @@ import {
   DatabaseRegular,
   LayerRegular,
   SubtractCircleRegular,
+  SettingsRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import type { EnvironmentGroup } from '../types/admin.ts';
+import type { EnvironmentManagementSetting } from '../generated/models/PowerPlatformforAdminsV2Model.ts';
 import { RESOURCE_TYPE_LABELS } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
@@ -53,6 +60,7 @@ import {
   disableManagedEnvironment,
   createEnvironmentBackup,
 } from '../services/environmentMutations.ts';
+import { fetchEnvironmentSettings, updateEnvironmentSettings } from '../services/settingsService.ts';
 import BackupDialog from './BackupDialog.tsx';
 import EnvironmentGroupDialog from './EnvironmentGroupDialog.tsx';
 import { useOwners } from '../services/ownerCache.ts';
@@ -247,6 +255,71 @@ const useStyles = makeStyles({
     overflowY: 'auto',
     flex: 1,
   },
+
+  // ── Content tabs ──────────────────────────────────────────────────────────
+  contentTabs: {
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
+    borderBottomColor: tokens.colorNeutralStroke2,
+    paddingLeft: tokens.spacingHorizontalXL,
+    flexShrink: 0,
+  },
+
+  // ── Settings panel ────────────────────────────────────────────────────────
+  settingsScroll: {
+    flex: 1,
+    overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalXL,
+    padding: `${tokens.spacingVerticalL} ${tokens.spacingHorizontalXL}`,
+  },
+  settingsGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: tokens.spacingVerticalS,
+    backgroundColor: tokens.colorNeutralBackground1,
+    borderRadius: tokens.borderRadiusMedium,
+    ...shorthands.border('1px', 'solid', tokens.colorNeutralStroke2),
+    overflow: 'hidden',
+  },
+  settingsGroupHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL}`,
+    backgroundColor: tokens.colorNeutralBackground3,
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
+    borderBottomColor: tokens.colorNeutralStroke2,
+    fontSize: tokens.fontSizeBase200,
+    fontWeight: tokens.fontWeightSemibold,
+    textTransform: 'uppercase',
+    letterSpacing: '0.05em',
+    color: tokens.colorNeutralForeground3,
+  },
+  settingRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: tokens.spacingHorizontalL,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL}`,
+    borderBottomWidth: '1px',
+    borderBottomStyle: 'solid',
+    borderBottomColor: tokens.colorNeutralStroke2,
+    ':last-child': { borderBottom: 'none' },
+  },
+  settingLabel: {
+    fontSize: tokens.fontSizeBase300,
+    color: tokens.colorNeutralForeground1,
+    flex: 1,
+  },
+  settingsActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: tokens.spacingHorizontalM,
+    flexShrink: 0,
+  },
 });
 
 function envTypeColor(envType: string): 'brand' | 'success' | 'warning' | 'important' | 'informative' {
@@ -267,6 +340,62 @@ function resourceTypeIcon(type: string): ReactElement {
   return <BoxRegular />;
 }
 
+type SettingFieldDef = { key: keyof EnvironmentManagementSetting; label: string; type: 'boolean' | 'string' };
+type SettingGroupDef = { label: string; fields: SettingFieldDef[] };
+
+const SETTING_GROUPS: SettingGroupDef[] = [
+  {
+    label: 'Power Apps',
+    fields: [
+      { key: 'powerApps_CopilotChat', label: 'Copilot Chat', type: 'boolean' },
+      { key: 'powerApps_NLSearch', label: 'Natural Language Search', type: 'boolean' },
+      { key: 'powerApps_AllowCodeApps', label: 'Code Apps', type: 'boolean' },
+      { key: 'powerApps_EnableFormInsights', label: 'Form Insights', type: 'boolean' },
+      { key: 'powerApps_ChartVisualization', label: 'Chart Visualization AI', type: 'boolean' },
+      { key: 'powerApps_FormPredictSmartPaste', label: 'Smart Paste', type: 'boolean' },
+      { key: 'powerApps_FormPredictAutomatic', label: 'Automatic Form Predictions', type: 'boolean' },
+    ],
+  },
+  {
+    label: 'Copilot Studio',
+    fields: [
+      { key: 'copilotStudio_ConnectedAgents', label: 'Connected Agents', type: 'boolean' },
+      { key: 'copilotStudio_CodeInterpreter', label: 'Code Interpreter', type: 'boolean' },
+      { key: 'copilotStudio_ConversationAuditLoggingEnabled', label: 'Conversation Audit Logging', type: 'boolean' },
+      { key: 'copilotStudio_ComputerUseSharedMachines', label: 'Computer Use – Shared Machines', type: 'boolean' },
+      { key: 'copilotStudio_ComputerUseCredentialsAllowed', label: 'Computer Use – Credentials Allowed', type: 'boolean' },
+      { key: 'copilotStudio_ComputerUseAppAllowlist', label: 'Computer Use – App Allowlist', type: 'string' },
+      { key: 'copilotStudio_ComputerUseWebAllowlist', label: 'Computer Use – Web Allowlist', type: 'string' },
+    ],
+  },
+  {
+    label: 'Power Pages',
+    fields: [
+      { key: 'powerPages_AllowMakerCopilotsForNewSites', label: 'Maker Copilots – New Sites', type: 'string' },
+      { key: 'powerPages_AllowMakerCopilotsForExistingSites', label: 'Maker Copilots – Existing Sites', type: 'string' },
+      { key: 'powerPages_AllowProDevCopilotsForSites', label: 'ProDev Copilots for Sites', type: 'string' },
+      { key: 'powerPages_AllowSiteCopilotForSites', label: 'Site Copilot', type: 'string' },
+      { key: 'powerPages_AllowNonProdPublicSites', label: 'Non-Prod Public Sites', type: 'string' },
+      { key: 'powerPages_AllowProDevCopilotsForEnvironment', label: 'ProDev Copilots for Environment', type: 'string' },
+    ],
+  },
+  {
+    label: 'Dynamics 365',
+    fields: [
+      { key: 'd365CustomerService_Copilot', label: 'Customer Service Copilot', type: 'boolean' },
+      { key: 'd365CustomerService_AIAgents', label: 'AI Agents', type: 'boolean' },
+    ],
+  },
+  {
+    label: 'Security',
+    fields: [
+      { key: 'enableIpBasedStorageAccessSignatureRule', label: 'IP-Based Storage Access Signature', type: 'boolean' },
+      { key: 'loggingEnabledForIpBasedStorageAccessSignature', label: 'Logging for IP-Based Storage Access', type: 'boolean' },
+      { key: 'allowedIpRangeForStorageAccessSignatures', label: 'Allowed IP Range for Storage', type: 'string' },
+    ],
+  },
+];
+
 export default function EnvironmentDetailView({
   environment: env,
   resources,
@@ -280,6 +409,25 @@ export default function EnvironmentDetailView({
   const [showBackup, setShowBackup] = useState(false);
   const [groupDialogMode, setGroupDialogMode] = useState<'add' | 'remove' | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [contentTab, setContentTab] = useState<'resources' | 'settings'>('resources');
+
+  // Settings state
+  const [settings, setSettings] = useState<EnvironmentManagementSetting | null>(null);
+  const [pendingSettings, setPendingSettings] = useState<EnvironmentManagementSetting>({});
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  // Fetch settings lazily when the Settings tab is first opened
+  useEffect(() => {
+    if (contentTab !== 'settings' || settings !== null || settingsLoading) return;
+    setSettingsLoading(true);
+    setSettingsError(null);
+    fetchEnvironmentSettings(env.name)
+      .then((s) => { setSettings(s ?? {}); setPendingSettings(s ?? {}); })
+      .catch((e: unknown) => setSettingsError(String(e)))
+      .finally(() => setSettingsLoading(false));
+  }, [contentTab, env.name, settings, settingsLoading]);
 
   const displayName = env.properties.displayName ?? env.name;
   const envType = (env.properties.environmentType ?? 'Unknown') as string;
@@ -356,7 +504,14 @@ export default function EnvironmentDetailView({
       <div className={styles.hero}>
         {/* Breadcrumb */}
         <div className={styles.breadcrumb}>
-          <Text className={styles.breadcrumbLink} onClick={onBack}>Environments</Text>
+          <Text
+            className={styles.breadcrumbLink}
+            onClick={onBack}
+            role="button"
+            tabIndex={0}
+            aria-label="Back to Environments list"
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onBack(); } }}
+          >Environments</Text>
           <ChevronRightRegular style={{ fontSize: '0.7rem' }} />
           <Text style={{ fontSize: tokens.fontSizeBase200 }}>{displayName}</Text>
         </div>
@@ -413,9 +568,82 @@ export default function EnvironmentDetailView({
         </div>
       </div>
 
+      <div className={styles.contentTabs}>
+        <TabList selectedValue={contentTab} onTabSelect={(_, d) => setContentTab(d.value as 'resources' | 'settings')}>
+          <Tab value="resources">Resources</Tab>
+          <Tab value="settings" icon={<SettingsRegular />}>Settings</Tab>
+        </TabList>
+      </div>
+
       <div className={styles.content}>
-        {/* Resource type stats */}
-        {typeCounts.size > 0 && (
+        {contentTab === 'settings' ? (
+          settingsLoading ? (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: tokens.spacingVerticalXL }}>
+              <Spinner label="Loading settings…" />
+            </div>
+          ) : settingsError ? (
+            <MessageBar intent="error"><MessageBarBody>{settingsError}</MessageBarBody></MessageBar>
+          ) : (
+            <div className={styles.settingsScroll}>
+              {SETTING_GROUPS.map((group) => (
+                <div key={group.label} className={styles.settingsGroup}>
+                  <div className={styles.settingsGroupHeader}>{group.label}</div>
+                  {group.fields.map((field) => {
+                    const current = pendingSettings[field.key];
+                    return (
+                      <div key={field.key} className={styles.settingRow}>
+                        <Text className={styles.settingLabel}>{field.label}</Text>
+                        {field.type === 'boolean' ? (
+                          <Switch
+                            checked={Boolean(current)}
+                            onChange={(_, d) => setPendingSettings((prev) => ({ ...prev, [field.key]: d.checked }))}
+                          />
+                        ) : (
+                          <Input
+                            size="small"
+                            style={{ minWidth: '260px' }}
+                            value={String(current ?? '')}
+                            placeholder="Not set"
+                            onChange={(_, d) => setPendingSettings((prev) => ({ ...prev, [field.key]: d.value }))}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+              <div className={styles.settingsActions}>
+                <Button
+                  appearance="secondary"
+                  disabled={isSavingSettings}
+                  onClick={() => setPendingSettings(settings ?? {})}
+                >
+                  Reset
+                </Button>
+                <Button
+                  appearance="primary"
+                  icon={isSavingSettings ? <Spinner size="tiny" /> : <SaveRegular />}
+                  disabled={isSavingSettings}
+                  onClick={async () => {
+                    setIsSavingSettings(true);
+                    try {
+                      await updateEnvironmentSettings(env.name, pendingSettings);
+                      setSettings(pendingSettings);
+                    } catch (e: unknown) {
+                      setSettingsError(String(e));
+                    } finally {
+                      setIsSavingSettings(false);
+                    }
+                  }}
+                >
+                  {isSavingSettings ? 'Saving…' : 'Save Settings'}
+                </Button>
+              </div>
+            </div>
+          )
+        ) : (
+          <>
+            {typeCounts.size > 0 && (
           <div className={styles.statsRow}>
             {Array.from(typeCounts.entries()).map(([type, count]) => (
               <div key={type} className={styles.statPill}>
@@ -495,6 +723,8 @@ export default function EnvironmentDetailView({
             </Table>
           </div>
         </div>
+            </>
+          )}
       </div>
 
       <ConfirmDialog

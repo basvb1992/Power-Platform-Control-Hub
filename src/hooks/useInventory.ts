@@ -5,6 +5,7 @@ import {
   fetchResources,
 } from '../services/inventoryApi.ts';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
+import { extractMessage } from '../utils/errorUtils.ts';
 
 export interface UseInventoryResult {
   resources: Resource[];
@@ -37,7 +38,7 @@ export function useInventory(): UseInventoryResult {
       setCounts(computeResourceCounts(fetchedResources));
     } catch (e: unknown) {
       setError(
-        e instanceof Error ? e.message : 'Failed to load Power Platform inventory.',
+        e instanceof Error ? extractMessage(e.message) : 'Failed to load Power Platform inventory.',
       );
     } finally {
       setIsLoading(false);

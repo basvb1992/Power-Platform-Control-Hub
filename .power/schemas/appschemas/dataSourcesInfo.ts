@@ -19,6 +19,1515 @@ export const dataSourcesInfo = {
     "dataSourceType": "Dataverse",
     "apis": {}
   },
+  "flowmanagement": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "",
+    "dataSourceType": "Connector",
+    "apis": {
+      "ListApis": {
+        "path": "/{connectionId}/apis",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "GetApi": {
+        "path": "/{connectionId}/apis/{apiName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "apiName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "CreateConnection": {
+        "path": "/{connectionId}/apis/{apiName}/connections",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "apiName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connection",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "201": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListConnections": {
+        "path": "/{connectionId}/connections",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListUserEnvironments": {
+        "path": "/{connectionId}/environments",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListFlowOwners": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/owners",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ModifyFlowOwners": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/modifyOwners",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListFlowUsers": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/users",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ModifyRunOnlyUsers": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/modifyUsers",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListMyFlows": {
+        "path": "/{connectionId}/environments/{environmentName}/flows",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "CreateFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Flow",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "GetFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "DeleteFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "UpdateFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}",
+        "method": "PATCH",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "Flow",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "StopFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/stop",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "StartFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/start",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ResubmitFlow": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/triggers/{triggerName}/histories/{runId}/resubmit",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "triggerName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "202": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListCallbackUrl": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/triggers/manual/listCallbackUrl",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "CancelFlowRun": {
+        "path": "/{connectionId}/environments/{environmentName}/flows/{flowName}/runs/{runId}/cancel",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "202": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListFlowsInEnvironment": {
+        "path": "/{connectionId}/scopes/admin/environments/{environmentName}/flows",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "expandSuspensionInfo",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeSoftDeletedFlows",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "ListFlowsInEnvironment_V2": {
+        "path": "/{connectionId}/scopes/admin/environments/{environmentName}/v2/flows",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "expandSuspensionInfo",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          },
+          {
+            "name": "includeSoftDeletedFlows",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "AdminModifyFlowOwners": {
+        "path": "/{connectionId}/scopes/admin/environments/{environmentName}/flows/{flowName}/modifyOwners",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "AdminGetFlow": {
+        "path": "/{connectionId}/scopes/admin/environments/{environmentName}/flows/{flowName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "includeFlowDefinition",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "AdminRestoreFlow": {
+        "path": "/{connectionId}/scopes/admin/environments/{environmentName}/flows/{flowName}/restore",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "flowName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      }
+    }
+  },
+  "powerappsforadmins": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "",
+    "dataSourceType": "Connector",
+    "apis": {
+      "Get-AdminAppRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/permissions",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Set-AdminAppOwner": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/modifyAppOwner",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Set-AppQuarantineState": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/setAppQuarantineState",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Set-PowerAppConditionalAccess": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/setPowerAppConditionalAccessDetails",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Get-AdminApps": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "$skiptoken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "default": {
+            "type": "void"
+          }
+        }
+      },
+      "Get-PowerAppConditionalAccess": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/getPowerAppConditionalAccessDetails",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "array"
+          }
+        }
+      },
+      "Get-AdminApp": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Remove-AdminApp": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Edit-AdminAppRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apps/{app}/modifyPermissions",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$filter",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Get-AdminConnections": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/connections",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Remove-AdminConnection": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis/{connectorName}/connections/{connectionName}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectionName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Get-AdminConnectionRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis/{connectorName}/connections/{connectionName}/permissions",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectionName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Edit-AdminConnectionRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis/{connector}/connections/{connection}/modifyPermissions",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connector",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connection",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "Get-AdminConnectors": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Get-AdminConnectorRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis/{connectorName}/permissions",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Edit-AdminConnectorRoleAssignment": {
+        "path": "/{connectionId}/providers/Microsoft.PowerApps/scopes/admin/environments/{environment}/apis/{connectorName}/modifyPermissions",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "connectorName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "Content-Type",
+            "in": "header",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      }
+    }
+  },
   "powerplatformadminv2": {
     "tableId": "",
     "version": "",
@@ -7929,6 +9438,1070 @@ export const dataSourcesInfo = {
           },
           "default": {
             "type": "void"
+          }
+        }
+      }
+    }
+  },
+  "powerplatformforadmins": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "",
+    "dataSourceType": "Connector",
+    "apis": {
+      "Get-AdminEnvironment": {
+        "path": "/{connectionId}/environments",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$skiptoken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "NewAdminEnvironment": {
+        "path": "/{connectionId}/environments",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "201": {
+            "type": "object"
+          },
+          "403": {
+            "type": "object"
+          },
+          "409": {
+            "type": "object"
+          }
+        }
+      },
+      "GetSingleEnvironment": {
+        "path": "/{connectionId}/environments/{environment}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Remove-AdminEnvironment": {
+        "path": "/{connectionId}/environments/{environment}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "202": {
+            "type": "object"
+          },
+          "204": {
+            "type": "object"
+          }
+        }
+      },
+      "Get-AdminEnvironmentRoleAssignment": {
+        "path": "/{connectionId}/environments/{environment}/roleAssignments",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Edit-AdminEnvironmentRoleAssignment": {
+        "path": "/{connectionId}/environments/{environment}/modifyRoleAssignments",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Get-AdminDlpPolicies": {
+        "path": "/{connectionId}/apiPolicies",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "NewTenantPolicy": {
+        "path": "/{connectionId}/apiPolicies",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "Edit-AdminDlpPolicy": {
+        "path": "/{connectionId}/apiPolicies/{policy}",
+        "method": "PUT",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "GetTenantPolicy": {
+        "path": "/{connectionId}/apiPolicies/{policy}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "RemoveTenantPolicy": {
+        "path": "/{connectionId}/apiPolicies/{policy}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "ListSupportedLocations": {
+        "path": "/{connectionId}/locations",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "ListEnvironmentLanguages": {
+        "path": "/{connectionId}/locations/{environmentLocation}/environmentLanguages",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentLocation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "ListEnvironmentCurrencies": {
+        "path": "/{connectionId}/locations/{environmentLocation}/environmentCurrencies",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environmentLocation",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "ProvisionInstance": {
+        "path": "/{connectionId}/environments/{environment}/provisionInstance",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          },
+          "202": {
+            "type": "object"
+          }
+        }
+      },
+      "GetProvisionOperation": {
+        "path": "/{connectionId}/environments/{environment}/provisionOperations/{operationName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operationName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "202": {
+            "type": "void"
+          },
+          "500": {
+            "type": "void"
+          }
+        }
+      },
+      "GetProvisionOperationV2": {
+        "path": "/{connectionId}/providers/Microsoft.BusinessAppPlatform/environments/{environment}/provisionOperations/{operationName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operationName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "202": {
+            "type": "void"
+          },
+          "500": {
+            "type": "void"
+          }
+        }
+      },
+      "GetEnvironmentOperation": {
+        "path": "/{connectionId}/scopes/admin/environments/{environment}/operations/{operationName}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "operationName",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "202": {
+            "type": "void"
+          },
+          "500": {
+            "type": "void"
+          }
+        }
+      },
+      "Add-AdminPowerAppsSyncUser": {
+        "path": "/{connectionId}/environments/{environment}/addUser",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "403": {
+            "type": "void"
+          },
+          "500": {
+            "type": "void"
+          }
+        }
+      },
+      "ValidateDelete": {
+        "path": "/{connectionId}/environments/{environment}/validateDelete",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "NewEnvironmentPolicy": {
+        "path": "/{connectionId}/environments/{environment}/apiPolicies",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "GetEnvironmentPolicy": {
+        "path": "/{connectionId}/environments/{environment}/apiPolicies/{policy}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "EditEnvironmentPolicy": {
+        "path": "/{connectionId}/environments/{environment}/apiPolicies/{policy}",
+        "method": "PUT",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "RemoveEnvironmentPolicy": {
+        "path": "/{connectionId}/environments/{environment}/apiPolicies/{policy}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "ListPoliciesV2": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/policies",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$skiptoken",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "type": "integer"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "CreatePolicyV2": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/policies",
+        "method": "POST",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": false,
+            "type": "object"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "GetPolicyV2": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/policies/{policy}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "UpdatePolicyV2": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/policies/{policy}",
+        "method": "PATCH",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "DeletePolicyV2": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/policies/{policy}",
+        "method": "DELETE",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "policy",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "object"
+          }
+        }
+      },
+      "UpdateEnvironment": {
+        "path": "/{connectionId}/providers/Microsoft.BusinessAppPlatform/environments/{environment}",
+        "method": "PATCH",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "environment",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "type": "object"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          }
+        }
+      },
+      "GetLifecycleOperationStatus": {
+        "path": "/{connectionId}/providers/Microsoft.BusinessAppPlatform/lifecycleOperations/{lifecycleOperationId}",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "lifecycleOperationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "void"
+          },
+          "202": {
+            "type": "void"
+          }
+        }
+      },
+      "ListUnblockableConnectors": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/connectors/metadata/unblockable",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "array"
+          }
+        }
+      },
+      "ListVirtualConnectors": {
+        "path": "/{connectionId}/providers/PowerPlatform.Governance/v1/connectors/metadata/virtual",
+        "method": "GET",
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "responseInfo": {
+          "200": {
+            "type": "array"
           }
         }
       }

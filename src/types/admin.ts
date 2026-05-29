@@ -65,6 +65,35 @@ export interface CrossTenantConnection {
   connectionType: 'Inbound' | 'Outbound';
 }
 
+export interface RuleBasedPolicy {
+  id: string;
+  name: string;
+  lastModified: string;
+  ruleSetCount: number;
+  ruleSets: PolicyRuleSet[];
+}
+
+export interface PolicyRuleSet {
+  id: string;
+  version: string;
+  inputs: Record<string, unknown>;
+}
+
+export interface GovernanceRuleSet {
+  id: string;
+  lastModified: string;
+  environmentFilterType: string;
+  environmentFilterValues: { id: string; type: string; name: string }[];
+  parameters: { type: string; resourceType: string; rules: { id: string; value: string }[] }[];
+}
+
+export interface PolicyRuleAssignment {
+  policyId: string;
+  resourceId: string;
+  resourceType: 'NotSpecified' | 'EnvironmentGroup' | 'Environment';
+  ruleSetCount: number;
+}
+
 export interface CrossTenantReport {
   tenantId: string;
   reportId: string;

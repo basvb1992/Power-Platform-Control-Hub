@@ -1,11 +1,19 @@
 import type { IOperationResult } from '@microsoft/power-apps/data';
 import type {
+  Clause,
   ResourceItem,
   ResourceQueryRequest,
   ResourceQueryResponse,
 } from '../generated/models/PowerPlatformforAdminsV2Model.ts';
 import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
+
+// Helper: the generated Clause interface only declares $type, but the actual
+// clause subtypes (ExtendClause, JoinClause, etc.) carry additional fields.
+// This cast lets us pass correctly-shaped objects without fighting the type.
+function c(clause: Record<string, unknown>): Clause {
+  return clause as unknown as Clause;
+}
 
 const API_VERSION = '2024-10-01';
 
@@ -48,39 +56,21 @@ export async function fetchResources(): Promise<Resource[]> {
     Options: { Top: 1000, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
     Clauses: [
-      {
-        $type: 'extend',
-        FieldName: 'joinKey',
-        Expression: 'tolower(tostring(properties.environmentId))',
-      },
-      {
+      c({ $type: 'extend', FieldName: 'joinKey', Expression: 'tolower(tostring(properties.environmentId))' }),
+      c({
         $type: 'join',
         JoinKind: 'leftouter',
         RightTable: {
           TableName: 'PowerPlatformResources',
           Clauses: [
-            {
-              $type: 'where',
-              FieldName: 'type',
-              Operator: '==',
-              Values: ["'microsoft.powerplatform/environments'"],
-            },
-            {
-              $type: 'project',
-              FieldList: [
-                'joinKey = tolower(name)',
-                'environmentName = properties.displayName',
-                'environmentRegion = location',
-                'environmentType = properties.environmentType',
-                'isManagedEnvironment = properties.isManaged',
-              ],
-            },
+            c({ $type: 'where', FieldName: 'type', Operator: '==', Values: ["'microsoft.powerplatform/environments'"] }),
+            c({ $type: 'project', FieldList: ['joinKey = tolower(name)', 'environmentName = properties.displayName', 'environmentRegion = location', 'environmentType = properties.environmentType', 'isManagedEnvironment = properties.isManaged'] }),
           ],
         },
         LeftColumnName: 'joinKey',
         RightColumnName: 'joinKey',
-      },
-      {
+      }),
+      c({
         $type: 'where',
         FieldName: 'type',
         Operator: 'in~',
@@ -94,18 +84,9 @@ export async function fetchResources(): Promise<Resource[]> {
           "'microsoft.powerautomate/m365agentflows'",
           "'microsoft.powerapps/codeapps'",
         ],
-      },
-      {
-        $type: 'extend',
-        FieldName: 'createdAtStr',
-        Expression: 'tostring(properties.createdAt)',
-      },
-      {
-        $type: 'orderby',
-        FieldNamesAscDesc: {
-          createdAtStr: 'desc',
-        },
-      },
+      }),
+      c({ $type: 'extend', FieldName: 'createdAtStr', Expression: 'tostring(properties.createdAt)' }),
+      c({ $type: 'orderby', FieldNamesAscDesc: { createdAtStr: 'desc' } }),
     ],
   };
 
@@ -119,23 +100,9 @@ export async function fetchEnvironments(): Promise<Resource[]> {
     Options: { Top: 500, Skip: 0, SkipToken: '' },
     TableName: 'PowerPlatformResources',
     Clauses: [
-      {
-        $type: 'where',
-        FieldName: 'type',
-        Operator: '==',
-        Values: ["'microsoft.powerplatform/environments'"],
-      },
-      {
-        $type: 'extend',
-        FieldName: 'displayNameStr',
-        Expression: 'tostring(properties.displayName)',
-      },
-      {
-        $type: 'orderby',
-        FieldNamesAscDesc: {
-          displayNameStr: 'asc',
-        },
-      },
+      c({ $type: 'where', FieldName: 'type', Operator: '==', Values: ["'microsoft.powerplatform/environments'"] }),
+      c({ $type: 'extend', FieldName: 'displayNameStr', Expression: 'tostring(properties.displayName)' }),
+      c({ $type: 'orderby', FieldNamesAscDesc: { displayNameStr: 'asc' } }),
     ],
   };
 
