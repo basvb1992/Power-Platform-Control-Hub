@@ -93,6 +93,9 @@ const useStyles = makeStyles({
     fontSize: tokens.fontSizeBase400,
     fontWeight: tokens.fontWeightSemibold,
     lineHeight: tokens.lineHeightBase400,
+    wordBreak: 'normal',
+    overflowWrap: 'break-word',
+    hyphens: 'none',
   },
   cardCount: {
     display: 'flex',
