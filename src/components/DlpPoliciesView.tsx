@@ -245,7 +245,6 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     gap: tokens.spacingVerticalL,
     width: '100%',
-    maxWidth: '920px',
   },
   formSection: {
     display: 'flex',
