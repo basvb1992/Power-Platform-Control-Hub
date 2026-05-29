@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { ReactElement, CSSProperties } from 'react';
 import {
   makeStyles,
@@ -411,6 +411,208 @@ const TRIGGER_TYPE_LABELS: Record<string, string> = {
   OpenApiConnectionWebhook: 'Connector webhook trigger',
   Manual: 'Manually triggered',
 };
+
+// ─── Flow Tree Types & Builder ────────────────────────────────────────────────
+
+type ActionDef = {
+  type?: string;
+  inputs?: Record<string, unknown>;
+  actions?: Record<string, ActionDef>;
+  else?: { actions?: Record<string, ActionDef> };
+  cases?: Record<string, { actions?: Record<string, ActionDef> }>;
+  default?: { actions?: Record<string, ActionDef> };
+};
+
+type RichNode =
+  | { kind: 'connector'; name: string; connector: string; operationId: string }
+  | { kind: 'control'; name: string; label: string }
+  | { kind: 'condition'; name: string; trueNodes: RichNode[]; falseNodes: RichNode[] }
+  | { kind: 'foreach'; name: string; children: RichNode[] }
+  | { kind: 'scope'; name: string; children: RichNode[] }
+  | { kind: 'switch'; name: string; cases: { label: string; nodes: RichNode[] }[]; defaultNodes: RichNode[] }
+  | { kind: 'until'; name: string; children: RichNode[] };
+
+const CONN_TYPES = new Set([
+  'OpenApiConnection', 'ApiConnection', 'OpenApiConnectionWebhook',
+  'ApiConnectionNotification', 'OpenApiConnectionNotification',
+]);
+
+function buildFlowTree(
+  actions: Record<string, ActionDef> | undefined,
+  resolveConnector: (connName: string) => string,
+): RichNode[] {
+  if (!actions) return [];
+  return Object.entries(actions).map(([actionName, action]): RichNode => {
+    const displayName = humanizeOperationId(actionName);
+    const type = action.type ?? '';
+
+    if (CONN_TYPES.has(type)) {
+      const host = action.inputs?.host as Record<string, unknown> | undefined;
+      const connName = (host?.connectionName as string) ?? '';
+      const opId = humanizeOperationId((host?.operationId as string) ?? '');
+      return { kind: 'connector', name: displayName, connector: resolveConnector(connName), operationId: opId };
+    }
+    if (type === 'If') {
+      return {
+        kind: 'condition', name: displayName,
+        trueNodes: buildFlowTree(action.actions, resolveConnector),
+        falseNodes: buildFlowTree(action.else?.actions, resolveConnector),
+      };
+    }
+    if (type === 'Foreach') {
+      return { kind: 'foreach', name: displayName, children: buildFlowTree(action.actions, resolveConnector) };
+    }
+    if (type === 'Scope') {
+      return { kind: 'scope', name: displayName, children: buildFlowTree(action.actions, resolveConnector) };
+    }
+    if (type === 'Until') {
+      return { kind: 'until', name: displayName, children: buildFlowTree(action.actions, resolveConnector) };
+    }
+    if (type === 'Switch') {
+      const cases = Object.entries(action.cases ?? {}).map(([label, c]) => ({
+        label, nodes: buildFlowTree(c.actions, resolveConnector),
+      }));
+      return {
+        kind: 'switch', name: displayName, cases,
+        defaultNodes: buildFlowTree(action.default?.actions, resolveConnector),
+      };
+    }
+    const label = CONTROL_FLOW_LABELS[type] ?? humanizeOperationId(type);
+    return { kind: 'control', name: displayName, label };
+  });
+}
+
+function countNodes(nodes: RichNode[]): number {
+  let n = nodes.length;
+  for (const node of nodes) {
+    if (node.kind === 'condition') n += countNodes(node.trueNodes) + countNodes(node.falseNodes);
+    else if (node.kind === 'foreach' || node.kind === 'scope' || node.kind === 'until') n += countNodes(node.children);
+    else if (node.kind === 'switch') {
+      for (const c of node.cases) n += countNodes(c.nodes);
+      n += countNodes(node.defaultNodes);
+    }
+  }
+  return n;
+}
+
+function FlowTreeNode({ node }: { node: RichNode }): ReactElement {
+  const rowStyle: CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS,
+    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`,
+    borderRadius: tokens.borderRadiusMedium,
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    marginBottom: tokens.spacingVerticalXXS,
+  };
+  const containerStyle: CSSProperties = {
+    borderRadius: tokens.borderRadiusMedium,
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    marginBottom: tokens.spacingVerticalXS,
+    overflow: 'hidden',
+  };
+  const containerHeaderStyle: CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  };
+
+  if (node.kind === 'connector') {
+    return (
+      <div style={{ ...rowStyle, backgroundColor: tokens.colorNeutralBackground2 }}>
+        <PlugConnectedRegular fontSize={14} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+        <Text style={{ fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase300 }}>{node.connector}</Text>
+        <Text style={{ color: tokens.colorNeutralForeground3 }}>·</Text>
+        <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{node.name}</Text>
+        {node.operationId && (
+          <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, fontFamily: 'monospace', flexShrink: 0 }}>{node.operationId}</Text>
+        )}
+      </div>
+    );
+  }
+
+  if (node.kind === 'control') {
+    return (
+      <div style={rowStyle}>
+        <FlowRegular fontSize={14} style={{ color: tokens.colorNeutralForeground3, flexShrink: 0 }} />
+        <Text style={{ color: tokens.colorNeutralForeground2, fontSize: tokens.fontSizeBase200, flexShrink: 0 }}>{node.label}</Text>
+        {node.name && node.name !== node.label && (
+          <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{node.name}</Text>
+        )}
+      </div>
+    );
+  }
+
+  if (node.kind === 'condition') {
+    return (
+      <div style={containerStyle}>
+        <div style={containerHeaderStyle}>
+          <FlowRegular fontSize={14} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+          <Text style={{ fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase300 }}>Condition</Text>
+          <Text style={{ color: tokens.colorNeutralForeground3 }}>·</Text>
+          <Text style={{ fontSize: tokens.fontSizeBase300 }}>{node.name}</Text>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+          <div style={{ padding: tokens.spacingHorizontalM, borderRight: `1px solid ${tokens.colorNeutralStroke2}` }}>
+            <Text style={{ fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: tokens.colorStatusSuccessForeground1, display: 'block', marginBottom: tokens.spacingVerticalXS }}>✓ True</Text>
+            {node.trueNodes.length > 0
+              ? node.trueNodes.map((n, i) => <FlowTreeNode key={i} node={n} />)
+              : <Text style={{ color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200 }}>No actions</Text>}
+          </div>
+          <div style={{ padding: tokens.spacingHorizontalM }}>
+            <Text style={{ fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: tokens.colorStatusDangerForeground1, display: 'block', marginBottom: tokens.spacingVerticalXS }}>✗ False</Text>
+            {node.falseNodes.length > 0
+              ? node.falseNodes.map((n, i) => <FlowTreeNode key={i} node={n} />)
+              : <Text style={{ color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200 }}>No actions</Text>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (node.kind === 'switch') {
+    return (
+      <div style={containerStyle}>
+        <div style={containerHeaderStyle}>
+          <FlowRegular fontSize={14} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+          <Text style={{ fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase300 }}>Switch</Text>
+          <Text style={{ color: tokens.colorNeutralForeground3 }}>·</Text>
+          <Text style={{ fontSize: tokens.fontSizeBase300 }}>{node.name}</Text>
+        </div>
+        {node.cases.map((c, i) => (
+          <div key={i} style={{ padding: tokens.spacingHorizontalM, borderBottom: `1px solid ${tokens.colorNeutralStroke2}` }}>
+            <Text style={{ fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, display: 'block', marginBottom: tokens.spacingVerticalXS }}>Case: {c.label}</Text>
+            {c.nodes.map((n, j) => <FlowTreeNode key={j} node={n} />)}
+          </div>
+        ))}
+        {node.defaultNodes.length > 0 && (
+          <div style={{ padding: tokens.spacingHorizontalM }}>
+            <Text style={{ fontSize: tokens.fontSizeBase200, fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, display: 'block', marginBottom: tokens.spacingVerticalXS }}>Default</Text>
+            {node.defaultNodes.map((n, i) => <FlowTreeNode key={i} node={n} />)}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // foreach, scope, until
+  const containerLabel = node.kind === 'foreach' ? 'For Each' : node.kind === 'until' ? 'Do Until' : 'Scope';
+  const children = node.children;
+  return (
+    <div style={containerStyle}>
+      <div style={containerHeaderStyle}>
+        <FlowRegular fontSize={14} style={{ color: tokens.colorBrandForeground1, flexShrink: 0 }} />
+        <Text style={{ fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase300 }}>{containerLabel}</Text>
+        <Text style={{ color: tokens.colorNeutralForeground3 }}>·</Text>
+        <Text style={{ fontSize: tokens.fontSizeBase300 }}>{node.name}</Text>
+      </div>
+      <div style={{ padding: tokens.spacingHorizontalM, display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXXS }}>
+        {children.length > 0
+          ? children.map((n, i) => <FlowTreeNode key={i} node={n} />)
+          : <Text style={{ color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200 }}>No actions</Text>}
+      </div>
+    </div>
+  );
+}
 
 const CONTROL_FLOW_LABELS: Record<string, string> = {
   Foreach: 'Apply to each',
@@ -1120,7 +1322,6 @@ export default function CloudFlowDetailPanel({
 
   const props = flowDetails?.properties;
   const triggersSummary = props?.definitionSummary?.triggers ?? [];
-  const actionsSummary = props?.definitionSummary?.actions ?? [];
   const creator = props?.creator;
   const connectionRefs = props?.connectionReferences ?? [];
 
@@ -1136,54 +1337,12 @@ export default function CloudFlowDetailPanel({
     return connectorNameMap[apiName.toLowerCase()] ?? getConnectorDisplayName(apiName);
   }
 
-  // Build rich connector groups: prefer full definition (has user action names + operationId)
-  type RichAction = { name: string; operationId?: string };
-  type RichConnectorGroup = { connector: string; actions: RichAction[] };
-  const richGroups: Record<string, RichConnectorGroup> = {};
-  const richControlFlow: Array<{ type: string; name: string }> = [];
-
-  const defActions = props?.definition?.actions ?? {};
-  const hasFullDef = Object.keys(defActions).length > 0;
-
-  if (hasFullDef) {
-    for (const [actionName, action] of Object.entries(defActions)) {
-      const displayName = humanizeOperationId(actionName);
-      const connTypes = ['OpenApiConnection', 'ApiConnection', 'OpenApiConnectionWebhook',
-                         'ApiConnectionNotification', 'OpenApiConnectionNotification'];
-      if (action.type && connTypes.includes(action.type)) {
-        const inputs = action.inputs as Record<string, unknown> | undefined;
-        const host = inputs?.host as Record<string, unknown> | undefined;
-        const connName = (host?.connectionName as string) ?? '';
-        const operationId = humanizeOperationId((host?.operationId as string) ?? '');
-        const key = connName.toLowerCase() || 'unknown';
-        if (!richGroups[key]) {
-          richGroups[key] = { connector: resolveConnectorName(connName), actions: [] };
-        }
-        richGroups[key].actions.push({ name: displayName, operationId: operationId || undefined });
-      } else if (action.type) {
-        const typeLabel = CONTROL_FLOW_LABELS[action.type] ?? humanizeOperationId(action.type);
-        richControlFlow.push({ type: typeLabel, name: displayName });
-      }
-    }
-  } else {
-    // Fallback to summary data
-    for (const a of actionsSummary) {
-      if (a.api?.name) {
-        const key = a.api.name.toLowerCase();
-        if (!richGroups[key]) {
-          richGroups[key] = { connector: resolveConnectorName(a.api.name), actions: [] };
-        }
-        if (a.swaggerOperationId) {
-          richGroups[key].actions.push({ name: humanizeOperationId(a.swaggerOperationId) });
-        }
-      } else if (a.type) {
-        richControlFlow.push({ type: CONTROL_FLOW_LABELS[a.type] ?? a.type, name: '' });
-      }
-    }
-  }
-
-  const totalActions = Object.values(richGroups).reduce((sum, g) => sum + g.actions.length, 0)
-    + richControlFlow.length;
+  // Build recursive flow tree from definition
+  const flowTree: RichNode[] = useMemo(() => {
+    const defActions = props?.definition?.actions as Record<string, ActionDef> | undefined;
+    if (!defActions || Object.keys(defActions).length === 0) return [];
+    return buildFlowTree(defActions, resolveConnectorName);
+  }, [props, resolveConnectorName]);
 
   // Recurrence schedule display from full definition
   const defTriggers = props?.definition?.triggers ?? {};
@@ -1395,8 +1554,8 @@ export default function CloudFlowDetailPanel({
               <AccordionHeader expandIconPosition="end" icon={<FlowRegular />}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Triggers &amp; Actions
-                  {!detailsLoading && (triggersSummary.length + totalActions) > 0 && (
-                    <Badge appearance="filled" size="small" color="informative">{triggersSummary.length + totalActions}</Badge>
+                  {!detailsLoading && (triggersSummary.length + countNodes(flowTree)) > 0 && (
+                    <Badge appearance="filled" size="small" color="informative">{triggersSummary.length + countNodes(flowTree)}</Badge>
                   )}
                 </span>
               </AccordionHeader>
@@ -1434,58 +1593,19 @@ export default function CloudFlowDetailPanel({
                       </div>
                     )}
 
-                    {/* Connectors & Actions */}
-                    {(Object.keys(richGroups).length > 0 || richControlFlow.length > 0) && (
+                    {/* Flow tree (recursive) */}
+                    {flowTree.length > 0 && (
                       <div>
                         <Text className={styles.sectionTitle}>
-                          Connectors &amp; Actions ({totalActions} action{totalActions !== 1 ? 's' : ''})
+                          Actions ({countNodes(flowTree)})
                         </Text>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS, marginTop: tokens.spacingVerticalXS }}>
-                          {Object.values(richGroups).map((group, i) => (
-                            <div key={i} className={styles.connectorCard}>
-                              <div className={styles.connectorCardHeader}>
-                                <PlugConnectorIcon />
-                                <Text style={{ fontWeight: tokens.fontWeightSemibold, flex: 1 }}>{group.connector}</Text>
-                                <Badge appearance="filled" color="informative" size="small">
-                                  {group.actions.length} action{group.actions.length !== 1 ? 's' : ''}
-                                </Badge>
-                              </div>
-                              {group.actions.map((action, j) => (
-                                <div key={j} className={styles.connectorActionRow}>
-                                  <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{action.name}</Text>
-                                  {action.operationId && (
-                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, fontFamily: 'monospace', flexShrink: 0 }}>
-                                      {action.operationId}
-                                    </Text>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-                          {richControlFlow.length > 0 && (
-                            <div className={styles.connectorCard}>
-                              <div className={styles.connectorCardHeader}>
-                                <FlowRegular fontSize={14} style={{ color: tokens.colorNeutralForeground3 }} />
-                                <Text style={{ fontWeight: tokens.fontWeightSemibold, color: tokens.colorNeutralForeground2, flex: 1 }}>Control flow</Text>
-                                <Badge appearance="tint" color="subtle" size="small">
-                                  {richControlFlow.length} action{richControlFlow.length !== 1 ? 's' : ''}
-                                </Badge>
-                              </div>
-                              {[...new Map(richControlFlow.map((a) => [`${a.type}|${a.name}`, a])).values()].map((a, j) => (
-                                <div key={j} className={styles.connectorActionRow}>
-                                  <Text style={{ flex: 1, fontSize: tokens.fontSizeBase300 }}>{a.name || a.type}</Text>
-                                  {a.name && a.type && a.name !== a.type && (
-                                    <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, flexShrink: 0 }}>{a.type}</Text>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXXS, marginTop: tokens.spacingVerticalXS }}>
+                          {flowTree.map((node, i) => <FlowTreeNode key={i} node={node} />)}
                         </div>
                       </div>
                     )}
 
-                    {!detailsLoading && triggersSummary.length === 0 && totalActions === 0 && (
+                    {!detailsLoading && triggersSummary.length === 0 && flowTree.length === 0 && (
                       <Text style={{ color: tokens.colorNeutralForeground3 }}>No trigger or action data available.</Text>
                     )}
                 </div>
@@ -1581,7 +1701,4 @@ export default function CloudFlowDetailPanel({
 // Tiny inline icon helper
 function CalendarInlineIcon(): ReactElement {
   return <CalendarRegular style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px', fontSize: '14px', color: tokens.colorNeutralForeground3 }} />;
-}
-function PlugConnectorIcon(): ReactElement {
-  return <PlugConnectedRegular style={{ fontSize: '14px', color: tokens.colorBrandForeground1, flexShrink: 0 }} />;
 }

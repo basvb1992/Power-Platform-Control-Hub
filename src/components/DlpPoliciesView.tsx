@@ -462,10 +462,9 @@ const useStyles = makeStyles({
     paddingBottom: tokens.spacingVerticalM,
   },
   advisoryRow: {
-    display: 'grid',
-    gridTemplateColumns: '200px 1fr',
+    display: 'flex',
+    alignItems: 'center',
     gap: tokens.spacingHorizontalM,
-    alignItems: 'start',
     padding: `${tokens.spacingVerticalS} 0`,
     borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
     ':last-child': { borderBottom: 'none' },
@@ -474,11 +473,12 @@ const useStyles = makeStyles({
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalXS,
-    flexWrap: 'wrap',
+    flexShrink: 0,
   },
   advisoryReason: {
     color: tokens.colorNeutralForeground3,
     fontSize: tokens.fontSizeBase200,
+    flex: 1,
   },
   advisoryHeader: {
     display: 'flex',
