@@ -511,21 +511,22 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
           {botError && (
             <MessageBar intent="warning" style={{ marginBottom: tokens.spacingVerticalM }}>
               <MessageBarBody>
-                <div>
-                  Could not load bot record from Dataverse.{' '}
-                  <a
-                    href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ color: tokens.colorBrandForegroundLink }}
-                  >
-                    View in Copilot Studio ↗
-                  </a>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalXS }}>
+                  <span>
+                    Could not load bot record from Dataverse.{' '}
+                    <a
+                      href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: tokens.colorBrandForegroundLink }}
+                    >
+                      View in Copilot Studio ↗
+                    </a>
+                  </span>
+                  <Text style={{ fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                    {botError}
+                  </Text>
                 </div>
-                <details style={{ marginTop: tokens.spacingVerticalXS, fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
-                  <summary style={{ cursor: 'pointer' }}>Technical details</summary>
-                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginTop: '4px' }}>{botError}</pre>
-                </details>
               </MessageBarBody>
             </MessageBar>
           )}
@@ -673,7 +674,10 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                   {!bot && !botLoading && !botError && (
                     <MessageBar intent="info">
                       <MessageBarBody>
-                        Bot record not found in admin environment Dataverse.{' '}
+                        {instanceUrl
+                          ? <>Bot record not found in Dataverse for this environment.{' '}</>
+                          : <>This environment does not appear to have Dataverse enabled — bot record unavailable.{' '}</>
+                        }
                         <a
                           href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
                           target="_blank"
@@ -748,7 +752,12 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                   ) : analysis.length === 0 ? (
                     <div className={styles.analysisSummary}>
                       <CheckmarkCircleRegular fontSize={20} style={{ color: tokens.colorStatusSuccessForeground1 }} />
-                      <Text>No issues found. Dataverse record not available — analysis limited to inventory data.</Text>
+                      <Text>
+                        {bot
+                          ? 'All checks passed. No issues found.'
+                          : 'Dataverse record not available — analysis requires bot data from Dataverse.'
+                        }
+                      </Text>
                     </div>
                   ) : (
                     <>
