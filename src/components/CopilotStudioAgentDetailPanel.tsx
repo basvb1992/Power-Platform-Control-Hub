@@ -47,6 +47,7 @@ import {
   quarantineBot,
   unquarantineBot,
 } from '../services/copilotStudioService.ts';
+import type { BotEnvironmentInfo } from '../services/copilotStudioService.ts';
 import type { AnalysisResult, AnalysisSeverity } from '../services/flowAnalyzer.ts';
 import { extractMessage } from '../utils/errorUtils.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
@@ -333,11 +334,16 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     setBotLoading(true);
     setBotError(null);
     try {
-      // Resolve environment Dataverse info first so we can use it as a cross-env
-      // fallback when the agent doesn't live in the admin environment's Dataverse.
-      const envInfo = await getEnvironmentDataverseInfo(envId);
-      setInstanceUrl(envInfo.instanceUrl ?? null);
+      // Use the instance URL already joined from the inventory query (fastest, no extra call).
+      // Fall back to a GetSingleEnvironment admin API call only if it wasn't in the resource.
+      let envInstanceUrl = resource.environmentInstanceUrl ?? null;
+      if (!envInstanceUrl) {
+        const envInfo = await getEnvironmentDataverseInfo(envId);
+        envInstanceUrl = envInfo.instanceUrl ?? null;
+      }
+      setInstanceUrl(envInstanceUrl);
 
+      const envInfo: BotEnvironmentInfo = { instanceUrl: envInstanceUrl ?? undefined };
       const result = await fetchBotDetails(botName, envInfo);
       setBot(result.bot);
       if (!result.bot && result.crossEnvError) {

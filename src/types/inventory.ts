@@ -25,6 +25,8 @@ export interface Resource {
   environmentRegion?: string;
   environmentType?: string;
   isManagedEnvironment?: boolean | string;
+  /** Dataverse instance URL for this resource's environment (joined from environment record). */
+  environmentInstanceUrl?: string;
 }
 
 export interface InventoryQueryResult {
