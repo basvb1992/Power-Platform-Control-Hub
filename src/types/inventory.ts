@@ -1,14 +1,52 @@
+export interface InventoryActor {
+  id?: string;
+  displayName?: string;
+  email?: string;
+  userPrincipalName?: string;
+}
+
+export interface InventorySharingSummary {
+  userCount?: number;
+  groupCount?: number;
+  entireTenant?: boolean;
+}
+
 export interface ResourceProperties {
   displayName?: string;
   createdAt?: string;
+  createdBy?: string | InventoryActor;
+  lastModifiedAt?: string;
+  lastModifiedBy?: string | InventoryActor;
+  /** Deprecated alias retained for compatibility with older callers. */
   modifiedAt?: string;
-  environmentId?: string;
-  createdBy?: string;
   ownerId?: string;
+  environmentId?: string;
+  isQuarantined?: boolean;
+  subType?: string;
+  appModuleId?: string;
+  logicalName?: string;
+  workflowEntityId?: string;
+  lastPublishedAt?: string;
+  createdIn?: 'Copilot Studio' | 'Microsoft 365 Copilot Agent Builder' | string;
+  schemaName?: string;
+  isManaged?: boolean;
+  quarantinedAt?: string;
+  botId?: string;
+  entraAppId?: string;
+  entraAgentId?: string;
+  entraAgentBlueprintId?: string;
+  orchestration?: 'Generative' | 'Classic' | string;
+  model?: string;
+  authentication?: 'Microsoft Entra' | 'None' | 'Generic OAuth 2.0' | string;
+  channels?: string[];
+  sharedWithViewers?: InventorySharingSummary;
+  sharedWithEditors?: InventorySharingSummary;
+  capabilitiesCounts?: Record<string, number>;
+  environmentType?: string;
+  environmentGroup?: string;
+  environmentGroupId?: string;
   /** Pre-resolved AAD display name for the owner GUID (populated by useInventory). */
   resolvedOwnerName?: string;
-  environmentType?: string;
-  isManaged?: boolean;
   [key: string]: unknown;
 }
 
@@ -25,8 +63,6 @@ export interface Resource {
   environmentRegion?: string;
   environmentType?: string;
   isManagedEnvironment?: boolean | string;
-  /** Dataverse instance URL for this resource's environment (joined from environment record). */
-  environmentInstanceUrl?: string;
 }
 
 export interface InventoryQueryResult {

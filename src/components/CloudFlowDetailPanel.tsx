@@ -1510,7 +1510,7 @@ export default function CloudFlowDetailPanel({
 
                       <span className={styles.detailLabel}>Last Modified</span>
                       <span className={styles.detailValue}>
-                        <CalendarInlineIcon /> {formatDate(props?.lastModifiedTime ?? resource.properties.modifiedAt)}
+                        <CalendarInlineIcon /> {formatDate(props?.lastModifiedTime ?? resource.properties.lastModifiedAt ?? resource.properties.modifiedAt)}
                       </span>
 
                       {creator && (
@@ -1545,6 +1545,15 @@ export default function CloudFlowDetailPanel({
                       <span className={styles.detailValue} style={{ wordBreak: 'break-all', fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
                         {flowName}
                       </span>
+
+                      {resource.properties.workflowEntityId && (
+                        <>
+                          <span className={styles.detailLabel}>Workflow Entity ID</span>
+                          <span className={styles.detailValue} style={{ wordBreak: 'break-all', fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3, fontFamily: 'Consolas, "Courier New", monospace' }}>
+                            {resource.properties.workflowEntityId}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}

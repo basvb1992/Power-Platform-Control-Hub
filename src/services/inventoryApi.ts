@@ -25,7 +25,7 @@ function unwrapOperationResult<T>(result: IOperationResult<T>): T {
 }
 
 function normalizeResource(resource: ResourceItem): Resource {
-  const record = resource as ResourceItem & { joinKey?: string; environmentInstanceUrl?: string };
+  const record = resource as ResourceItem & { joinKey?: string };
 
   return {
     id: resource.id,
@@ -38,7 +38,6 @@ function normalizeResource(resource: ResourceItem): Resource {
     environmentRegion: resource.environmentRegion,
     environmentType: resource.environmentType,
     isManagedEnvironment: resource.isManagedEnvironment,
-    environmentInstanceUrl: record.environmentInstanceUrl,
   };
 }
 
@@ -102,7 +101,7 @@ export async function fetchResources(
           TableName: 'PowerPlatformResources',
           Clauses: [
             c({ $type: 'where', FieldName: 'type', Operator: '==', Values: ["'microsoft.powerplatform/environments'"] }),
-            c({ $type: 'project', FieldList: ['joinKey = tolower(name)', 'environmentName = properties.displayName', 'environmentRegion = location', 'environmentType = properties.environmentType', 'isManagedEnvironment = properties.isManaged', 'environmentInstanceUrl = properties.linkedEnvironmentMetadata.instanceUrl'] }),
+            c({ $type: 'project', FieldList: ['joinKey = tolower(name)', 'environmentName = properties.displayName', 'environmentRegion = location', 'environmentType = properties.environmentType', 'isManagedEnvironment = properties.isManaged'] }),
           ],
         },
         LeftColumnName: 'joinKey',

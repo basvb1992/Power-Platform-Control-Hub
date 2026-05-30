@@ -429,13 +429,33 @@ export default function CanvasAppDetailPanel({ resource, onClose }: Props): Reac
 
                   <span className={styles.detailLabel}>Last Modified</span>
                   <span className={styles.detailValue}>
-                    {adminInfo?.lastModifiedTime ? new Date(adminInfo.lastModifiedTime).toLocaleString() : props.modifiedAt ? new Date(props.modifiedAt).toLocaleString() : '—'}
+                    {adminInfo?.lastModifiedTime
+                      ? new Date(adminInfo.lastModifiedTime).toLocaleString()
+                      : props.lastModifiedAt
+                        ? new Date(props.lastModifiedAt).toLocaleString()
+                        : props.modifiedAt
+                          ? new Date(props.modifiedAt).toLocaleString()
+                          : '—'}
                   </span>
 
                   {adminInfo?.lastModifiedBy && <>
                     <span className={styles.detailLabel}>Modified by</span>
                     <span className={styles.detailValue}>
                       {adminInfo.lastModifiedBy.displayName ?? adminInfo.lastModifiedBy.email ?? '—'}
+                    </span>
+                  </>}
+
+                  {props.subType && <>
+                    <span className={styles.detailLabel}>Sub Type</span>
+                    <span className={styles.detailValue}>{props.subType}</span>
+                  </>}
+
+                  {props.isQuarantined !== undefined && <>
+                    <span className={styles.detailLabel}>Quarantine Status</span>
+                    <span className={styles.detailValue}>
+                      <Badge appearance="tint" color={props.isQuarantined ? 'danger' : 'success'} size="small">
+                        {props.isQuarantined ? 'Quarantined' : 'Not Quarantined'}
+                      </Badge>
                     </span>
                   </>}
 

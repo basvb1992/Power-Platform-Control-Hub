@@ -722,7 +722,11 @@ export default function EnvironmentDetailView({
                     const name = r.properties.displayName ?? r.name;
                     const typeLabel = RESOURCE_TYPE_LABELS[r.type] ?? r.type;
                     const created = r.properties.createdAt ? new Date(r.properties.createdAt as string).toLocaleDateString() : '—';
-                    const modified = r.properties.modifiedAt ? new Date(r.properties.modifiedAt as string).toLocaleDateString() : '—';
+                    const modified = r.properties.lastModifiedAt
+                      ? new Date(r.properties.lastModifiedAt as string).toLocaleDateString()
+                      : r.properties.modifiedAt
+                        ? new Date(r.properties.modifiedAt as string).toLocaleDateString()
+                        : '—';
                     const ownerGuid = (r.properties.createdBy ?? r.properties.ownerId ?? '') as string;
                     const owner = ownerNames.get(ownerGuid.toLowerCase()) ?? (ownerGuid || '—');
                     return (

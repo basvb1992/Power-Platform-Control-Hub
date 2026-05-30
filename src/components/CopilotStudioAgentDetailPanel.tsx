@@ -40,7 +40,7 @@ import {
   ShieldPersonRegular,
   BookOpenRegular,
 } from '@fluentui/react-icons';
-import type { Resource } from '../types/inventory.ts';
+import type { InventorySharingSummary, Resource } from '../types/inventory.ts';
 import type { Bots } from '../generated/models/BotsModel.ts';
 import type { BotComponent } from '../services/dataverseConnectorService.ts';
 import { COMPONENT_TYPE_LABELS } from '../services/dataverseConnectorService.ts';
@@ -251,6 +251,35 @@ const useStyles = makeStyles({
 function formatDate(iso?: string): string {
   if (!iso) return '—';
   try { return new Date(iso).toLocaleString(); } catch { return iso; }
+}
+
+function hasText(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function formatSharedSummary(summary?: InventorySharingSummary): string | null {
+  if (!summary) return null;
+  if (summary.entireTenant) return 'Entire tenant';
+
+  const parts: string[] = [];
+  if (typeof summary.userCount === 'number') {
+    parts.push(`${summary.userCount} user${summary.userCount === 1 ? '' : 's'}`);
+  }
+  if (typeof summary.groupCount === 'number') {
+    parts.push(`${summary.groupCount} group${summary.groupCount === 1 ? '' : 's'}`);
+  }
+
+  return parts.length > 0 ? parts.join(', ') : null;
+}
+
+function getStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+}
+
+function getCapabilityEntries(value: unknown): Array<[string, number]> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.entries(value).filter((entry): entry is [string, number] => typeof entry[1] === 'number');
 }
 
 function severityIcon(severity: AnalysisSeverity): ReactElement {
@@ -521,7 +550,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [expandedAnalysis, setExpandedAnalysis] = useState<Set<string>>(new Set());
-  const [openSections, setOpenSections] = useState<string[]>(['details', 'analysis']);
+  const [openSections, setOpenSections] = useState<string[]>(['details', 'inventory', 'analysis']);
 
   function handleSectionToggle(_: unknown, data: { openItems: string[] }) {
     setOpenSections(data.openItems);
@@ -532,11 +561,10 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     setBotError(null);
     setComponents([]);
     setResolvedOwner(null);
+    setDataverseError(null);
     try {
-      // Use the instance URL already joined from the inventory query (fastest, no extra call).
-      // Fall back to a GetEnvironmentByIdForUser (V2) / GetSingleEnvironment (V1) call only if not in the resource.
-      let envInstanceUrl = resource.environmentInstanceUrl ?? null;
-      if (!envInstanceUrl) {
+      let envInstanceUrl: string | null = null;
+      if (envId) {
         const envInfo = await getEnvironmentDataverseInfo(envId);
         envInstanceUrl = envInfo.instanceUrl ?? null;
         if (!envInstanceUrl && envInfo.dataverseError) {
@@ -661,6 +689,24 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     0: 'Unspecified', 1: 'None', 2: 'Integrated', 3: 'Custom',
     5: 'Azure AD v2', 6: 'Azure AD v2 (Certificate)', 10: 'Generic OAuth 2',
   };
+  const inventoryProps = resource.properties;
+  const inventoryChannels = getStringArray(inventoryProps.channels);
+  const inventoryViewers = formatSharedSummary(inventoryProps.sharedWithViewers);
+  const inventoryEditors = formatSharedSummary(inventoryProps.sharedWithEditors);
+  const inventoryCapabilities = getCapabilityEntries(inventoryProps.capabilitiesCounts);
+  const hasInventoryDetails = [
+    hasText(inventoryProps.orchestration),
+    hasText(inventoryProps.model),
+    hasText(inventoryProps.authentication),
+    hasText(inventoryProps.createdIn),
+    inventoryChannels.length > 0,
+    Boolean(inventoryViewers),
+    Boolean(inventoryEditors),
+    hasText(inventoryProps.entraAppId),
+    hasText(inventoryProps.entraAgentId),
+    hasText(inventoryProps.entraAgentBlueprintId),
+    inventoryCapabilities.length > 0,
+  ].some(Boolean);
 
   return (
     <>
@@ -947,6 +993,113 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                         </a>
                       </MessageBarBody>
                     </MessageBar>
+                  )}
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+
+            {/* ── Inventory ── */}
+            <AccordionItem value="inventory">
+              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />}>
+                Inventory
+              </AccordionHeader>
+              <AccordionPanel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL, paddingBottom: tokens.spacingVerticalL }}>
+                  {hasInventoryDetails ? (
+                    <div className={styles.detailGrid}>
+                      {hasText(inventoryProps.orchestration) && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>Orchestration</span>
+                          <span className={styles.detailValue}>{inventoryProps.orchestration}</span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.model) && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>AI Model</span>
+                          <span className={styles.detailValue}>{inventoryProps.model}</span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.authentication) && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>Authentication</span>
+                          <span className={styles.detailValue}>{inventoryProps.authentication}</span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.createdIn) && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>Created In</span>
+                          <span className={styles.detailValue}>{inventoryProps.createdIn}</span>
+                        </div>
+                      )}
+
+                      {inventoryViewers && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>Shared With Viewers</span>
+                          <span className={styles.detailValue}>{inventoryViewers}</span>
+                        </div>
+                      )}
+
+                      {inventoryEditors && (
+                        <div className={styles.detailItem}>
+                          <span className={styles.detailLabel}>Shared With Editors</span>
+                          <span className={styles.detailValue}>{inventoryEditors}</span>
+                        </div>
+                      )}
+
+                      {inventoryChannels.length > 0 && (
+                        <div className={styles.detailItemWide}>
+                          <span className={styles.detailLabel}>Channels</span>
+                          <span className={styles.detailValue} style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalXS }}>
+                            {inventoryChannels.map((channel) => (
+                              <Badge key={channel} appearance="tint" color="informative" size="small">{channel}</Badge>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.entraAppId) && (
+                        <div className={styles.detailItemWide}>
+                          <span className={styles.detailLabel}>Entra App ID</span>
+                          <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', fontFamily: 'Consolas, "Courier New", monospace', color: tokens.colorNeutralForeground3 }}>
+                            {inventoryProps.entraAppId}
+                          </span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.entraAgentId) && (
+                        <div className={styles.detailItemWide}>
+                          <span className={styles.detailLabel}>Entra Agent ID</span>
+                          <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', fontFamily: 'Consolas, "Courier New", monospace', color: tokens.colorNeutralForeground3 }}>
+                            {inventoryProps.entraAgentId}
+                          </span>
+                        </div>
+                      )}
+
+                      {hasText(inventoryProps.entraAgentBlueprintId) && (
+                        <div className={styles.detailItemWide}>
+                          <span className={styles.detailLabel}>Entra Blueprint ID</span>
+                          <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', fontFamily: 'Consolas, "Courier New", monospace', color: tokens.colorNeutralForeground3 }}>
+                            {inventoryProps.entraAgentBlueprintId}
+                          </span>
+                        </div>
+                      )}
+
+                      {inventoryCapabilities.length > 0 && (
+                        <div className={styles.detailItemWide}>
+                          <span className={styles.detailLabel}>Capabilities</span>
+                          <span className={styles.detailValue} style={{ display: 'flex', flexWrap: 'wrap', gap: tokens.spacingHorizontalXS }}>
+                            {inventoryCapabilities.map(([name, count]) => (
+                              <Badge key={name} appearance="tint" color="brand" size="small">{name}: {count}</Badge>
+                            ))}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <Text style={{ color: tokens.colorNeutralForeground3 }}>No inventory-only agent fields available.</Text>
                   )}
                 </div>
               </AccordionPanel>

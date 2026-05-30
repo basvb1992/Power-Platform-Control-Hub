@@ -24,7 +24,7 @@ import { extractMessage } from '../utils/errorUtils.ts';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent } from '../services/resourceMutations.ts';
 import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
-type SortField = 'name' | 'type' | 'environment' | 'region' | 'owner' | 'created';
+type SortField = 'name' | 'type' | 'environment' | 'region' | 'owner' | 'created' | 'lastModified';
 type SortDir = 'asc' | 'desc';
 
 interface ResourcesViewProps {
@@ -106,6 +106,12 @@ const useStyles = makeStyles({
     whiteSpace: 'nowrap',
     display: 'block',
   },
+  nameCell: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    minWidth: 0,
+  },
   centered: {
     display: 'flex',
     justifyContent: 'center',
@@ -139,6 +145,7 @@ function getFieldValue(r: Resource, field: SortField): string {
     case 'region': return (r.environmentRegion ?? r.location ?? '').toLowerCase();
     case 'owner': return getOwnerDisplay(r).toLowerCase();
     case 'created': return r.properties.createdAt ?? '';
+    case 'lastModified': return r.properties.lastModifiedAt ?? r.properties.modifiedAt ?? '';
   }
 }
 
@@ -348,12 +355,13 @@ export default function ResourcesView({
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: '24%' }} />
-            <col style={{ width: '110px' }} />
             <col style={{ width: '22%' }} />
+            <col style={{ width: '110px' }} />
+            <col style={{ width: '20%' }} />
             <col style={{ width: '10%' }} />
-            <col style={{ width: '18%' }} />
-            <col style={{ width: '85px' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '96px' }} />
+            <col style={{ width: '96px' }} />
             <col style={{ width: '44px' }} />
           </colgroup>
           <thead>
@@ -376,6 +384,9 @@ export default function ResourcesView({
               <th className={styles.th} onClick={() => handleSort('created')}>
                 Created{sortIndicator('created')}
               </th>
+              <th className={styles.th} onClick={() => handleSort('lastModified')}>
+                Modified{sortIndicator('lastModified')}
+              </th>
               <th className={styles.th}></th>
             </tr>
           </thead>
@@ -384,7 +395,7 @@ export default function ResourcesView({
               <tr>
                 <td
                   className={styles.td}
-                  colSpan={7}
+                  colSpan={8}
                   style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}
                 >
                   No resources match your filters.
@@ -398,7 +409,12 @@ export default function ResourcesView({
                 return (
                   <tr key={r.id ?? `${r.type}-${r.name}-${i}`}>
                     <td className={styles.td} title={displayName}>
-                      <span className={styles.tdText}>{displayName}</span>
+                      <span className={styles.nameCell}>
+                        <span className={styles.tdText}>{displayName}</span>
+                        {r.properties.isQuarantined === true && (
+                          <Badge appearance="tint" color="danger" size="small">🔒</Badge>
+                        )}
+                      </span>
                     </td>
                     <td className={styles.td}>
                       <Badge
@@ -426,6 +442,13 @@ export default function ResourcesView({
                       <span className={styles.tdText}>
                         {r.properties.createdAt
                           ? new Date(r.properties.createdAt).toLocaleDateString()
+                          : '—'}
+                      </span>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.tdText}>
+                        {r.properties.lastModifiedAt ?? r.properties.modifiedAt
+                          ? new Date((r.properties.lastModifiedAt ?? r.properties.modifiedAt) as string).toLocaleDateString()
                           : '—'}
                       </span>
                     </td>
