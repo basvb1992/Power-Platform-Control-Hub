@@ -3395,10 +3395,10 @@
       }
     },
     "runtimeUrls": [
-      "https://usa002-004.azure-apihub.net/apim/powerplatformforadmins"
+      "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformforadmins"
     ],
-    "primaryRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerplatformforadmins",
-    "doNotUseApiHubNetRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerplatformforadmins",
+    "primaryRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformforadmins",
+    "doNotUseApiHubNetRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformforadmins",
     "metadata": {
       "source": "marketplace",
       "brandColor": "",

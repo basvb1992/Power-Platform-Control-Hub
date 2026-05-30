@@ -16,6 +16,7 @@ import {
 import { DeleteRegular, SearchRegular, ArrowClockwiseRegular, OpenRegular } from '@fluentui/react-icons';
 import CloudFlowDetailPanel from './CloudFlowDetailPanel.tsx';
 import CanvasAppDetailPanel from './CanvasAppDetailPanel.tsx';
+import CopilotStudioAgentDetailPanel from './CopilotStudioAgentDetailPanel.tsx';
 import type { Resource } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_SHORT_LABELS, RESOURCE_TYPES_FILTER, getTypeBadgeColor } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
@@ -240,6 +241,19 @@ export default function ResourcesView({
     ) {
       return (
         <CloudFlowDetailPanel
+          resource={detailResource}
+          onClose={() => setDetailResource(null)}
+          onDeleted={(name) => {
+            setDeletedNames((prev) => new Set([...prev, name]));
+            setDetailResource(null);
+          }}
+        />
+      );
+    }
+    // Copilot Studio agents
+    if (typeLower === 'microsoft.copilotstudio/agents') {
+      return (
+        <CopilotStudioAgentDetailPanel
           resource={detailResource}
           onClose={() => setDetailResource(null)}
           onDeleted={(name) => {

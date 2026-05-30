@@ -20776,10 +20776,10 @@
       "basePath": "/apim/powerplatformadminv2"
     },
     "runtimeUrls": [
-      "https://usa002-004.azure-apihub.net/apim/powerplatformadminv2"
+      "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2"
     ],
-    "primaryRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerplatformadminv2",
-    "doNotUseApiHubNetRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/powerplatformadminv2",
+    "primaryRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
+    "doNotUseApiHubNetRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
     "metadata": {
       "source": "marketplace",
       "brandColor": "#000000",

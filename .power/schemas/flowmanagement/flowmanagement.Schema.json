@@ -2642,10 +2642,10 @@
       }
     },
     "runtimeUrls": [
-      "https://usa002-004.azure-apihub.net/apim/flowmanagement"
+      "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/flowmanagement"
     ],
-    "primaryRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/flowmanagement",
-    "doNotUseApiHubNetRuntimeUrl": "https://usa002-004.azure-apihub.net/apim/flowmanagement",
+    "primaryRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/flowmanagement",
+    "doNotUseApiHubNetRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/flowmanagement",
     "metadata": {
       "source": "marketplace",
       "brandColor": "#0066FF",

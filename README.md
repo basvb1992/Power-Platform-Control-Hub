@@ -28,6 +28,14 @@ A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [P
 - Role assignments list (owner, co-owner, viewer)
 - 🔒 Quarantine / Unquarantine actions
 - ➕ Add owner (searches AAD users)
+**🤖 Copilot Studio Agent detail panel** (click any Copilot Studio agent in Resources):
+- **Agent Details**: display name, schema name, status badge, language, authentication mode, last published, created/modified, owner, environment, Dataverse instance URL, agent ID, quarantine status
+- **Definition (Configuration)**: the `configuration` column from the Dataverse `bots` table, rendered as formatted JSON
+- **Best Practice Analysis**: checks for inactive agents, unpublished agents, unauthenticated access, missing language, and empty configuration
+- 🔒 Quarantine / Unquarantine (Power Platform Admin V2, cross-environment)
+- 🗑️ Delete (Power Platform Admin V2, cross-environment)
+- Bot record fetched from the admin environment's Dataverse (`bots` table); Dataverse instance URL resolved via the Power Platform for Admins connector
+
 **⚡ Cloud Flow / Agent Flow / M365 Agent Flow detail panel**:
 - **Triggers & Actions** accordion section with a recursive tree view:
   - Conditions shown with **True** / **False** branches side-by-side
@@ -86,6 +94,7 @@ CoE-Code/
 │   │   ├── canvasAppAdminService.ts   # Canvas app governance via Power Apps for Admins
 │   │   ├── flowManagementService.ts   # Flow enable/disable/delete
 │   │   ├── flowAnalyzer.ts            # 22 best-practice checks for cloud/agent flows
+│   │   ├── copilotStudioService.ts    # Copilot Studio bot Dataverse queries + Admin V2 actions
 │   │   ├── governanceMutations.ts     # Env group / policy / rule set write ops
 │   │   ├── environmentMutations.ts    # Environment write ops
 │   │   ├── ownerCache.ts              # AAD user display name resolution
@@ -95,6 +104,7 @@ CoE-Code/
 │   │   ├── ResourcesView.tsx          # Resources table + detail panel routing
 │   │   ├── CanvasAppDetailPanel.tsx   # Canvas app detail + analysis
 │   │   ├── CloudFlowDetailPanel.tsx   # Cloud/agent flow detail + analysis
+│   │   ├── CopilotStudioAgentDetailPanel.tsx  # Copilot Studio agent detail + analysis
 │   │   ├── EnvironmentsView.tsx       # Environment cards
 │   │   ├── EnvironmentDetailView.tsx  # Single environment detail
 │   │   ├── RecommendationsView.tsx    # Advisor recommendations
