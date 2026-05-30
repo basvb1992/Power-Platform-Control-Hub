@@ -350,6 +350,11 @@ export default function EnvironmentsView({
               : null;
             const isPending = pendingEnvId === e.name;
             const envGroupId = e.properties['environmentGroupId'] as string | undefined;
+            const runtimeState = ((e.properties['states'] as Record<string, unknown> | undefined)
+              ?.['runtime'] as Record<string, unknown> | undefined)
+              ?.['id'] as string | undefined;
+            const envIsDisabled = runtimeState?.toLowerCase() === 'disabled';
+            const envIsEnabled = !runtimeState || runtimeState?.toLowerCase() === 'enabled';
 
             return (
               <Card
@@ -378,18 +383,22 @@ export default function EnvironmentsView({
                     </MenuTrigger>
                     <MenuPopover>
                       <MenuList>
-                        <MenuItem
-                          icon={<PlayRegular />}
-                          onClick={(ev) => { ev.stopPropagation(); void runAction(e.name, () => execEnable(e.name)); }}
-                        >
-                          Enable
-                        </MenuItem>
-                        <MenuItem
-                          icon={<StopRegular />}
-                          onClick={(ev) => { ev.stopPropagation(); setConfirmAction({ type: 'disable', env: e }); }}
-                        >
-                          Disable
-                        </MenuItem>
+                        {envIsDisabled && (
+                          <MenuItem
+                            icon={<PlayRegular />}
+                            onClick={(ev) => { ev.stopPropagation(); void runAction(e.name, () => execEnable(e.name)); }}
+                          >
+                            Enable
+                          </MenuItem>
+                        )}
+                        {envIsEnabled && (
+                          <MenuItem
+                            icon={<StopRegular />}
+                            onClick={(ev) => { ev.stopPropagation(); setConfirmAction({ type: 'disable', env: e }); }}
+                          >
+                            Disable
+                          </MenuItem>
+                        )}
                         {isManaged ? (
                           <MenuItem
                             icon={<ShieldDismissRegular />}
