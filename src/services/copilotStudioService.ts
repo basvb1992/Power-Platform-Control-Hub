@@ -7,14 +7,16 @@ import { getDataverseBotById, listDataverseBots } from './dataverseConnectorServ
 
 const API_VERSION = '2024-10-01';
 
+// Note: 'owneridname', 'createdbyname', 'modifiedbyname' are OData annotation virtual fields — not valid
+// as direct $select columns in cross-env Dataverse queries via the connector. Use _xxx_value GUIDs only.
 const BOT_SELECT = [
   'botid', 'name', 'statecode', 'statuscode', 'schemaname',
   'language', 'authenticationmode', 'authenticationtrigger',
   'publishedon', 'template', 'configuration',
   'createdon', 'modifiedon',
-  '_ownerid_value', 'owneridname',
-  '_createdby_value', 'createdbyname',
-  '_modifiedby_value', 'modifiedbyname',
+  '_ownerid_value',
+  '_createdby_value',
+  '_modifiedby_value',
 ].join(',');
 
 function unwrap<T>(result: IOperationResult<T>): T {
