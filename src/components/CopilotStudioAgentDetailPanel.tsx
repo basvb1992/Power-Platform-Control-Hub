@@ -36,11 +36,17 @@ import {
   CalendarRegular,
   BrainRegular,
   CodeRegular,
+  AppsListRegular,
+  ShieldPersonRegular,
+  BookOpenRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import type { Bots } from '../generated/models/BotsModel.ts';
+import type { BotComponent } from '../services/dataverseConnectorService.ts';
+import { COMPONENT_TYPE_LABELS } from '../services/dataverseConnectorService.ts';
 import {
   fetchBotDetails,
+  fetchBotComponents,
   getEnvironmentDataverseInfo,
   deleteCopilotAgent,
   getBotQuarantineStatus,
@@ -49,6 +55,7 @@ import {
 } from '../services/copilotStudioService.ts';
 import type { BotEnvironmentInfo } from '../services/copilotStudioService.ts';
 import type { AnalysisResult, AnalysisSeverity } from '../services/flowAnalyzer.ts';
+import { resolveUserIds } from '../services/userService.ts';
 import { extractMessage } from '../utils/errorUtils.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 
@@ -241,7 +248,11 @@ function severityIcon(severity: AnalysisSeverity): ReactElement {
 
 // ── Best practice analysis for Copilot Studio agents ──────────────────────────
 
-function analyzeCopilotAgent(bot: Bots | null): AnalysisResult[] {
+const ACCESS_CONTROL_LABELS: Record<number, string> = {
+  0: 'Any', 1: 'Copilot readers', 2: 'Group membership', 3: 'Any (multi-tenant)',
+};
+
+function analyzeCopilotAgent(bot: Bots | null, components: BotComponent[]): AnalysisResult[] {
   const results: AnalysisResult[] = [];
   if (!bot) return results;
 
@@ -267,7 +278,7 @@ function analyzeCopilotAgent(bot: Bots | null): AnalysisResult[] {
     });
   }
 
-  // 3. Authentication mode: Unspecified or None (may be intentional but worth noting)
+  // 3. Authentication mode: Unspecified or None
   const authMode = Number(bot.authenticationmode);
   if (authMode === 0 || authMode === 1) {
     results.push({
@@ -301,7 +312,175 @@ function analyzeCopilotAgent(bot: Bots | null): AnalysisResult[] {
     });
   }
 
+  // 6. Access control policy open to everyone
+  const acp = Number(bot.accesscontrolpolicy);
+  if (acp === 0) {
+    results.push({
+      id: 'access-control-open',
+      title: 'Access control allows anyone',
+      description: 'The access control policy is set to "Any" — anyone can interact with this agent without group or reader restrictions.',
+      recommendation: 'If this agent is for internal use only, consider setting access control to "Copilot readers" or "Group membership" to restrict access.',
+      severity: 'info',
+    });
+  }
+
+  // 7. Group membership policy but no security groups configured
+  if (acp === 2 && !bot.authorizedsecuritygroupids) {
+    results.push({
+      id: 'group-membership-no-groups',
+      title: 'Group membership access control has no groups configured',
+      description: 'Access control is set to "Group membership" but no AAD security groups are configured. No users will be able to access this agent.',
+      recommendation: 'Add the required AAD security group IDs to the Authorized Security Groups field in Copilot Studio.',
+      severity: 'critical',
+    });
+  }
+
+  // Component-based checks (only when components were loaded)
+  if (components.length > 0) {
+    // 8. Inactive custom topics
+    const inactiveTopics = components.filter(
+      c => (c.componenttype === 0 || c.componenttype === 9) && Number(c.statecode) !== 0,
+    );
+    if (inactiveTopics.length > 0) {
+      results.push({
+        id: 'inactive-topics',
+        title: `${inactiveTopics.length} inactive topic${inactiveTopics.length !== 1 ? 's' : ''} found`,
+        description: `${inactiveTopics.length} topic${inactiveTopics.length !== 1 ? 's' : ''} ${inactiveTopics.length === 1 ? 'is' : 'are'} disabled: ${inactiveTopics.map(t => t.name ?? 'Unknown').slice(0, 5).join(', ')}${inactiveTopics.length > 5 ? '…' : ''}.`,
+        recommendation: 'Disabled topics are not active. Review these topics and either enable, update or delete them to keep the agent clean.',
+        severity: 'warning',
+      });
+    }
+
+    // 9. No knowledge sources
+    const knowledgeSources = components.filter(c => c.componenttype === 16);
+    if (knowledgeSources.length === 0) {
+      results.push({
+        id: 'no-knowledge-sources',
+        title: 'No knowledge sources configured',
+        description: 'This agent has no knowledge sources. Without grounding data, the agent relies solely on its topics and generative AI defaults.',
+        recommendation: 'Consider adding knowledge sources (SharePoint, websites, uploaded files) to ground the agent\'s responses in your organisation\'s data.',
+        severity: 'info',
+      });
+    }
+
+    // 10. No test cases
+    const testCases = components.filter(c => c.componenttype === 19);
+    if (testCases.length === 0) {
+      results.push({
+        id: 'no-test-cases',
+        title: 'No test cases defined',
+        description: 'This agent has no test cases. Test cases help validate that the agent responds correctly after changes.',
+        recommendation: 'Add test cases in Copilot Studio to catch regressions and verify agent behaviour before publishing.',
+        severity: 'info',
+      });
+    }
+  }
+
   return results;
+}
+
+// ── Component types shown in the governance view ─────────────────────────────
+const GOVERNANCE_TYPES = new Set([0, 1, 9, 13, 15, 16, 17, 18, 19]);
+
+function ComponentsView({ components }: { components: BotComponent[] }): ReactElement {
+  // Group by componenttype
+  const groups = new Map<number, BotComponent[]>();
+  for (const c of components) {
+    const t = c.componenttype ?? -1;
+    if (!groups.has(t)) groups.set(t, []);
+    groups.get(t)!.push(c);
+  }
+
+  // Sort groups: governance types first, then the rest
+  const sortedTypes = [...groups.keys()].sort((a, b) => {
+    const aGov = GOVERNANCE_TYPES.has(a) ? 0 : 1;
+    const bGov = GOVERNANCE_TYPES.has(b) ? 0 : 1;
+    return aGov !== bGov ? aGov - bGov : a - b;
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM }}>
+      {/* Summary table */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto auto auto',
+        gap: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`,
+        fontSize: tokens.fontSizeBase200,
+        borderRadius: tokens.borderRadiusMedium,
+        border: `1px solid ${tokens.colorNeutralStroke2}`,
+        overflow: 'hidden',
+      }}>
+        <div style={{ padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`, fontWeight: tokens.fontWeightSemibold, backgroundColor: tokens.colorNeutralBackground2, borderBottom: `1px solid ${tokens.colorNeutralStroke2}` }}>Type</div>
+        <div style={{ padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`, fontWeight: tokens.fontWeightSemibold, backgroundColor: tokens.colorNeutralBackground2, textAlign: 'right', borderBottom: `1px solid ${tokens.colorNeutralStroke2}` }}>Total</div>
+        <div style={{ padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`, fontWeight: tokens.fontWeightSemibold, backgroundColor: tokens.colorNeutralBackground2, textAlign: 'right', borderBottom: `1px solid ${tokens.colorNeutralStroke2}` }}>Active</div>
+        <div style={{ padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`, fontWeight: tokens.fontWeightSemibold, backgroundColor: tokens.colorNeutralBackground2, textAlign: 'right', borderBottom: `1px solid ${tokens.colorNeutralStroke2}` }}>Inactive</div>
+        {sortedTypes.map((type, idx) => {
+          const items = groups.get(type)!;
+          const active = items.filter(c => Number(c.statecode) === 0).length;
+          const inactive = items.length - active;
+          const isLast = idx === sortedTypes.length - 1;
+          const borderStyle = isLast ? 'none' : `1px solid ${tokens.colorNeutralStroke2}`;
+          return (
+            <>
+              <div key={`label-${type}`} style={{ padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`, borderBottom: borderStyle }}>
+                {GOVERNANCE_TYPES.has(type) && <BookOpenRegular fontSize={12} style={{ marginRight: 4, verticalAlign: 'middle', color: tokens.colorBrandForeground1 }} />}
+                {COMPONENT_TYPE_LABELS[type] ?? `Type ${type}`}
+              </div>
+              <div key={`total-${type}`} style={{ padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`, textAlign: 'right', borderBottom: borderStyle }}>{items.length}</div>
+              <div key={`active-${type}`} style={{ padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`, textAlign: 'right', color: tokens.colorStatusSuccessForeground1, borderBottom: borderStyle }}>{active > 0 ? active : '—'}</div>
+              <div key={`inactive-${type}`} style={{ padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`, textAlign: 'right', color: inactive > 0 ? tokens.colorStatusWarningForeground1 : tokens.colorNeutralForeground3, borderBottom: borderStyle }}>
+                {inactive > 0 ? inactive : '—'}
+              </div>
+            </>
+          );
+        })}
+      </div>
+
+      {/* Detailed topic list (governance types only) */}
+      {sortedTypes.filter(t => GOVERNANCE_TYPES.has(t)).map(type => {
+        const items = groups.get(type)!;
+        return (
+          <div key={type}>
+            <Text style={{ fontWeight: tokens.fontWeightSemibold, fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground2, display: 'block', marginBottom: tokens.spacingVerticalXS }}>
+              {COMPONENT_TYPE_LABELS[type] ?? `Type ${type}`} ({items.length})
+            </Text>
+            <div style={{
+              borderRadius: tokens.borderRadiusMedium,
+              border: `1px solid ${tokens.colorNeutralStroke2}`,
+              overflow: 'hidden',
+            }}>
+              {items.map((comp, i) => {
+                const isActive = Number(comp.statecode) === 0;
+                const isLast = i === items.length - 1;
+                return (
+                  <div key={comp.botcomponentid ?? i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: tokens.spacingHorizontalS,
+                    padding: `${tokens.spacingVerticalXS} ${tokens.spacingHorizontalM}`,
+                    borderBottom: isLast ? 'none' : `1px solid ${tokens.colorNeutralStroke2}`,
+                    fontSize: tokens.fontSizeBase200,
+                  }}>
+                    {isActive
+                      ? <CheckmarkCircleRegular fontSize={14} style={{ color: tokens.colorStatusSuccessForeground1, flexShrink: 0 }} />
+                      : <DismissCircleRegular fontSize={14} style={{ color: tokens.colorStatusWarningForeground1, flexShrink: 0 }} />
+                    }
+                    <span style={{ flex: 1, wordBreak: 'break-word' }}>{comp.name ?? '(unnamed)'}</span>
+                    {!isActive && (
+                      <Badge appearance="tint" color="warning" size="tiny">Inactive</Badge>
+                    )}
+                    {comp.category && (
+                      <span style={{ color: tokens.colorNeutralForeground3 }}>{comp.category}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -322,6 +501,10 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
   const [dataverseError, setDataverseError] = useState<string | null>(null);
   const [isQuarantined, setIsQuarantined] = useState<boolean | null>(null);
 
+  const [components, setComponents] = useState<BotComponent[]>([]);
+  const [componentsLoading, setComponentsLoading] = useState(false);
+  const [resolvedOwner, setResolvedOwner] = useState<string | null>(null);
+
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [expandedAnalysis, setExpandedAnalysis] = useState<Set<string>>(new Set());
@@ -334,6 +517,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
   async function loadDetails() {
     setBotLoading(true);
     setBotError(null);
+    setComponents([]);
+    setResolvedOwner(null);
     try {
       // Use the instance URL already joined from the inventory query (fastest, no extra call).
       // Fall back to a GetEnvironmentByIdForUser (V2) / GetSingleEnvironment (V1) call only if not in the resource.
@@ -352,6 +537,29 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
       setBot(result.bot);
       if (!result.bot && result.crossEnvError) {
         setBotError(result.crossEnvError);
+      }
+
+      // Resolve owner GUID to display name (best-effort)
+      if (result.bot?._ownerid_value) {
+        try {
+          const names = await resolveUserIds([result.bot._ownerid_value]);
+          setResolvedOwner(names.get(result.bot._ownerid_value) ?? null);
+        } catch {
+          // non-critical
+        }
+      }
+
+      // Fetch bot components from cross-env Dataverse (best-effort, non-blocking display)
+      if (result.bot?.botid && envInstanceUrl) {
+        setComponentsLoading(true);
+        try {
+          const comps = await fetchBotComponents(envInstanceUrl, result.bot.botid);
+          setComponents(comps);
+        } catch {
+          // components are optional
+        } finally {
+          setComponentsLoading(false);
+        }
       }
 
       // Fetch quarantine status (best-effort)
@@ -420,7 +628,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     });
   }
 
-  const analysis = analyzeCopilotAgent(bot);
+  const analysis = analyzeCopilotAgent(bot, components);
   const issueCount = analysis.filter((r) => r.severity !== 'info').length;
   const hasIssues = issueCount > 0;
 
@@ -595,12 +803,32 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                       </>
                     )}
 
+                    {bot?.accesscontrolpolicy !== undefined && (
+                      <>
+                        <span className={styles.detailLabel}>Access Control</span>
+                        <span className={styles.detailValue}>
+                          <ShieldPersonRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {ACCESS_CONTROL_LABELS[Number(bot.accesscontrolpolicy)] ?? String(bot.accesscontrolpolicy)}
+                        </span>
+                      </>
+                    )}
+
+                    {bot?.authorizedsecuritygroupids && (
+                      <>
+                        <span className={styles.detailLabel}>Authorized Groups</span>
+                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
+                          {bot.authorizedsecuritygroupids}
+                        </span>
+                      </>
+                    )}
+
                     {bot?.publishedon && (
                       <>
                         <span className={styles.detailLabel}>Last Published</span>
                         <span className={styles.detailValue}>
                           <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                           {formatDate(bot.publishedon)}
+                          {bot.publishedby && <span style={{ color: tokens.colorNeutralForeground3, marginLeft: 6 }}>by {bot.publishedby}</span>}
                         </span>
                       </>
                     )}
@@ -625,10 +853,10 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                       </>
                     )}
 
-                    {bot?.owneridname && (
+                    {(bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value) && (
                       <>
                         <span className={styles.detailLabel}>Owner</span>
-                        <span className={styles.detailValue}>{bot.owneridname}</span>
+                        <span className={styles.detailValue}>{bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value}</span>
                       </>
                     )}
 
@@ -814,6 +1042,33 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                         })}
                       </div>
                     </>
+                  )}
+                </div>
+              </AccordionPanel>
+            </AccordionItem>
+
+            {/* ── Components ── */}
+            <AccordionItem value="components">
+              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
+                  Components
+                  {components.length > 0 && (
+                    <Badge appearance="tint" color="informative" size="small">{components.length}</Badge>
+                  )}
+                </span>
+              </AccordionHeader>
+              <AccordionPanel>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalM, paddingBottom: tokens.spacingVerticalL }}>
+                  {(botLoading || componentsLoading) ? (
+                    <Spinner size="tiny" label="Loading components…" />
+                  ) : !bot ? (
+                    <Text style={{ color: tokens.colorNeutralForeground3 }}>
+                      Bot record not available — components cannot be loaded.
+                    </Text>
+                  ) : components.length === 0 ? (
+                    <Text style={{ color: tokens.colorNeutralForeground3 }}>No components found for this agent.</Text>
+                  ) : (
+                    <ComponentsView components={components} />
                   )}
                 </div>
               </AccordionPanel>

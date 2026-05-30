@@ -3,7 +3,8 @@ import { BotsService } from '../generated/services/BotsService.ts';
 import { PowerPlatformforAdminsService } from '../generated/services/PowerPlatformforAdminsService.ts';
 import { PowerPlatformforAdminsV2Service } from '../generated/services/PowerPlatformforAdminsV2Service.ts';
 import type { IOperationResult } from '@microsoft/power-apps/data';
-import { getDataverseBotById, listDataverseBots } from './dataverseConnectorService.ts';
+import { getDataverseBotById, listDataverseBots, listBotComponents } from './dataverseConnectorService.ts';
+import type { BotComponent } from './dataverseConnectorService.ts';
 
 const API_VERSION = '2024-10-01';
 
@@ -12,12 +13,15 @@ const API_VERSION = '2024-10-01';
 const BOT_SELECT = [
   'botid', 'name', 'statecode', 'statuscode', 'schemaname',
   'language', 'authenticationmode', 'authenticationtrigger',
-  'publishedon', 'template', 'configuration',
+  'accesscontrolpolicy', 'authorizedsecuritygroupids',
+  'publishedon', 'publishedby', 'template', 'configuration',
   'createdon', 'modifiedon',
   '_ownerid_value',
   '_createdby_value',
   '_modifiedby_value',
 ].join(',');
+
+const COMPONENT_SELECT = 'botcomponentid,name,componenttype,statecode,statuscode,category,description';
 
 function unwrap<T>(result: IOperationResult<T>): T {
   if (!result.success || result.error) {
@@ -161,6 +165,20 @@ export async function fetchBotDetails(
   }
 
   return { bot: null };
+}
+
+/**
+ * Fetch bot component records for a given bot from any Dataverse environment.
+ * Returns an empty array on failure so the panel degrades gracefully.
+ */
+export async function fetchBotComponents(instanceUrl: string, botId: string): Promise<BotComponent[]> {
+  try {
+    const result = await listBotComponents(instanceUrl, botId, COMPONENT_SELECT);
+    const data = unwrap(result);
+    return data.value ?? [];
+  } catch {
+    return [];
+  }
 }
 
 // ── Admin actions (cross-environment via Admin V2 connector) ──────────────────
