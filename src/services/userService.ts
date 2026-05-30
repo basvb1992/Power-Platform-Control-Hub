@@ -11,8 +11,14 @@ export function isGuid(s: string): boolean {
   return GUID_RE.test(s);
 }
 
+/** Well-known system GUIDs that should never be looked up in AAD. */
+const SYSTEM_GUIDS: Record<string, string> = {
+  '00000000-0000-0000-0000-000000000000': 'SYSTEM',
+  '00000000-0000-0000-0000-5157eaa02fcd': 'SYSTEM',
+};
+
 /** Persistent display-name cache: guid → display name (or original guid on failure). */
-const nameCache = new Map<string, string>();
+const nameCache = new Map<string, string>(Object.entries(SYSTEM_GUIDS));
 
 /**
  * Resolves a list of AAD user GUIDs to display names.
