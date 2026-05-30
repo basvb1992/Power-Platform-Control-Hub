@@ -133,12 +133,25 @@ const useStyles = makeStyles({
   },
   detailGrid: {
     display: 'grid',
-    gridTemplateColumns: '180px 1fr',
-    gap: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL}`,
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalXXL}`,
     alignItems: 'start',
-    '@media (max-width: 600px)': {
+    '@media (max-width: 768px)': {
       gridTemplateColumns: '1fr',
     },
+  },
+  detailItem: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: tokens.spacingVerticalXS,
+    minWidth: 0,
+  },
+  detailItemWide: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: tokens.spacingVerticalXS,
+    minWidth: 0,
+    gridColumn: 'span 2',
   },
   detailLabel: {
     fontSize: tokens.fontSizeBase200,
@@ -146,7 +159,6 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     textTransform: 'uppercase',
     letterSpacing: '0.04em',
-    paddingTop: '2px',
   },
   detailValue: {
     fontSize: tokens.fontSizeBase300,
@@ -763,20 +775,13 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
               <AccordionPanel>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL, paddingBottom: tokens.spacingVerticalL }}>
                   <div className={styles.detailGrid}>
-                    <span className={styles.detailLabel}>Display Name</span>
-                    <span className={styles.detailValue}>{displayName}</span>
-
-                    {bot?.schemaname && (
-                      <>
-                        <span className={styles.detailLabel}>Schema Name</span>
-                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
-                          {bot.schemaname}
-                        </span>
-                      </>
-                    )}
+                    <div className={styles.detailItem}>
+                      <span className={styles.detailLabel}>Display Name</span>
+                      <span className={styles.detailValue}>{displayName}</span>
+                    </div>
 
                     {bot && (
-                      <>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Status</span>
                         <span className={styles.detailValue}>
                           <Badge appearance="tint" color={isActive ? 'success' : 'warning'} size="small"
@@ -784,116 +789,37 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                             {isActive ? 'Active' : 'Inactive'}
                           </Badge>
                         </span>
-                      </>
+                      </div>
                     )}
 
                     {bot?.language !== undefined && bot.language !== null && (
-                      <>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Language (LCID)</span>
                         <span className={styles.detailValue}>{bot.language}</span>
-                      </>
+                      </div>
                     )}
 
                     {bot?.authenticationmode !== undefined && (
-                      <>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Authentication</span>
                         <span className={styles.detailValue}>
                           {authModeLabels[Number(bot.authenticationmode)] ?? String(bot.authenticationmode)}
                         </span>
-                      </>
+                      </div>
                     )}
 
                     {bot?.accesscontrolpolicy !== undefined && (
-                      <>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Access Control</span>
                         <span className={styles.detailValue}>
                           <ShieldPersonRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
                           {ACCESS_CONTROL_LABELS[Number(bot.accesscontrolpolicy)] ?? String(bot.accesscontrolpolicy)}
                         </span>
-                      </>
+                      </div>
                     )}
-
-                    {bot?.authorizedsecuritygroupids && (
-                      <>
-                        <span className={styles.detailLabel}>Authorized Groups</span>
-                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
-                          {bot.authorizedsecuritygroupids}
-                        </span>
-                      </>
-                    )}
-
-                    {bot?.publishedon && (
-                      <>
-                        <span className={styles.detailLabel}>Last Published</span>
-                        <span className={styles.detailValue}>
-                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                          {formatDate(bot.publishedon)}
-                          {bot.publishedby && <span style={{ color: tokens.colorNeutralForeground3, marginLeft: 6 }}>by {bot.publishedby}</span>}
-                        </span>
-                      </>
-                    )}
-
-                    {(bot?.createdon ?? resource.properties.createdAt) && (
-                      <>
-                        <span className={styles.detailLabel}>Created</span>
-                        <span className={styles.detailValue}>
-                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                          {formatDate((bot?.createdon ?? resource.properties.createdAt) as string)}
-                        </span>
-                      </>
-                    )}
-
-                    {bot?.modifiedon && (
-                      <>
-                        <span className={styles.detailLabel}>Last Modified</span>
-                        <span className={styles.detailValue}>
-                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
-                          {formatDate(bot.modifiedon)}
-                        </span>
-                      </>
-                    )}
-
-                    {(bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value) && (
-                      <>
-                        <span className={styles.detailLabel}>Owner</span>
-                        <span className={styles.detailValue}>{bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value}</span>
-                      </>
-                    )}
-
-                    {bot?.createdbyname && (
-                      <>
-                        <span className={styles.detailLabel}>Created By</span>
-                        <span className={styles.detailValue}>{bot.createdbyname}</span>
-                      </>
-                    )}
-
-                    <span className={styles.detailLabel}>Environment</span>
-                    <span className={styles.detailValue}>
-                      {resource.environmentName
-                        ? <span>
-                            <span style={{ fontWeight: tokens.fontWeightSemibold }}>{resource.environmentName}</span>
-                            <span style={{ display: 'block', color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200, wordBreak: 'break-all' }}>{envId}</span>
-                          </span>
-                        : <span style={{ color: tokens.colorNeutralForeground2, fontSize: tokens.fontSizeBase200, wordBreak: 'break-all' }}>{envId}</span>
-                      }
-                    </span>
-
-                    {instanceUrl && (
-                      <>
-                        <span className={styles.detailLabel}>Dataverse URL</span>
-                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
-                          {instanceUrl}
-                        </span>
-                      </>
-                    )}
-
-                    <span className={styles.detailLabel}>Agent ID</span>
-                    <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
-                      {bot?.botid ?? botName}
-                    </span>
 
                     {isQuarantined !== null && (
-                      <>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Quarantine</span>
                         <span className={styles.detailValue}>
                           <Badge
@@ -905,8 +831,101 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                             {isQuarantined ? 'Quarantined' : 'Not Quarantined'}
                           </Badge>
                         </span>
-                      </>
+                      </div>
                     )}
+
+                    {bot?.publishedon && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Last Published</span>
+                        <span className={styles.detailValue}>
+                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {formatDate(bot.publishedon)}
+                          {bot.publishedby && <span style={{ color: tokens.colorNeutralForeground3, marginLeft: 6 }}>by {bot.publishedby}</span>}
+                        </span>
+                      </div>
+                    )}
+
+                    {(bot?.createdon ?? resource.properties.createdAt) && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Created</span>
+                        <span className={styles.detailValue}>
+                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {formatDate((bot?.createdon ?? resource.properties.createdAt) as string)}
+                        </span>
+                      </div>
+                    )}
+
+                    {bot?.modifiedon && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Last Modified</span>
+                        <span className={styles.detailValue}>
+                          <CalendarRegular fontSize={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                          {formatDate(bot.modifiedon)}
+                        </span>
+                      </div>
+                    )}
+
+                    {(bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value) && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Owner</span>
+                        <span className={styles.detailValue}>{bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value}</span>
+                      </div>
+                    )}
+
+                    {bot?.createdbyname && (
+                      <div className={styles.detailItem}>
+                        <span className={styles.detailLabel}>Created By</span>
+                        <span className={styles.detailValue}>{bot.createdbyname}</span>
+                      </div>
+                    )}
+
+                    {/* Wide items — span both columns */}
+                    {bot?.schemaname && (
+                      <div className={styles.detailItemWide}>
+                        <span className={styles.detailLabel}>Schema Name</span>
+                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
+                          {bot.schemaname}
+                        </span>
+                      </div>
+                    )}
+
+                    {bot?.authorizedsecuritygroupids && (
+                      <div className={styles.detailItemWide}>
+                        <span className={styles.detailLabel}>Authorized Groups</span>
+                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
+                          {bot.authorizedsecuritygroupids}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className={styles.detailItemWide}>
+                      <span className={styles.detailLabel}>Environment</span>
+                      <span className={styles.detailValue}>
+                        {resource.environmentName
+                          ? <span>
+                              <span style={{ fontWeight: tokens.fontWeightSemibold }}>{resource.environmentName}</span>
+                              <span style={{ display: 'block', color: tokens.colorNeutralForeground3, fontSize: tokens.fontSizeBase200, wordBreak: 'break-all' }}>{envId}</span>
+                            </span>
+                          : <span style={{ color: tokens.colorNeutralForeground2, fontSize: tokens.fontSizeBase200, wordBreak: 'break-all' }}>{envId}</span>
+                        }
+                      </span>
+                    </div>
+
+                    {instanceUrl && (
+                      <div className={styles.detailItemWide}>
+                        <span className={styles.detailLabel}>Dataverse URL</span>
+                        <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
+                          {instanceUrl}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className={styles.detailItemWide}>
+                      <span className={styles.detailLabel}>Agent ID</span>
+                      <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
+                        {bot?.botid ?? botName}
+                      </span>
+                    </div>
                   </div>
 
                   {!bot && !botLoading && !botError && (
