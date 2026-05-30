@@ -46,6 +46,7 @@ import {
   LayerRegular,
   SubtractCircleRegular,
   SettingsRegular,
+  PersonAddRegular,
 } from '@fluentui/react-icons';
 import type { Resource } from '../types/inventory.ts';
 import type { EnvironmentGroup } from '../types/admin.ts';
@@ -59,6 +60,7 @@ import {
   enableManagedEnvironment,
   disableManagedEnvironment,
   createEnvironmentBackup,
+  addSelfAsEnvironmentAdmin,
 } from '../services/environmentMutations.ts';
 import { fetchEnvironmentSettings, updateEnvironmentSettings } from '../services/settingsService.ts';
 import BackupDialog from './BackupDialog.tsx';
@@ -460,6 +462,10 @@ export default function EnvironmentDetailView({
     successMessage: 'Backup request submitted.',
     onSuccess: () => setShowBackup(false),
   });
+  const { execute: execAddSelfAsAdmin, isLoading: isAddingAsAdmin } = useMutation(addSelfAsEnvironmentAdmin, {
+    successMessage: 'You have been added as System Administrator. Refreshing…',
+    onSuccess: () => void onRefreshEnvironments?.(),
+  });
 
   async function runAction(action: () => Promise<unknown>) {
     setIsPending(true);
@@ -543,6 +549,13 @@ export default function EnvironmentDetailView({
                   : <MenuItem icon={<ShieldRegular />} onClick={() => void runAction(() => execEnableManaged(env.name))}>Enable Managed</MenuItem>
                 }
                 <MenuItem icon={<SaveRegular />} onClick={() => setShowBackup(true)}>Create Backup</MenuItem>
+                <MenuItem
+                  icon={isAddingAsAdmin ? <Spinner size="tiny" /> : <PersonAddRegular />}
+                  disabled={isAddingAsAdmin || isPending}
+                  onClick={() => void execAddSelfAsAdmin(env.name)}
+                >
+                  Add yourself as Environment Admin
+                </MenuItem>
                 {!envGroupId && (
                   <MenuItem icon={<LayerRegular />} onClick={() => setGroupDialogMode('add')}>Add to Group</MenuItem>
                 )}
