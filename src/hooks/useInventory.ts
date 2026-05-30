@@ -6,6 +6,7 @@ import {
 } from '../services/inventoryApi.ts';
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
 import { extractMessage } from '../utils/errorUtils.ts';
+import { isGuid, resolveUserIds } from '../services/userService.ts';
 
 export interface UseInventoryResult {
   resources: Resource[];
@@ -15,6 +16,18 @@ export interface UseInventoryResult {
   loadingLabel: string | null;
   error: string | null;
   refresh: () => Promise<void>;
+}
+
+/** Extract the owner GUID from a resource, if it is a bare GUID rather than a display name. */
+function extractOwnerGuid(r: Resource): string | null {
+  const p = r.properties as Record<string, unknown>;
+  if (p.owner && typeof p.owner === 'object') {
+    const o = p.owner as { displayName?: string; id?: string };
+    if (!o.displayName && o.id && isGuid(o.id)) return o.id;
+  }
+  if (typeof p.ownerId === 'string' && isGuid(p.ownerId)) return p.ownerId;
+  if (typeof p.createdBy === 'string' && isGuid(p.createdBy)) return p.createdBy;
+  return null;
 }
 
 export function useInventory(): UseInventoryResult {
@@ -38,9 +51,23 @@ export function useInventory(): UseInventoryResult {
         fetchEnvironments(),
       ]);
 
-      setResources(fetchedResources);
+      // Collect unique owner GUIDs and resolve them to display names
+      setLoadingLabel('Resolving owner names…');
+      const ownerGuids = [...new Set(fetchedResources.map(extractOwnerGuid).filter(Boolean) as string[])];
+      const nameMap = await resolveUserIds(ownerGuids);
+
+      // Enrich resources with the resolved display name
+      const enriched = fetchedResources.map((r) => {
+        const guid = extractOwnerGuid(r);
+        if (!guid) return r;
+        const resolved = nameMap.get(guid);
+        if (!resolved || resolved === guid) return r;
+        return { ...r, properties: { ...r.properties, resolvedOwnerName: resolved } };
+      });
+
+      setResources(enriched);
       setEnvironments(fetchedEnvironments);
-      setCounts(computeResourceCounts(fetchedResources));
+      setCounts(computeResourceCounts(enriched));
     } catch (e: unknown) {
       setError(
         e instanceof Error ? extractMessage(e.message) : 'Failed to load Power Platform inventory.',

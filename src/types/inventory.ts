@@ -5,6 +5,8 @@ export interface ResourceProperties {
   environmentId?: string;
   createdBy?: string;
   ownerId?: string;
+  /** Pre-resolved AAD display name for the owner GUID (populated by useInventory). */
+  resolvedOwnerName?: string;
   environmentType?: string;
   isManaged?: boolean;
   [key: string]: unknown;

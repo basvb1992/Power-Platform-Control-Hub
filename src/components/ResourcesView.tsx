@@ -116,6 +116,8 @@ const useStyles = makeStyles({
 
 function getOwnerDisplay(r: Resource): string {
   const p = r.properties as Record<string, unknown>;
+  // Use pre-resolved AAD display name if available
+  if (typeof p.resolvedOwnerName === 'string') return p.resolvedOwnerName;
   if (p.owner && typeof p.owner === 'object') {
     const o = p.owner as { displayName?: string; email?: string; id?: string };
     return o.displayName ?? o.email ?? o.id ?? '—';
