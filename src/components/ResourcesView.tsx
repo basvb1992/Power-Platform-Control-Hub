@@ -24,7 +24,7 @@ import { extractMessage } from '../utils/errorUtils.ts';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent } from '../services/resourceMutations.ts';
 import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
-type SortField = 'name' | 'type' | 'environment' | 'region' | 'created';
+type SortField = 'name' | 'type' | 'environment' | 'region' | 'owner' | 'created';
 type SortDir = 'asc' | 'desc';
 
 interface ResourcesViewProps {
@@ -114,12 +114,28 @@ const useStyles = makeStyles({
   },
 });
 
+function getOwnerDisplay(r: Resource): string {
+  const p = r.properties as Record<string, unknown>;
+  if (p.owner && typeof p.owner === 'object') {
+    const o = p.owner as { displayName?: string; email?: string; id?: string };
+    return o.displayName ?? o.email ?? o.id ?? '—';
+  }
+  if (p.createdBy) {
+    if (typeof p.createdBy === 'string') return p.createdBy;
+    const cb = p.createdBy as { displayName?: string };
+    return cb.displayName ?? '—';
+  }
+  if (typeof p.ownerId === 'string') return p.ownerId;
+  return '—';
+}
+
 function getFieldValue(r: Resource, field: SortField): string {
   switch (field) {
     case 'name': return (r.properties.displayName ?? r.name).toLowerCase();
     case 'type': return r.type.toLowerCase();
     case 'environment': return (r.environmentName ?? '').toLowerCase();
     case 'region': return (r.environmentRegion ?? r.location ?? '').toLowerCase();
+    case 'owner': return getOwnerDisplay(r).toLowerCase();
     case 'created': return r.properties.createdAt ?? '';
   }
 }
@@ -151,6 +167,7 @@ export default function ResourcesView({
   const [pendingResourceName, setPendingResourceName] = useState<string | null>(null);
   const [deletedNames, setDeletedNames] = useState<Set<string>>(new Set());
   const [detailResource, setDetailResource] = useState<Resource | null>(null);
+  const [ownerFilter, setOwnerFilter] = useState('all');
 
   // Load tombstones from Dataverse (+ localStorage fallback) on mount
   useEffect(() => {
@@ -182,10 +199,12 @@ export default function ResourcesView({
       if (deletedNames.has(r.name)) return false;
       const matchesType = typeFilter === 'all' || r.type.toLowerCase() === typeFilter;
       const name = (r.properties.displayName ?? r.name).toLowerCase();
-      const matchesSearch = !term || name.includes(term) || (r.environmentName ?? '').toLowerCase().includes(term);
-      return matchesType && matchesSearch;
+      const owner = getOwnerDisplay(r).toLowerCase();
+      const matchesSearch = !term || name.includes(term) || (r.environmentName ?? '').toLowerCase().includes(term) || owner.includes(term);
+      const matchesOwner = ownerFilter === 'all' || getOwnerDisplay(r) === ownerFilter;
+      return matchesType && matchesSearch && matchesOwner;
     });
-  }, [resources, search, typeFilter, deletedNames]);
+  }, [resources, search, typeFilter, ownerFilter, deletedNames]);
 
   const sorted = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -195,6 +214,15 @@ export default function ResourcesView({
       return sortDir === 'asc' ? cmp : -cmp;
     });
   }, [filtered, sortField, sortDir]);
+
+  const uniqueOwners = useMemo(() => {
+    const seen = new Set<string>();
+    for (const r of resources) {
+      const o = getOwnerDisplay(r);
+      if (o !== '—') seen.add(o);
+    }
+    return Array.from(seen).sort((a, b) => a.localeCompare(b));
+  }, [resources]);
 
   function handleSort(field: SortField) {
     if (field === sortField) {
@@ -287,6 +315,18 @@ export default function ResourcesView({
             <Option key={t.key} value={t.key}>{t.label}</Option>
           ))}
         </Dropdown>
+        <Dropdown
+          value={ownerFilter === 'all' ? 'All Owners' : ownerFilter}
+          selectedOptions={[ownerFilter]}
+          onOptionSelect={(_, data) => setOwnerFilter(data.optionValue ?? 'all')}
+          size="small"
+          style={{ minWidth: '160px' }}
+        >
+          <Option value="all">All Owners</Option>
+          {uniqueOwners.map((o) => (
+            <Option key={o} value={o}>{o}</Option>
+          ))}
+        </Dropdown>
         <Text className={styles.count}>{sorted.length} result(s)</Text>
         <Button
           appearance="subtle"
@@ -306,11 +346,12 @@ export default function ResourcesView({
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: '30%' }} />
-            <col style={{ width: '120px' }} />
-            <col style={{ width: '27%' }} />
-            <col style={{ width: '13%' }} />
-            <col style={{ width: '90px' }} />
+            <col style={{ width: '24%' }} />
+            <col style={{ width: '110px' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '85px' }} />
             <col style={{ width: '44px' }} />
           </colgroup>
           <thead>
@@ -327,6 +368,9 @@ export default function ResourcesView({
               <th className={styles.th} onClick={() => handleSort('region')}>
                 Region{sortIndicator('region')}
               </th>
+              <th className={styles.th} onClick={() => handleSort('owner')}>
+                Owner{sortIndicator('owner')}
+              </th>
               <th className={styles.th} onClick={() => handleSort('created')}>
                 Created{sortIndicator('created')}
               </th>
@@ -338,7 +382,7 @@ export default function ResourcesView({
               <tr>
                 <td
                   className={styles.td}
-                  colSpan={6}
+                  colSpan={7}
                   style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}
                 >
                   No resources match your filters.
@@ -372,6 +416,9 @@ export default function ResourcesView({
                     </td>
                     <td className={styles.td}>
                       <span className={styles.tdText}>{r.environmentRegion ?? r.location ?? '—'}</span>
+                    </td>
+                    <td className={styles.td} title={getOwnerDisplay(r)}>
+                      <span className={styles.tdText}>{getOwnerDisplay(r)}</span>
                     </td>
                     <td className={styles.td}>
                       <span className={styles.tdText}>

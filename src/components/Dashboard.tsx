@@ -39,6 +39,20 @@ import { deleteCopilotAgent } from '../services/resourceMutations.ts';
 import { fetchTombstonedIds, addTombstone, removeTombstone } from '../services/tombstoneService.ts';
 
 const DELETABLE_TYPES = new Set<string>([]);
+function getOwnerDisplay(r: Resource): string {
+  const p = r.properties as Record<string, unknown>;
+  if (p.owner && typeof p.owner === 'object') {
+    const o = p.owner as { displayName?: string; email?: string; id?: string };
+    return o.displayName ?? o.email ?? o.id ?? '—';
+  }
+  if (p.createdBy) {
+    if (typeof p.createdBy === 'string') return p.createdBy;
+    const cb = p.createdBy as { displayName?: string };
+    return cb.displayName ?? '—';
+  }
+  if (typeof p.ownerId === 'string') return p.ownerId;
+  return '—';
+}
 const DETAIL_PANEL_TYPES = new Set([
   'microsoft.powerautomate/cloudflows',
   'microsoft.powerautomate/agentflows',
@@ -303,7 +317,7 @@ export default function Dashboard({
     },
   });
 
-  type SortCol = 'name' | 'type' | 'environment' | 'region' | 'created';
+  type SortCol = 'name' | 'type' | 'environment' | 'region' | 'owner' | 'created';
   const [sortCol, setSortCol] = useState<SortCol>('created');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
@@ -322,7 +336,8 @@ export default function Dashboard({
       if (deletedNames.has(r.name)) return false;
       if (!term) return true;
       const name = (r.properties.displayName ?? r.name).toLowerCase();
-      return name.includes(term) || (r.environmentName ?? '').toLowerCase().includes(term);
+      const owner = getOwnerDisplay(r).toLowerCase();
+      return name.includes(term) || (r.environmentName ?? '').toLowerCase().includes(term) || owner.includes(term);
     });
     arr.sort((a, b) => {
       let av = '';
@@ -344,6 +359,10 @@ export default function Dashboard({
           av = a.environmentRegion ?? a.location ?? '';
           bv = b.environmentRegion ?? b.location ?? '';
           break;
+        case 'owner':
+          av = getOwnerDisplay(a);
+          bv = getOwnerDisplay(b);
+          break;
         case 'created':
           av = a.properties.createdAt ?? '';
           bv = b.properties.createdAt ?? '';
@@ -353,7 +372,7 @@ export default function Dashboard({
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return arr;
-  }, [resources, sortCol, sortDir]);
+  }, [resources, search, sortCol, sortDir, deletedNames]);
 
   // Reset pagination when resources change (e.g. refresh)
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [resources]);
@@ -469,11 +488,12 @@ export default function Dashboard({
           <Card className={styles.tableCard}>
         <table className={styles.table}>
           <colgroup>
-            <col style={{ width: '26%' }} />
+            <col style={{ width: '20%' }} />
             <col style={{ width: '110px' }} />
-            <col style={{ width: '28%' }} />
-            <col style={{ width: '10%' }} />
-            <col style={{ width: '10%' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '17%' }} />
+            <col style={{ width: '9%' }} />
             <col style={{ width: '44px' }} />
           </colgroup>
           <thead>
@@ -483,6 +503,7 @@ export default function Dashboard({
                 { col: 'type' as const, label: 'Type' },
                 { col: 'environment' as const, label: 'Environment' },
                 { col: 'region' as const, label: 'Region' },
+                { col: 'owner' as const, label: 'Owner' },
                 { col: 'created' as const, label: 'Created' },
               ]).map(({ col, label }) => (
                 <th
@@ -504,7 +525,7 @@ export default function Dashboard({
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td className={styles.td} colSpan={6} style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
+                <td className={styles.td} colSpan={7} style={{ textAlign: 'center', color: tokens.colorNeutralForeground3 }}>
                   {search ? 'No resources match your search.' : 'No resources found'}
                 </td>
               </tr>
@@ -537,6 +558,9 @@ export default function Dashboard({
                       </td>
                       <td className={tdClass}>
                         <span className={styles.tdText}>{r.environmentRegion ?? r.location ?? '—'}</span>
+                      </td>
+                      <td className={tdClass} title={getOwnerDisplay(r)}>
+                        <span className={styles.tdText}>{getOwnerDisplay(r)}</span>
                       </td>
                       <td className={tdClass}>
                         <span className={styles.tdText}>
@@ -572,7 +596,7 @@ export default function Dashboard({
                 })}
                 {hasMore && (
                   <tr ref={sentinelRef} className={styles.sentinel}>
-                    <td colSpan={6}>
+                    <td colSpan={7}>
                       <div className={styles.loadingMore}>
                         <Spinner size="tiny" label={`Loading more… (${visibleCount} / ${sortedResources.length})`} />
                       </div>
