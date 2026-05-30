@@ -868,14 +868,14 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                     )}
 
                     {(bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value) && (
-                      <div className={styles.detailItem}>
+                      <div className={styles.detailItemWide}>
                         <span className={styles.detailLabel}>Owner</span>
                         <span className={styles.detailValue}>{bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value}</span>
                       </div>
                     )}
 
                     {bot?.createdbyname && (
-                      <div className={styles.detailItem}>
+                      <div className={styles.detailItemWide}>
                         <span className={styles.detailLabel}>Created By</span>
                         <span className={styles.detailValue}>{bot.createdbyname}</span>
                       </div>
