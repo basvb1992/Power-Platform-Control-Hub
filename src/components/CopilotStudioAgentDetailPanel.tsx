@@ -333,12 +333,15 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     setBotLoading(true);
     setBotError(null);
     try {
-      const [botRecord, envInfo] = await Promise.all([
-        fetchBotDetails(botName),
-        getEnvironmentDataverseInfo(envId),
+      // Resolve environment Dataverse info first so we can use it as a cross-env
+      // fallback when the agent doesn't live in the admin environment's Dataverse.
+      const envInfo = await getEnvironmentDataverseInfo(envId);
+      setInstanceUrl(envInfo.instanceUrl ?? null);
+
+      const [botRecord] = await Promise.all([
+        fetchBotDetails(botName, envInfo),
       ]);
       setBot(botRecord);
-      setInstanceUrl(envInfo.instanceUrl ?? null);
 
       // Fetch quarantine status (best-effort)
       try {
