@@ -1242,7 +1242,10 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                         </Text>
                       </div>
                       <div className={styles.analysisList}>
-                        {analysis.map((item) => {
+                        {[...analysis].sort((a, b) => {
+                          const order = { critical: 0, warning: 1, info: 2 };
+                          return (order[a.severity] ?? 3) - (order[b.severity] ?? 3);
+                        }).map((item) => {
                           const isExpanded = expandedAnalysis.has(item.id);
                           return (
                             <div key={item.id}>
