@@ -971,22 +971,21 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                     )}
 
                     {(bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value) && (
-                      <div className={styles.detailItemWide}>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Owner</span>
                         <span className={styles.detailValue}>{bot?.owneridname ?? resolvedOwner ?? bot?._ownerid_value}</span>
                       </div>
                     )}
 
                     {bot?.createdbyname && (
-                      <div className={styles.detailItemWide}>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Created By</span>
                         <span className={styles.detailValue}>{bot.createdbyname}</span>
                       </div>
                     )}
 
-                    {/* Wide items — span both columns */}
                     {bot?.schemaname && (
-                      <div className={styles.detailItemWide}>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Schema Name</span>
                         <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
                           {bot.schemaname}
@@ -995,7 +994,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                     )}
 
                     {bot?.authorizedsecuritygroupids && (
-                      <div className={styles.detailItemWide}>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Authorized Groups</span>
                         <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
                           {bot.authorizedsecuritygroupids}
@@ -1017,7 +1016,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                     </div>
 
                     {instanceUrl && (
-                      <div className={styles.detailItemWide}>
+                      <div className={styles.detailItem}>
                         <span className={styles.detailLabel}>Dataverse URL</span>
                         <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
                           {instanceUrl}
@@ -1025,7 +1024,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                       </div>
                     )}
 
-                    <div className={styles.detailItemWide}>
+                    <div className={styles.detailItem}>
                       <span className={styles.detailLabel}>Agent ID</span>
                       <span className={styles.detailValue} style={{ fontSize: tokens.fontSizeBase200, wordBreak: 'break-all', color: tokens.colorNeutralForeground3 }}>
                         {bot?.botid ?? botName}
