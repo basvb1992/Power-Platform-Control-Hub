@@ -41,10 +41,29 @@ export interface BotEnvironmentInfo {
   instanceApiUrl?: string;
   uniqueName?: string;
   friendlyName?: string;
+  dataverseError?: string;
 }
 
-/** Resolve Dataverse instance URL for an environment using the Power Platform for Admins connector. */
+/** Resolve Dataverse instance URL for an environment.
+ *  Tries V2 GetEnvironmentByIdForUser first (has explicit `url` field), then falls back to V1 GetSingleEnvironment.
+ */
 export async function getEnvironmentDataverseInfo(environmentId: string): Promise<BotEnvironmentInfo> {
+  // Try V2 connector — returns EnvironmentResponse with explicit `url` for the Dataverse instance URL
+  try {
+    const v2result = await PowerPlatformforAdminsV2Service.GetEnvironmentByIdForUser(environmentId, '2024-10-01');
+    const env = unwrap(v2result);
+    if (env.url) {
+      return {
+        instanceUrl: env.url,
+        uniqueName: env.domainName,
+        friendlyName: env.displayName,
+      };
+    }
+  } catch {
+    // V2 failed — fall through to V1
+  }
+
+  // Fall back to V1 connector
   try {
     const result = await PowerPlatformforAdminsService.GetSingleEnvironment(environmentId);
     const env = unwrap(result);
@@ -55,8 +74,8 @@ export async function getEnvironmentDataverseInfo(environmentId: string): Promis
       uniqueName: linked?.uniqueName,
       friendlyName: linked?.friendlyName,
     };
-  } catch {
-    return {};
+  } catch (e) {
+    return { dataverseError: e instanceof Error ? e.message : String(e) };
   }
 }
 

@@ -319,6 +319,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
   const [botError, setBotError] = useState<string | null>(null);
 
   const [instanceUrl, setInstanceUrl] = useState<string | null>(null);
+  const [dataverseError, setDataverseError] = useState<string | null>(null);
   const [isQuarantined, setIsQuarantined] = useState<boolean | null>(null);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -335,11 +336,14 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
     setBotError(null);
     try {
       // Use the instance URL already joined from the inventory query (fastest, no extra call).
-      // Fall back to a GetSingleEnvironment admin API call only if it wasn't in the resource.
+      // Fall back to a GetEnvironmentByIdForUser (V2) / GetSingleEnvironment (V1) call only if not in the resource.
       let envInstanceUrl = resource.environmentInstanceUrl ?? null;
       if (!envInstanceUrl) {
         const envInfo = await getEnvironmentDataverseInfo(envId);
         envInstanceUrl = envInfo.instanceUrl ?? null;
+        if (!envInstanceUrl && envInfo.dataverseError) {
+          setDataverseError(envInfo.dataverseError);
+        }
       }
       setInstanceUrl(envInstanceUrl);
 
@@ -682,7 +686,7 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                       <MessageBarBody>
                         {instanceUrl
                           ? <>Bot record not found in Dataverse for this environment.{' '}</>
-                          : <>This environment does not appear to have Dataverse enabled — bot record unavailable.{' '}</>
+                          : <>Unable to resolve Dataverse instance URL for this environment.{dataverseError ? <><br /><span style={{ fontSize: tokens.fontSizeBase200, opacity: 0.8 }}>{dataverseError}</span></> : ' Bot record unavailable.'}{' '}</>
                         }
                         <a
                           href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
