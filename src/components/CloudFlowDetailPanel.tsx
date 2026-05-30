@@ -1103,11 +1103,11 @@ export default function CloudFlowDetailPanel({
   })();
 
   // Build the Power Automate deep-link URL.
-  // envId may be "Default-<tenantGuid>" or a bare GUID — the make.powerautomate.com URL needs just the GUID.
+  // The make.powerautomate.com URL uses the full environment ID as returned by the API
+  // (e.g. "Default-<tenantGuid>" for default envs, bare GUID for others) plus /details.
   const flowUrl = (() => {
-    const envGuid = envId.startsWith('Default-') ? envId.slice('Default-'.length) : envId;
-    if (!envGuid || !flowName) return null;
-    return `https://make.powerautomate.com/environments/${envGuid}/flows/${flowName}`;
+    if (!envId || !flowName) return null;
+    return `https://make.powerautomate.com/environments/${envId}/flows/${flowName}/details`;
   })();
 
   const [openSections, setOpenSections] = useState<string[]>(['details', 'triggers', 'analysis']);
