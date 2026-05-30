@@ -32,6 +32,7 @@ import type { Resource, ResourceCounts } from '../types/inventory.ts';
 import { RESOURCE_TYPE_LABELS, RESOURCE_TYPE_SHORT_LABELS, getTypeBadgeColor } from '../types/inventory.ts';
 import CanvasAppDetailPanel from './CanvasAppDetailPanel.tsx';
 import CloudFlowDetailPanel from './CloudFlowDetailPanel.tsx';
+import CopilotStudioAgentDetailPanel from './CopilotStudioAgentDetailPanel.tsx';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
 import { deleteCopilotAgent } from '../services/resourceMutations.ts';
@@ -396,6 +397,18 @@ export default function Dashboard({
     const typeLower = detailResource.type.toLowerCase();
     if (typeLower === 'microsoft.powerapps/apps' || typeLower === 'microsoft.powerapps/canvasapps') {
       return <CanvasAppDetailPanel resource={detailResource} onClose={() => setDetailResource(null)} />;
+    }
+    if (typeLower === 'microsoft.copilotstudio/agents') {
+      return (
+        <CopilotStudioAgentDetailPanel
+          resource={detailResource}
+          onClose={() => setDetailResource(null)}
+          onDeleted={(name) => {
+            setDeletedNames((prev) => new Set([...prev, name]));
+            setDetailResource(null);
+          }}
+        />
+      );
     }
     if (DETAIL_PANEL_TYPES.has(typeLower)) {
       return (
