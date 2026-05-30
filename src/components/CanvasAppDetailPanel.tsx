@@ -170,6 +170,16 @@ const useStyles = makeStyles({
     flexWrap: 'wrap' as const,
     gap: tokens.spacingHorizontalXS,
   },
+  accordionCard: {
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    borderRadius: tokens.borderRadiusMedium,
+    overflow: 'hidden',
+    marginBottom: tokens.spacingVerticalS,
+  },
+  accordionHeaderTinted: {
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
 });
 
 const SEV_ICON: Record<AnalysisSeverity, ReactElement> = {
@@ -390,8 +400,8 @@ export default function CanvasAppDetailPanel({ resource, onClose }: Props): Reac
 
         <Accordion multiple collapsible defaultOpenItems={['details', 'governance', 'roles', 'analysis']}>
           {/* ── App Details ── */}
-          <AccordionItem value="details">
-            <AccordionHeader expandIconPosition="end" icon={<InfoRegular />}>App Details</AccordionHeader>
+          <AccordionItem value="details" className={styles.accordionCard}>
+            <AccordionHeader expandIconPosition="end" icon={<InfoRegular />} className={styles.accordionHeaderTinted}>App Details</AccordionHeader>
             <AccordionPanel>
               <div style={{ paddingBottom: tokens.spacingVerticalL }}>
                 {loading && !adminInfo && <Spinner size="small" />}
@@ -490,8 +500,8 @@ export default function CanvasAppDetailPanel({ resource, onClose }: Props): Reac
           </AccordionItem>
 
           {/* ── Governance & Sharing ── */}
-          <AccordionItem value="governance">
-            <AccordionHeader expandIconPosition="end" icon={<PeopleRegular />}>
+          <AccordionItem value="governance" className={styles.accordionCard}>
+            <AccordionHeader expandIconPosition="end" icon={<PeopleRegular />} className={styles.accordionHeaderTinted}>
               Governance &amp; Sharing
             </AccordionHeader>
             <AccordionPanel>
@@ -556,8 +566,8 @@ export default function CanvasAppDetailPanel({ resource, onClose }: Props): Reac
           </AccordionItem>
 
           {/* ── Role Assignments ── */}
-          <AccordionItem value="roles">
-            <AccordionHeader expandIconPosition="end" icon={<PersonRegular />}>
+          <AccordionItem value="roles" className={styles.accordionCard}>
+            <AccordionHeader expandIconPosition="end" icon={<PersonRegular />} className={styles.accordionHeaderTinted}>
               Role Assignments
               {roleAssignments.length > 0 && (
                 <Badge appearance="tint" color="informative" size="small" style={{ marginLeft: tokens.spacingHorizontalS }}>
@@ -604,8 +614,8 @@ export default function CanvasAppDetailPanel({ resource, onClose }: Props): Reac
           </AccordionItem>
 
           {/* ── Best Practice Analysis ── */}
-          <AccordionItem value="analysis">
-            <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />}>
+          <AccordionItem value="analysis" className={styles.accordionCard}>
+            <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />} className={styles.accordionHeaderTinted}>
               Best Practice Analysis
               {analysisResults.length > 0 && (
                 <Badge appearance="filled" color="danger" size="small" style={{ marginLeft: tokens.spacingHorizontalS }}>

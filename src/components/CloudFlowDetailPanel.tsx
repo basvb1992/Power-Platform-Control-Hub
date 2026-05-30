@@ -356,6 +356,16 @@ const useStyles = makeStyles({
     flex: 1,
     minWidth: 0,
   },
+  accordionCard: {
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    borderRadius: tokens.borderRadiusMedium,
+    overflow: 'hidden',
+    marginBottom: tokens.spacingVerticalS,
+  },
+  accordionHeaderTinted: {
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
 });
 
 function formatDate(iso?: string): string {
@@ -1484,8 +1494,8 @@ export default function CloudFlowDetailPanel({
             onToggle={handleSectionToggle as (e: unknown, d: { openItems: string[] }) => void}
           >
             {/* ── Flow Details ── */}
-            <AccordionItem value="details">
-              <AccordionHeader expandIconPosition="end" icon={<InfoRegular />}>
+            <AccordionItem value="details" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<InfoRegular />} className={styles.accordionHeaderTinted}>
                 Flow Details
               </AccordionHeader>
               <AccordionPanel>
@@ -1561,8 +1571,8 @@ export default function CloudFlowDetailPanel({
             </AccordionItem>
 
             {/* ── Triggers & Actions ── */}
-            <AccordionItem value="triggers">
-              <AccordionHeader expandIconPosition="end" icon={<FlowRegular />}>
+            <AccordionItem value="triggers" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<FlowRegular />} className={styles.accordionHeaderTinted}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Triggers &amp; Actions
                   {!detailsLoading && (triggersSummary.length + countNodes(flowTree)) > 0 && (
@@ -1655,8 +1665,8 @@ export default function CloudFlowDetailPanel({
             </AccordionItem>
 
             {/* ── Best Practice Analysis ── */}
-            <AccordionItem value="analysis">
-              <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />}>
+            <AccordionItem value="analysis" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />} className={styles.accordionHeaderTinted}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Best Practice Analysis
                   {analysisResults.length > 0 && !detailsLoading && (
@@ -1685,8 +1695,8 @@ export default function CloudFlowDetailPanel({
             </AccordionItem>
 
             {/* ── Owners ── */}
-            <AccordionItem value="owners">
-              <AccordionHeader expandIconPosition="end" icon={<PersonRegular />}>Owners</AccordionHeader>
+            <AccordionItem value="owners" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<PersonRegular />} className={styles.accordionHeaderTinted}>Owners</AccordionHeader>
               <AccordionPanel>
                 <div style={{ paddingBottom: tokens.spacingVerticalL }}>
                   <PermissionsList
@@ -1701,8 +1711,8 @@ export default function CloudFlowDetailPanel({
             </AccordionItem>
 
             {/* ── Run-Only Users ── */}
-            <AccordionItem value="runonlyusers">
-              <AccordionHeader expandIconPosition="end" icon={<PeopleRegular />}>Run-Only Users</AccordionHeader>
+            <AccordionItem value="runonlyusers" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<PeopleRegular />} className={styles.accordionHeaderTinted}>Run-Only Users</AccordionHeader>
               <AccordionPanel>
                 <div style={{ paddingBottom: tokens.spacingVerticalL }}>
                   <PermissionsList

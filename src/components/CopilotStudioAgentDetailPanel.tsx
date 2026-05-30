@@ -248,6 +248,16 @@ const useStyles = makeStyles({
     backgroundColor: tokens.colorNeutralBackground3,
     borderLeft: `3px solid ${tokens.colorBrandStroke1}`,
   },
+  accordionCard: {
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    borderRadius: tokens.borderRadiusMedium,
+    overflow: 'hidden',
+    marginBottom: tokens.spacingVerticalS,
+  },
+  accordionHeaderTinted: {
+    backgroundColor: tokens.colorNeutralBackground2,
+    borderBottom: `1px solid ${tokens.colorNeutralStroke2}`,
+  },
 });
 
 function formatDate(iso?: string): string {
@@ -873,8 +883,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
             onToggle={handleSectionToggle as (e: unknown, d: { openItems: string[] }) => void}
           >
             {/* ── Agent Details ── */}
-            <AccordionItem value="details">
-              <AccordionHeader expandIconPosition="end" icon={<InfoRegular />}>
+            <AccordionItem value="details" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<InfoRegular />} className={styles.accordionHeaderTinted}>
                 Agent Details
               </AccordionHeader>
               <AccordionPanel>
@@ -1055,8 +1065,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
             </AccordionItem>
 
             {/* ── Inventory ── */}
-            <AccordionItem value="inventory">
-              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />}>
+            <AccordionItem value="inventory" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />} className={styles.accordionHeaderTinted}>
                 Inventory
               </AccordionHeader>
               <AccordionPanel>
@@ -1162,8 +1172,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
             </AccordionItem>
 
             {/* ── Configuration / Definition ── */}
-            <AccordionItem value="configuration">
-              <AccordionHeader expandIconPosition="end" icon={<CodeRegular />}>
+            <AccordionItem value="configuration" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<CodeRegular />} className={styles.accordionHeaderTinted}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   <BrainRegular fontSize={16} />
                   Definition (Configuration)
@@ -1202,8 +1212,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
             </AccordionItem>
 
             {/* ── Best Practice Analysis ── */}
-            <AccordionItem value="analysis">
-              <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />}>
+            <AccordionItem value="analysis" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<ShieldCheckmarkRegular />} className={styles.accordionHeaderTinted}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Best Practice Analysis
                   {!botLoading && analysis.length > 0 && (
@@ -1281,8 +1291,8 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
             </AccordionItem>
 
             {/* ── Components ── */}
-            <AccordionItem value="components">
-              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />}>
+            <AccordionItem value="components" className={styles.accordionCard}>
+              <AccordionHeader expandIconPosition="end" icon={<AppsListRegular />} className={styles.accordionHeaderTinted}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: tokens.spacingHorizontalS }}>
                   Components
                   {components.length > 0 && (
