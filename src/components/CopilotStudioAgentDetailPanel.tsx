@@ -338,10 +338,11 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
       const envInfo = await getEnvironmentDataverseInfo(envId);
       setInstanceUrl(envInfo.instanceUrl ?? null);
 
-      const [botRecord] = await Promise.all([
-        fetchBotDetails(botName, envInfo),
-      ]);
-      setBot(botRecord);
+      const result = await fetchBotDetails(botName, envInfo);
+      setBot(result.bot);
+      if (!result.bot && result.crossEnvError) {
+        setBotError(result.crossEnvError);
+      }
 
       // Fetch quarantine status (best-effort)
       try {
@@ -510,7 +511,21 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
           {botError && (
             <MessageBar intent="warning" style={{ marginBottom: tokens.spacingVerticalM }}>
               <MessageBarBody>
-                Could not load Dataverse bot record: {botError}. Showing Inventory API data only.
+                <div>
+                  Could not load bot record from Dataverse.{' '}
+                  <a
+                    href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ color: tokens.colorBrandForegroundLink }}
+                  >
+                    View in Copilot Studio ↗
+                  </a>
+                </div>
+                <details style={{ marginTop: tokens.spacingVerticalXS, fontSize: tokens.fontSizeBase200, color: tokens.colorNeutralForeground3 }}>
+                  <summary style={{ cursor: 'pointer' }}>Technical details</summary>
+                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', marginTop: '4px' }}>{botError}</pre>
+                </details>
               </MessageBarBody>
             </MessageBar>
           )}
@@ -658,7 +673,15 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                   {!bot && !botLoading && !botError && (
                     <MessageBar intent="info">
                       <MessageBarBody>
-                        No Dataverse bot record found for this agent in the admin environment. The agent may reside in a different Dataverse environment.
+                        Bot record not found in admin environment Dataverse.{' '}
+                        <a
+                          href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: tokens.colorBrandForegroundLink }}
+                        >
+                          View in Copilot Studio ↗
+                        </a>
                       </MessageBarBody>
                     </MessageBar>
                   )}
@@ -687,7 +710,19 @@ export default function CopilotStudioAgentDetailPanel({ resource, onClose, onDel
                     </>
                   ) : (
                     <Text style={{ color: tokens.colorNeutralForeground3 }}>
-                      {bot ? 'No configuration data in this bot record.' : 'Bot record not available — configuration cannot be shown.'}
+                      {bot
+                        ? 'No configuration data in this bot record.'
+                        : <>Bot record not available — configuration cannot be shown.{' '}
+                            <a
+                              href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${botName}/overview`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: tokens.colorBrandForegroundLink }}
+                            >
+                              View in Copilot Studio ↗
+                            </a>
+                          </>
+                      }
                     </Text>
                   )}
                 </div>
