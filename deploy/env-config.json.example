@@ -1,0 +1,28 @@
+{
+  "environments": {
+    "dev": {
+      "name": "Dev (<short-id>)",
+      "environmentId": "<dev-environment-id>",
+      "appId": "<dev-app-id — from power.config.json after first push>",
+      "connections": {
+        "shared_powerplatformadminv2": "<connection-id>",
+        "shared_powerappsforadmins": "<connection-id>",
+        "shared_flowmanagement": "<connection-id>",
+        "shared_powerplatformforadmins": "<connection-id>",
+        "shared_commondataserviceforapps": "<connection-id>"
+      }
+    },
+    "prod": {
+      "name": "Prod (<short-id>)",
+      "environmentId": "<prod-environment-id>",
+      "appId": "<prod-app-id — from power.config.json after first push>",
+      "connections": {
+        "shared_powerplatformadminv2": "<connection-id>",
+        "shared_powerappsforadmins": "<connection-id>",
+        "shared_flowmanagement": "<connection-id>",
+        "shared_powerplatformforadmins": "<connection-id>",
+        "shared_commondataserviceforapps": "<connection-id>"
+      }
+    }
+  }
+}

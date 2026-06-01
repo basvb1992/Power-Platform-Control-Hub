@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "appId": "<your-app-id — set by npx power-apps push>",
+  "appDisplayName": "Power Platform Control Hub",
+  "region": "prod",
+  "environmentId": "<your-environment-id>",
+  "description": "Admin dashboard for monitoring and managing Power Platform environments, resources, governance, and recommendations.",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {
+    "<connection-reference-guid>": {
+      "id": "/providers/Microsoft.PowerApps/apis/shared_powerplatformadminv2",
+      "displayName": "Power Platform for Admins V2",
+      "dataSources": ["powerplatformadminv2"],
+      "authenticationType": "oauth2-auth",
+      "dataSets": {}
+    }
+  }
+}

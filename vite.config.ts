@@ -4,15 +4,21 @@ import { powerApps } from '@microsoft/power-apps-vite/plugin';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
-const powerConfig = JSON.parse(
-  readFileSync(resolve(__dirname, 'power.config.json'), 'utf-8'),
-) as { appDisplayName: string };
+let appDisplayName = 'Power Platform Control Hub';
+try {
+  const powerConfig = JSON.parse(
+    readFileSync(resolve(__dirname, 'power.config.json'), 'utf-8'),
+  ) as { appDisplayName?: string };
+  if (powerConfig.appDisplayName) appDisplayName = powerConfig.appDisplayName;
+} catch {
+  // power.config.json is gitignored (contains connection IDs); fall back to default name.
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), powerApps()],
   define: {
-    __APP_DISPLAY_NAME__: JSON.stringify(powerConfig.appDisplayName),
+    __APP_DISPLAY_NAME__: JSON.stringify(appDisplayName),
   },
   resolve: {
     alias: {
