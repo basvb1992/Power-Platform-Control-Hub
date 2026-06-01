@@ -1,6 +1,6 @@
 # 🚀 Power Platform Control Hub
 
-A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api) and several Power Platform admin connectors to surface a real-time view of all resources across your tenant — canvas apps, model-driven apps, cloud flows, agent flows, code apps, Copilot Studio agents, and environments — without requiring Dataverse or the CoE Starter Kit solution.
+A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api) and several Power Platform admin connectors — including **Microsoft Dataverse** — to surface a real-time view of all resources across your tenant: canvas apps, model-driven apps, cloud flows, agent flows, code apps, Copilot Studio agents, and environments. No CoE Starter Kit solution required.
 
 🔐 Authentication is handled entirely by the Power Apps host. No app registration or MSAL configuration is required.
 
@@ -129,15 +129,13 @@ The **Triggers & Actions** section renders the complete flow graph:
 
 ### 🌍 Environment detail view
 
-**Sections:** Resources tab (table of all resources in the environment) · Settings tab · Analysis tab
+**Sections:** Resources tab (table of all resources in the environment) · Analysis tab
 
 **Actions (Actions menu):** Enable / Disable · Enable / Disable Managed Environment · Create Backup · Apply admin access · Add to / Remove from Group
 
 The **Resources table** includes Name, Type, Created, Modified, Owner columns. Clicking the ↗ icon on a Canvas App, Cloud Flow, or Agent row opens that resource's full detail panel.
 
-The **Settings tab** exposes the environment's management settings (Power Apps AI features, Copilot Studio capabilities, Power Pages Copilot, Dynamics 365 AI, Security) and allows saving changes.
-
-**Best Practice Analysis — 5 checks:**
+**Best Practice Analysis — 6 checks:**
 
 | # | Severity | Check |
 |---|---|---|
@@ -146,6 +144,7 @@ The **Settings tab** exposes the environment's management settings (Power Apps A
 | 3 | ℹ️ Info | Not a Managed Environment |
 | 4 | ℹ️ Info | Not assigned to an Environment Group |
 | 5 | ℹ️ Info | Large environment (>200 resources) |
+| 6 | ℹ️ Info | Environment URL appears auto-generated |
 
 ---
 
@@ -203,7 +202,8 @@ CoE-Code/
 │   ├── utils/
 │   │   ├── errorUtils.ts              # Error message extraction helpers
 │   │   ├── formatDate.ts              # Date formatting helpers
-│   │   └── inventoryFormatters.ts     # Shared inventory data formatting helpers
+│   │   ├── inventoryFormatters.ts     # Shared inventory data formatting helpers
+│   │   └── lcidUtils.ts               # LCID → language name resolution
 │   └── components/
 │       ├── Dashboard.tsx              # Overview / metric cards
 │       ├── ResourcesView.tsx          # Resources table + detail panel routing
@@ -304,6 +304,23 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 ---
 
+## 📦 Dataverse Solution
+
+A companion Dataverse solution is included in the `solution/` folder. It provides the `ppa_resourcetombstone` table used for soft-delete / tombstone tracking of resources.
+
+```powershell
+# Import the solution into your environment
+pac solution import --path solution\PowerPlatformControlHub_1_0_0_0.zip --environment <environment-id>
+```
+
+The solution source is unpacked in `solution/src/` and can be re-packed after changes:
+
+```powershell
+pac solution pack --zipfile solution\PowerPlatformControlHub_1_0_0_0.zip --folder solution\src --packagetype Unmanaged
+```
+
+---
+
 ## ⚙️ Enable Code Apps on Your Environment
 
 1. Go to [Power Platform admin center](https://admin.powerplatform.microsoft.com).
@@ -330,6 +347,7 @@ The CLI prints a Power Apps URL when the push succeeds.
 
 - The Inventory API is automatically paginated via `skipToken` — all pages are fetched transparently, so tenants with thousands of resources are fully supported.
 - The app requires the signed-in user to be a **Power Platform tenant admin** to read cross-environment data.
+- The **Microsoft Dataverse connector** is used to query Copilot Studio bot records. The bundled solution (`solution/`) imports the required `ppa_resourcetombstone` table.
 - **DLP policy connector groups do not auto-populate** — when creating or updating a policy, all connector assignments must be explicitly provided. The create page handles this by loading connectors from a selected environment. See [known issues](https://learn.microsoft.com/en-us/connectors/powerplatformforadmins/#known-issues-and-limitations).
 - Code apps are **not** supported in the Power Apps mobile app or Power Apps for Windows.
 - Code apps **do not** support Power Platform Git integration.
