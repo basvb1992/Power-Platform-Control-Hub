@@ -6,6 +6,38 @@ A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [P
 
 ---
 
+## 📸 Screenshots
+
+### Overview
+
+![Overview](screenshots/01-overview.png)
+
+### Resources
+
+![Resources](screenshots/02-resources.png)
+
+### Environments
+
+![Environments](screenshots/03-environments.png)
+
+### Tenant Policies
+
+![Tenant Policies](screenshots/04-tenant-policies.png)
+
+### Environment Groups
+
+![Environment Groups](screenshots/05-environment-groups.png)
+
+### Connectors
+
+![Connectors](screenshots/06-connectors.png)
+
+### Recommendations
+
+![Recommendations](screenshots/07-recommendations.png)
+
+---
+
 ## ✨ Features
 
 ### 🗂️ Navigation tabs
