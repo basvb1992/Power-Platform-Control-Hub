@@ -7,6 +7,7 @@ import {
 import type { Resource, ResourceCounts } from '../types/inventory.ts';
 import { extractMessage } from '../utils/errorUtils.ts';
 import { isGuid, resolveUserIds } from '../services/userService.ts';
+import { fetchPowerPagesWebsitesForEnvironments } from '../services/adminApi.ts';
 
 export interface UseInventoryResult {
   resources: Resource[];
@@ -54,7 +55,10 @@ export function useInventory(): UseInventoryResult {
       // Collect unique owner GUIDs and resolve them to display names
       setLoadingLabel('Resolving owner names…');
       const ownerGuids = [...new Set(fetchedResources.map(extractOwnerGuid).filter(Boolean) as string[])];
-      const nameMap = await resolveUserIds(ownerGuids);
+      const [nameMap, websiteResources] = await Promise.all([
+        resolveUserIds(ownerGuids),
+        fetchPowerPagesWebsitesForEnvironments(fetchedEnvironments),
+      ]);
 
       // Enrich resources with resolved owner names.
       const enriched = fetchedResources.map((r) => {
@@ -71,9 +75,10 @@ export function useInventory(): UseInventoryResult {
         };
       });
 
-      setResources(enriched);
+      const allResources = [...enriched, ...websiteResources];
+      setResources(allResources);
       setEnvironments(fetchedEnvironments);
-      setCounts(computeResourceCounts(enriched));
+      setCounts(computeResourceCounts(allResources));
     } catch (e: unknown) {
       setError(
         e instanceof Error ? extractMessage(e.message) : 'Failed to load Power Platform inventory.',

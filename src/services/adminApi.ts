@@ -24,6 +24,7 @@ import type {
   RoleAssignment,
   RuleBasedPolicy,
 } from '../types/admin.ts';
+import type { Resource } from '../types/inventory.ts';
 
 const API_VERSION = '2024-10-01';
 
@@ -225,6 +226,53 @@ export async function fetchConnectors(environmentId: string): Promise<Connection
 export async function fetchPowerPagesWebsites(environmentId: string): Promise<PowerPagesWebsite[]> {
   const result = await PowerPlatformforAdminsV2Service.GetWebsites(environmentId, API_VERSION);
   return (unwrapOperationResult(result).value ?? []).map(mapWebsite);
+}
+
+const POWER_PAGES_RESOURCE_TYPE = 'microsoft.powerpages/websites';
+
+function mapWebsiteToResource(website: PowerPagesWebsite, environment?: Resource): Resource {
+  return {
+    id: website.id,
+    name: website.name,
+    type: POWER_PAGES_RESOURCE_TYPE,
+    location: environment?.environmentRegion ?? environment?.location,
+    properties: {
+      displayName: website.name,
+      createdAt: website.createdOn,
+      environmentId: website.environmentId,
+      websiteUrl: website.websiteUrl,
+      siteVisibility: website.siteVisibility,
+      websiteType: website.type,
+      status: website.status,
+      packageVersion: website.packageVersion,
+    },
+    environmentName: website.environmentName || environment?.properties.displayName,
+    environmentRegion: environment?.environmentRegion ?? environment?.location,
+  };
+}
+
+/**
+ * Fetches Power Pages websites across every supplied environment and normalizes
+ * them into the shared Resource shape so they can appear alongside other
+ * resources in the inventory. Failures for individual environments are ignored
+ * so a single inaccessible environment doesn't break the whole load.
+ */
+export async function fetchPowerPagesWebsitesForEnvironments(environments: Resource[]): Promise<Resource[]> {
+  const envByName = new Map(environments.map((environment) => [environment.name, environment]));
+  const settled = await Promise.allSettled(
+    environments.map((environment) => fetchPowerPagesWebsites(environment.name)),
+  );
+
+  const resources: Resource[] = [];
+  settled.forEach((result, index) => {
+    if (result.status !== 'fulfilled') return;
+    const fallbackEnv = environments[index];
+    for (const website of result.value) {
+      resources.push(mapWebsiteToResource(website, envByName.get(website.environmentId) ?? fallbackEnv));
+    }
+  });
+
+  return resources;
 }
 
 export async function addEnvironmentToGroup(groupId: string, environmentId: string): Promise<void> {

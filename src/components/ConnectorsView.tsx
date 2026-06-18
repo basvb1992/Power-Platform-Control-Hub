@@ -4,7 +4,6 @@ import {
   Badge,
   Button,
   Dropdown,
-  Link,
   MessageBar,
   MessageBarBody,
   Option,
@@ -15,14 +14,13 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { DeleteRegular, GlobeRegular, LinkRegular, PlugConnectedRegular, TableRegular } from '@fluentui/react-icons';
+import { DeleteRegular, LinkRegular, PlugConnectedRegular, TableRegular } from '@fluentui/react-icons';
 import {
   fetchConnections,
   fetchConnectors,
-  fetchPowerPagesWebsites,
 } from '../services/adminApi.ts';
 import { deleteConnection } from '../services/connectorMutations.ts';
-import type { Connection, PowerPagesWebsite } from '../types/admin.ts';
+import type { Connection } from '../types/admin.ts';
 import type { Resource } from '../types/inventory.ts';
 import ConfirmDialog from './ConfirmDialog.tsx';
 import { useMutation } from '../hooks/useMutation.tsx';
@@ -31,7 +29,7 @@ interface ConnectorsViewProps {
   environments: Resource[];
 }
 
-type ConnectorsTab = 'connections' | 'connectors' | 'websites';
+type ConnectorsTab = 'connections' | 'connectors';
 
 const useStyles = makeStyles({
   root: {
@@ -133,10 +131,6 @@ function getEnvironmentLabel(environment: Resource): string {
   return environment.properties.displayName ?? environment.name;
 }
 
-function getWebsiteBadgeColor(type: PowerPagesWebsite['type']): 'warning' | 'brand' {
-  return type === 'Trial' ? 'warning' : 'brand';
-}
-
 export default function ConnectorsView({
   environments,
 }: ConnectorsViewProps): ReactElement {
@@ -145,7 +139,6 @@ export default function ConnectorsView({
   const [activeTab, setActiveTab] = useState<ConnectorsTab>('connectors');
   const [connectionsByEnvironment, setConnectionsByEnvironment] = useState<Record<string, Connection[]>>({});
   const [connectorsByEnvironment, setConnectorsByEnvironment] = useState<Record<string, Connection[]>>({});
-  const [websitesByEnvironment, setWebsitesByEnvironment] = useState<Record<string, PowerPagesWebsite[]>>({});
   const [loadingKey, setLoadingKey] = useState<string | null>(null);
   const [errorByKey, setErrorByKey] = useState<Record<string, string>>({});
   const [confirmDeleteConnection, setConfirmDeleteConnection] = useState<Connection | null>(null);
@@ -199,9 +192,7 @@ export default function ConnectorsView({
     const cacheKey = `${activeTab}:${selectedEnvironmentId}`;
     const hasCachedData = activeTab === 'connections'
       ? selectedEnvironmentId in connectionsByEnvironment
-      : activeTab === 'connectors'
-        ? selectedEnvironmentId in connectorsByEnvironment
-        : selectedEnvironmentId in websitesByEnvironment;
+      : selectedEnvironmentId in connectorsByEnvironment;
 
     if (hasCachedData) return;
 
@@ -212,12 +203,9 @@ export default function ConnectorsView({
       if (activeTab === 'connections') {
         const result = await fetchConnections(selectedEnvironmentId);
         setConnectionsByEnvironment((current) => ({ ...current, [selectedEnvironmentId]: result }));
-      } else if (activeTab === 'connectors') {
+      } else {
         const result = await fetchConnectors(selectedEnvironmentId);
         setConnectorsByEnvironment((current) => ({ ...current, [selectedEnvironmentId]: result }));
-      } else {
-        const result = await fetchPowerPagesWebsites(selectedEnvironmentId);
-        setWebsitesByEnvironment((current) => ({ ...current, [selectedEnvironmentId]: result }));
       }
     } catch (e: unknown) {
       setErrorByKey((current) => ({
@@ -232,7 +220,6 @@ export default function ConnectorsView({
     connectionsByEnvironment,
     connectorsByEnvironment,
     selectedEnvironmentId,
-    websitesByEnvironment,
   ]);
 
   useEffect(() => {
@@ -250,9 +237,6 @@ export default function ConnectorsView({
     ? activeTab === 'connections'
       ? connectionsByEnvironment[selectedEnvironmentId] ?? []
       : connectorsByEnvironment[selectedEnvironmentId] ?? []
-    : [];
-  const currentWebsites = selectedEnvironmentId
-    ? websitesByEnvironment[selectedEnvironmentId] ?? []
     : [];
 
   // Reset filters when environment or tab changes
@@ -324,53 +308,6 @@ export default function ConnectorsView({
         <MessageBar intent="error">
           <MessageBarBody>{currentError}</MessageBarBody>
         </MessageBar>
-      );
-    }
-
-    if (activeTab === 'websites') {
-      return (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>Name</th>
-                <th className={styles.th}>URL</th>
-                <th className={styles.th}>Type</th>
-                <th className={styles.th}>Visibility</th>
-                <th className={styles.th}>Package Version</th>
-                <th className={styles.th}>Created On</th>
-              </tr>
-            </thead>
-            <tbody>
-              {currentWebsites.length === 0 ? (
-                <tr>
-                  <td className={styles.td} colSpan={6} style={{ textAlign: 'center' }}>
-                    No Power Pages websites found for this environment.
-                  </td>
-                </tr>
-              ) : (
-                currentWebsites.map((website) => (
-                  <tr key={website.id}>
-                    <td className={styles.td}>{website.name}</td>
-                    <td className={styles.td}>
-                      <Link href={website.websiteUrl} target="_blank" rel="noreferrer">
-                        {website.websiteUrl}
-                      </Link>
-                    </td>
-                    <td className={styles.td}>
-                      <Badge appearance="filled" color={getWebsiteBadgeColor(website.type)}>
-                        {website.type}
-                      </Badge>
-                    </td>
-                    <td className={styles.td}>{website.siteVisibility}</td>
-                    <td className={styles.td}>{website.packageVersion ?? '—'}</td>
-                    <td className={styles.td}>{formatDate(website.createdOn)}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
       );
     }
 
@@ -450,7 +387,6 @@ export default function ConnectorsView({
     activeTab,
     currentConnections,
     currentError,
-    currentWebsites,
     displayedConnections,
     isLoading,
     pendingConnectionId,
@@ -518,9 +454,6 @@ export default function ConnectorsView({
           </Tab>
           <Tab value="connections" icon={<PlugConnectedRegular />}>
             Connections
-          </Tab>
-          <Tab value="websites" icon={<GlobeRegular />}>
-            Power Pages Websites
           </Tab>
         </TabList>
 
