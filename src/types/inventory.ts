@@ -95,6 +95,7 @@ export const RESOURCE_TYPE_LABELS: Record<string, string> = {
   'microsoft.powerapps/apps': 'App Builder App',
   'microsoft.powerautomate/m365agentflows': 'M365 Agent Flow',
   'microsoft.powerapps/codeapps': 'Code App',
+  'microsoft.powerpages/websites': 'Power Pages Website',
   'microsoft.powerplatform/environments': 'Environment',
 };
 
@@ -108,6 +109,7 @@ export const RESOURCE_TYPE_SHORT_LABELS: Record<string, string> = {
   'microsoft.powerapps/apps': 'App Builder',
   'microsoft.powerautomate/m365agentflows': 'M365 Flow',
   'microsoft.powerapps/codeapps': 'Code App',
+  'microsoft.powerpages/websites': 'Power Pages',
 };
 
 type BadgeColor = 'brand' | 'informative' | 'success' | 'warning' | 'severe' | 'important' | 'danger';
@@ -115,6 +117,7 @@ type BadgeColor = 'brand' | 'informative' | 'success' | 'warning' | 'severe' | '
 export function getTypeBadgeColor(type: string): BadgeColor {
   const t = type.toLowerCase();
   if (t === 'microsoft.copilotstudio/agents') return 'success';
+  if (t === 'microsoft.powerpages/websites') return 'important';
   if (t.includes('flow')) return 'informative';
   if (t.includes('apps') || t.includes('codeapps') || t.includes('canvasapps') || t.includes('modeldrivenapps')) return 'brand';
   return 'brand';
@@ -130,4 +133,5 @@ export const RESOURCE_TYPES_FILTER = [
   { key: 'microsoft.powerapps/apps', label: 'App Builder Apps' },
   { key: 'microsoft.powerautomate/m365agentflows', label: 'M365 Agent Flows' },
   { key: 'microsoft.powerapps/codeapps', label: 'Code Apps' },
+  { key: 'microsoft.powerpages/websites', label: 'Power Pages Websites' },
 ] as const;
