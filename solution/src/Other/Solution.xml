@@ -1,23 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<ImportExportXml version="9.2.26044.163" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26044.163" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.26044.00163">
+<ImportExportXml version="9.2.26054.153" SolutionPackageVersion="9.2" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" OrganizationVersion="9.2.26054.153" OrganizationSchemaType="Standard" CRMServerServiceabilityVersion="9.2.26054.00154">
   <SolutionManifest>
-    <UniqueName>PowerPlatformControlHub</UniqueName>
+    <UniqueName>VbdPowerPlatformControlHub</UniqueName>
     <LocalizedNames>
-      <LocalizedName description="Power Platform Control Hub" languagecode="1033" />
+      <LocalizedName description="Power Platform Control Hub (VBD)" languagecode="1033" />
     </LocalizedNames>
     <Descriptions />
     <Version>1.0.0.0</Version>
     <Managed>0</Managed>
     <Publisher>
-      <UniqueName>PowerPlatformAdvocates</UniqueName>
+      <UniqueName>VbdControlHubPublisher</UniqueName>
       <LocalizedNames>
-        <LocalizedName description="Power Platform Advocates" languagecode="1033" />
+        <LocalizedName description="VBD (Bas van Breda)" languagecode="1033" />
       </LocalizedNames>
       <Descriptions />
       <EMailAddress xsi:nil="true"></EMailAddress>
       <SupportingWebsiteUrl xsi:nil="true"></SupportingWebsiteUrl>
-      <CustomizationPrefix>ppa</CustomizationPrefix>
-      <CustomizationOptionValuePrefix>89425</CustomizationOptionValuePrefix>
+      <CustomizationPrefix>vbd</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>73000</CustomizationOptionValuePrefix>
       <Addresses>
         <Address>
           <AddressNumber>1</AddressNumber>
@@ -78,7 +78,7 @@
       </Addresses>
     </Publisher>
     <RootComponents>
-      <RootComponent type="1" schemaName="ppa_resourcetombstone" behavior="0" />
+      <RootComponent type="300" schemaName="vbd_powerplatformcontrolhub_155bf" behavior="0" />
     </RootComponents>
     <MissingDependencies />
   </SolutionManifest>
