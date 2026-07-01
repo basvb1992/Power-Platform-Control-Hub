@@ -4,7 +4,7 @@
   "type": "Microsoft.PowerApps/apis",
   "properties": {
     "displayName": "Microsoft Dataverse",
-    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4721/commondataserviceforapps/icon.png",
+    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon.png",
     "iconBrandColor": "",
     "apiEnvironment": "Shared",
     "isCustomApi": false,
@@ -54,7 +54,7 @@
                 "description": "Sign in with your Microsoft Entra ID credentials",
                 "tooltip": "Provide Microsoft Entra ID credentials",
                 "constraints": {
-                  "required": "false",
+                  "required": "true",
                   "hidden": "false"
                 }
               }
@@ -154,7 +154,7 @@
                 "description": "Sign in with your Microsoft Entra ID credentials",
                 "tooltip": "Provide Microsoft Entra ID credentials",
                 "constraints": {
-                  "required": "false",
+                  "required": "true",
                   "hidden": "true"
                 }
               }
@@ -515,6 +515,12 @@
       "schemes": [
         "https"
       ],
+      "x-ms-capabilities": {
+        "testConnection": {
+          "operationId": "GetOrganizationsTest",
+          "parameters": {}
+        }
+      },
       "paths": {
         "/{connectionId}/v1.0/$metadata.json/organizations": {
           "get": {
@@ -553,6 +559,46 @@
             "x-ms-visibility": "internal",
             "externalDocs": {
               "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#get-organizations"
+            }
+          }
+        },
+        "/{connectionId}/v1.0/$metadata.json/organizationsTest": {
+          "get": {
+            "tags": [
+              "Organizations"
+            ],
+            "summary": "Get organizations test",
+            "description": "Get all organizations (test variant).",
+            "operationId": "GetOrganizationsTest",
+            "consumes": [],
+            "produces": [
+              "application/json",
+              "text/json"
+            ],
+            "parameters": [
+              {
+                "name": "connectionId",
+                "in": "path",
+                "required": true,
+                "x-ms-visibility": "internal",
+                "type": "string"
+              }
+            ],
+            "responses": {
+              "200": {
+                "description": "OK",
+                "schema": {
+                  "$ref": "#/definitions/OrganizationsDynamicValuesList"
+                }
+              },
+              "default": {
+                "description": "Operation Failed."
+              }
+            },
+            "deprecated": false,
+            "x-ms-visibility": "internal",
+            "externalDocs": {
+              "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#get-organizations-test"
             }
           }
         },
@@ -9532,23 +9578,23 @@
       }
     },
     "runtimeUrls": [
-      "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/commondataserviceforapps"
+      "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/commondataserviceforapps"
     ],
-    "primaryRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/commondataserviceforapps",
-    "doNotUseApiHubNetRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/commondataserviceforapps",
+    "primaryRuntimeUrl": "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/commondataserviceforapps",
+    "doNotUseApiHubNetRuntimeUrl": "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/commondataserviceforapps",
     "metadata": {
       "source": "marketplace",
       "brandColor": "",
       "useNewApimVersion": "true",
       "version": {
-        "previous": "releases/v1.0.1810\\1.0.1810.4710",
-        "current": "releases/v1.0.1811\\1.0.1811.4721"
+        "previous": "releases/v1.0.1811\\1.0.1811.4721",
+        "current": "releases/v1.0.1811\\1.0.1811.4743"
       },
       "OperationIcons": {
-        "mcp_ContactCenterMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4721/commondataserviceforapps/icon_mcp_ContactCenterMCPServer.png",
-        "mcp_ERPMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4721/commondataserviceforapps/icon_mcp_ERPMCPServer.png",
-        "mcp_SalesMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4721/commondataserviceforapps/icon_mcp_SalesMCPServer.png",
-        "mcp_ServiceMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4721/commondataserviceforapps/icon_mcp_ServiceMCPServer.png"
+        "mcp_ContactCenterMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ContactCenterMCPServer.png",
+        "mcp_ERPMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ERPMCPServer.png",
+        "mcp_SalesMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_SalesMCPServer.png",
+        "mcp_ServiceMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ServiceMCPServer.png"
       }
     },
     "capabilities": [
@@ -9558,7 +9604,7 @@
     "interfaces": {},
     "description": "Provides access to Microsoft Dataverse actions and triggers for Power Platform environments.",
     "createdTime": "2024-03-25T21:44:09.9343266Z",
-    "changedTime": "2026-05-18T16:41:34.6796466Z",
+    "changedTime": "2026-06-03T08:41:47.3377022Z",
     "releaseTag": "Production",
     "tier": "Premium",
     "publisher": "Microsoft",

@@ -407,7 +407,7 @@ export default function ConnectorsView({
         {activeTab === 'connectors' && (
           <Dropdown
             placeholder="All publishers"
-            value={publisherFilter === 'microsoft' ? 'Microsoft' : publisherFilter === 'thirdparty' ? 'Third Party' : undefined}
+            value={publisherFilter === 'microsoft' ? 'Microsoft' : publisherFilter === 'thirdparty' ? 'Third Party' : ''}
             selectedOptions={publisherFilter ? [publisherFilter] : []}
             onOptionSelect={(_, data) => setPublisherFilter(data.optionValue === publisherFilter ? '' : (data.optionValue ?? ''))}
             style={{ minWidth: '160px' }}
@@ -419,7 +419,7 @@ export default function ConnectorsView({
         {activeTab === 'connectors' && connectorTiers.length > 0 && (
           <Dropdown
             placeholder="All tiers"
-            value={tierFilter || undefined}
+            value={tierFilter || ''}
             selectedOptions={tierFilter ? [tierFilter] : []}
             onOptionSelect={(_, data) => setTierFilter(data.optionValue === tierFilter ? '' : (data.optionValue ?? ''))}
             style={{ minWidth: '140px' }}
@@ -429,9 +429,19 @@ export default function ConnectorsView({
             ))}
           </Dropdown>
         )}
+        {activeTab === 'connectors' && (publisherFilter !== '' || tierFilter !== '') && (
+          <Button
+            appearance="subtle"
+            size="small"
+            onClick={() => { setPublisherFilter(''); setTierFilter(''); }}
+            title="Clear all filters"
+          >
+            Clear filters
+          </Button>
+        )}
         <Dropdown
           placeholder="Select an environment"
-          value={selectedEnvironmentValue}
+          value={selectedEnvironmentValue ?? ''}
           selectedOptions={selectedEnvironmentId ? [selectedEnvironmentId] : []}
           onOptionSelect={(_, data) => setSelectedEnvironmentId(data.optionValue ?? '')}
           style={{ minWidth: '260px' }}

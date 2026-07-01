@@ -4,7 +4,7 @@
   "type": "Microsoft.PowerApps/apis",
   "properties": {
     "displayName": "Power Platform for Admins V2",
-    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1812/1.0.1812.4731/powerplatformadminv2/icon.png",
+    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1816/1.0.1816.4809/powerplatformadminv2/icon.png",
     "iconBrandColor": "#000000",
     "apiEnvironment": "Shared",
     "isCustomApi": false,
@@ -64,6 +64,20 @@
                 "constraints": {
                   "required": "true",
                   "hidden": "false"
+                }
+              }
+            },
+            "token:TenantId": {
+              "type": "string",
+              "metadata": {
+                "sourceType": "AzureActiveDirectoryTenant"
+              },
+              "uiDefinition": {
+                "displayName": "Tenant",
+                "description": "The tenant ID of for the Microsoft Entra ID application",
+                "constraints": {
+                  "required": "false",
+                  "hidden": "true"
                 }
               }
             }
@@ -20776,18 +20790,18 @@
       "basePath": "/apim/powerplatformadminv2"
     },
     "runtimeUrls": [
-      "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2"
+      "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/powerplatformadminv2"
     ],
-    "primaryRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
-    "doNotUseApiHubNetRuntimeUrl": "https://daacce33-7d66-ea1f-bfe5-f912f9252a1e.14.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
+    "primaryRuntimeUrl": "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
+    "doNotUseApiHubNetRuntimeUrl": "https://c673c9bb-37fd-ea99-8e82-be26a7839301.08.common.usa002.azure-apihub.net/apim/powerplatformadminv2",
     "metadata": {
       "source": "marketplace",
       "brandColor": "#000000",
       "stackOwner": "Microsoft",
       "useNewApimVersion": "true",
       "version": {
-        "previous": "releases/v1.0.1808\\1.0.1808.4692",
-        "current": "releases/v1.0.1812\\1.0.1812.4731"
+        "previous": "releases/v1.0.1816\\1.0.1816.4770",
+        "current": "releases/v1.0.1816\\1.0.1816.4809"
       }
     },
     "capabilities": [
@@ -20796,7 +20810,7 @@
     "interfaces": {},
     "description": "Unified connector for all administrative capabilities in Microsoft Power Platform",
     "createdTime": "2024-03-26T21:06:48.533185Z",
-    "changedTime": "2026-05-25T16:42:20.8572924Z",
+    "changedTime": "2026-06-25T20:45:07.6968381Z",
     "releaseTag": "Production",
     "tier": "Standard",
     "publisher": "Microsoft",

@@ -13,6 +13,43 @@ import type { Bots } from '../generated/models/BotsModel.ts';
 const client = getClient(dataSourcesInfo);
 const DATA_SOURCE = 'commondataserviceforapps';
 
+/**
+ * Generic cross-environment "list rows" against any Dataverse table via the
+ * connector's `ListRecordsWithOrganization` operation. Returns the raw OData
+ * `value` array (records as untyped maps, including `@...FormattedValue`
+ * annotations when `prefer` requests them). Used by the Copilot Studio deep
+ * analytics to read transcripts / bots / components / connection refs from any
+ * environment the signed-in admin can reach.
+ */
+export async function listRecordsWithOrg(
+  instanceUrl: string,
+  entityName: string,
+  opts: { select?: string; filter?: string; orderby?: string; top?: number; prefer?: string } = {},
+): Promise<Record<string, unknown>[]> {
+  const org = instanceUrl.endsWith('/') ? instanceUrl.slice(0, -1) : instanceUrl;
+  const parameters: Record<string, unknown> = {
+    organization: org,
+    entityName,
+    accept: 'application/json',
+  };
+  if (opts.select) parameters['$select'] = opts.select;
+  if (opts.filter) parameters['$filter'] = opts.filter;
+  if (opts.orderby) parameters['$orderby'] = opts.orderby;
+  if (opts.top) parameters['$top'] = opts.top;
+  if (opts.prefer) parameters['prefer'] = opts.prefer;
+
+  const res = await client.executeAsync<Record<string, unknown>, { value?: Record<string, unknown>[] }>({
+    connectorOperation: {
+      tableName: DATA_SOURCE,
+      operationName: 'ListRecordsWithOrganization',
+      parameters,
+    },
+  });
+  if (!res.success) throw res.error ?? new Error(`Failed to list ${entityName}`);
+  return (res.data?.value ?? []) as Record<string, unknown>[];
+}
+
+
 /** A bot component record from Dataverse (topics, skills, knowledge sources, etc.) */
 export interface BotComponent {
   botcomponentid?: string;

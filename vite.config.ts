@@ -20,6 +20,20 @@ export default defineConfig({
   define: {
     __APP_DISPLAY_NAME__: JSON.stringify(appDisplayName),
   },
+  build: {
+    // Fluent UI is large but rarely changes; isolating it into its own vendor chunk
+    // keeps it long-cached so returning users only re-download the small app chunk.
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (!id.includes('node_modules')) return undefined;
+          if (id.includes('@fluentui') || id.includes('@griffel')) return 'fluent-vendor';
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       // Allow importing the internal Power Apps SDK runtime context to get cross-env Dataverse access.

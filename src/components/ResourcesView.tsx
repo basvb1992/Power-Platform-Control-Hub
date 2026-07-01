@@ -393,6 +393,16 @@ export default function ResourcesView({
           ))}
         </Dropdown>
         <Text className={styles.count}>{sorted.length} result(s)</Text>
+        {(typeFilter !== 'all' || ownerFilter !== 'all' || envFilter !== 'all' || search !== '') && (
+          <Button
+            appearance="subtle"
+            size="small"
+            onClick={() => { setTypeFilter('all'); setOwnerFilter('all'); setEnvFilter('all'); setSearch(''); }}
+            title="Clear all filters"
+          >
+            Clear filters
+          </Button>
+        )}
         <Button
           appearance="subtle"
           icon={<ArrowClockwiseRegular />}

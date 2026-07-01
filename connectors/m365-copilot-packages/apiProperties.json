@@ -1,0 +1,34 @@
+{
+  "properties": {
+    "connectionParameters": {
+      "token": {
+        "type": "oauthSetting",
+        "oAuthSettings": {
+          "identityProvider": "aadcertificate",
+          "clientId": "REPLACE_WITH_APP_REGISTRATION_CLIENT_ID",
+          "scopes": [
+            "CopilotPackages.Read.All"
+          ],
+          "redirectMode": "Global",
+          "redirectUrl": "https://global.consent.azure-apim.net/redirect",
+          "properties": {
+            "IsFirstParty": "False",
+            "AzureActiveDirectoryResourceId": "https://graph.microsoft.com",
+            "IsOnbehalfofLoginSupported": true
+          },
+          "customParameters": {
+            "loginUri": {
+              "value": "https://login.microsoftonline.com"
+            },
+            "resourceUri": {
+              "value": "https://graph.microsoft.com"
+            }
+          }
+        }
+      }
+    },
+    "iconBrandColor": "#0f6cbd",
+    "capabilities": [],
+    "policyTemplateInstances": []
+  }
+}

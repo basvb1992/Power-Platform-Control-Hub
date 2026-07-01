@@ -1,0 +1,207 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "M365 Copilot Package Management",
+    "description": "Custom connector for the Microsoft Graph Copilot Package Management API (beta). Lists Microsoft 365 Copilot agents/apps in the tenant and retrieves their setup data (declarative-agent definition: instructions, capabilities, knowledge, actions). The configuration for agents built in the Microsoft 365 Copilot Agent Builder is stored in Microsoft 365, not in Dataverse, so it must be read via Microsoft Graph. Requires a Microsoft Agent 365 license and the CopilotPackages.Read.All delegated permission (AI Administrator or Global Administrator).",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Copilot Studio Control Hub"
+    }
+  },
+  "host": "graph.microsoft.com",
+  "basePath": "/beta",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/copilot/admin/catalog/packages": {
+      "get": {
+        "summary": "List Copilot packages",
+        "description": "Retrieves all Copilot packages (agents/apps) in the tenant. Use the $filter parameter to narrow to agents, e.g. supportedHosts/any(h:h eq 'Copilot') or elementTypes/any(h:h eq 'DeclarativeAgent').",
+        "operationId": "ListCopilotPackages",
+        "parameters": [
+          {
+            "name": "$filter",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "description": "OData filter. Supported: supportedHosts (Copilot/Outlook/Teams/M365), elementTypes (Bots/DeclarativeAgent/CustomEngineAgent), lastModifiedDateTime.",
+            "x-ms-summary": "Filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A collection of Copilot packages.",
+            "schema": {
+              "$ref": "#/definitions/CopilotPackageCollection"
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "schema": {
+              "$ref": "#/definitions/GraphError"
+            }
+          }
+        }
+      }
+    },
+    "/copilot/admin/catalog/packages/{id}": {
+      "get": {
+        "summary": "Get Copilot package details",
+        "description": "Retrieves detailed metadata and the setup data (elementDetails) for a single Copilot agent/app by id. For declarative agents the elementDetails contains the agent definition (instructions, capabilities, knowledge, actions).",
+        "operationId": "GetCopilotPackageDetail",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "description": "The Copilot package id (e.g. P_19ae1zz1-...).",
+            "x-ms-summary": "Package id",
+            "x-ms-url-encoding": "single"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Copilot package details.",
+            "schema": {
+              "$ref": "#/definitions/CopilotPackageDetail"
+            }
+          },
+          "default": {
+            "description": "Error response.",
+            "schema": {
+              "$ref": "#/definitions/GraphError"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "CopilotPackageCollection": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CopilotPackage"
+          }
+        }
+      }
+    },
+    "CopilotPackage": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "x-ms-summary": "Id" },
+        "displayName": { "type": "string", "x-ms-summary": "Display name" },
+        "type": { "type": "string", "x-ms-summary": "Type" },
+        "shortDescription": { "type": "string", "x-ms-summary": "Short description" },
+        "isBlocked": { "type": "boolean", "x-ms-summary": "Is blocked" },
+        "supportedHosts": { "type": "array", "items": { "type": "string" }, "x-ms-summary": "Supported hosts" },
+        "elementTypes": { "type": "array", "items": { "type": "string" }, "x-ms-summary": "Element types" },
+        "lastModifiedDateTime": { "type": "string", "x-ms-summary": "Last modified" },
+        "publisher": { "type": "string", "x-ms-summary": "Publisher" },
+        "availableTo": { "type": "string", "x-ms-summary": "Available to" },
+        "deployedTo": { "type": "string", "x-ms-summary": "Deployed to" },
+        "platform": { "type": "string", "x-ms-summary": "Platform" },
+        "version": { "type": "string", "x-ms-summary": "Version" },
+        "manifestId": { "type": "string", "x-ms-summary": "Manifest id" },
+        "appId": { "type": "string", "x-ms-summary": "App id" }
+      }
+    },
+    "CopilotPackageDetail": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "type": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "longDescription": { "type": "string" },
+        "isBlocked": { "type": "boolean" },
+        "supportedHosts": { "type": "array", "items": { "type": "string" } },
+        "elementTypes": { "type": "array", "items": { "type": "string" } },
+        "lastModifiedDateTime": { "type": "string" },
+        "publisher": { "type": "string" },
+        "availableTo": { "type": "string" },
+        "deployedTo": { "type": "string" },
+        "platform": { "type": "string" },
+        "version": { "type": "string" },
+        "manifestId": { "type": "string" },
+        "appId": { "type": "string" },
+        "categories": { "type": "array", "items": { "type": "string" } },
+        "sensitivity": { "type": "string" },
+        "elementDetails": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CopilotElementDetail"
+          }
+        }
+      }
+    },
+    "CopilotElementDetail": {
+      "type": "object",
+      "properties": {
+        "elementType": { "type": "string" },
+        "elements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "definition": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "GraphError": {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": "object",
+          "properties": {
+            "code": { "type": "string" },
+            "message": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "oauth2-auth": {
+      "type": "oauth2",
+      "flow": "accessCode",
+      "authorizationUrl": "https://login.windows.net/common/oauth2/authorize",
+      "tokenUrl": "https://login.windows.net/common/oauth2/authorize",
+      "scopes": {
+        "CopilotPackages.Read.All": "Read Copilot packages"
+      }
+    }
+  },
+  "security": [
+    {
+      "oauth2-auth": [
+        "CopilotPackages.Read.All"
+      ]
+    }
+  ],
+  "x-ms-connector-metadata": [
+    {
+      "propertyName": "Website",
+      "propertyValue": "https://learn.microsoft.com/microsoft-365-copilot/extensibility/api/admin-settings/package/overview"
+    },
+    {
+      "propertyName": "Privacy policy",
+      "propertyValue": "https://privacy.microsoft.com/privacystatement"
+    },
+    {
+      "propertyName": "Categories",
+      "propertyValue": "AI;Productivity"
+    }
+  ]
+}

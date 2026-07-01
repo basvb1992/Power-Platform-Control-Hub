@@ -1,8 +1,26 @@
-# 🚀 Power Platform Control Hub
+# 🚀 Copilot Studio Control Hub
+
+> **Fork of [Power Platform Control Hub](https://github.com/Laskewitz/Power-Platform-Control-Hub) by Daniel Laskewitz**, extended with a deep **Copilot Studio** analytics layer. All the original tenant-wide CoE capabilities are intact — this fork adds a dedicated **Copilot Studio** tab.
 
 A **Center of Excellence (CoE) Starter Kit dashboard replacement** built as a [Power Apps Code App](https://learn.microsoft.com/en-us/power-apps/developer/code-apps/overview). It uses the [Power Platform Inventory API](https://learn.microsoft.com/en-us/power-platform/admin/inventory-api) and several Power Platform admin connectors — including **Microsoft Dataverse** — to surface a real-time view of all resources across your tenant: canvas apps, model-driven apps, cloud flows, agent flows, code apps, Copilot Studio agents, and environments. No CoE Starter Kit solution required.
 
 🔐 Authentication is handled entirely by the Power Apps host. No app registration or MSAL configuration is required.
+
+---
+
+## 🤖 Copilot Studio deep analytics (this fork)
+
+The **Copilot Studio** tab adds per-environment depth on top of the tenant-wide inventory:
+
+- **Environment selector** — pick any Dataverse environment in the tenant; data is read live from that environment's Dataverse via the cross-environment connector.
+- **Control Tower** — fleet health ring, needs-attention inbox, cost-vs-budget, and top spenders.
+- **Cost** — credit modeling from conversation transcripts (configurable credits/step), trend, by-agent / by-kind / by-owner rollups, distribution, and anomaly detection.
+- **Conversations** — conversation replay with per-step orchestration trace and cost.
+- **Governance** — orphaned / unpublished / stale / no-auth / high-failure / premium-connector findings per agent.
+- **Agents** — agent inventory with a detail drawer (components, connections, runs).
+- **M365 Agents** — agents built in the **Microsoft 365 Copilot Agent Builder** store their setup in Microsoft 365, not Dataverse. This tab reads their configuration (instructions, capabilities, knowledge, actions) via the Microsoft Graph **Copilot Package Management API** through a custom connector (see [`connectors/m365-copilot-packages/`](connectors/m365-copilot-packages/README.md)). Requires a Microsoft Agent 365 license + `CopilotPackages.Read.All`.
+
+The deep layer lives under `src/copilot-studio/` and reuses Daniel's `ListRecordsWithOrganization` connector pattern for tenant-wide reach.
 
 ---
 

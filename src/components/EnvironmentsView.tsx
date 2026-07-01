@@ -361,6 +361,16 @@ export default function EnvironmentsView({
           ))}
         </Dropdown>
         <Text className={styles.count}>{filtered.length} environment(s)</Text>
+        {(search !== '' || typeFilter !== 'all' || regionFilter !== 'all') && (
+          <Button
+            appearance="subtle"
+            size="small"
+            onClick={() => { setSearch(''); setTypeFilter('all'); setRegionFilter('all'); }}
+            title="Clear all filters"
+          >
+            Clear filters
+          </Button>
+        )}
       </div>
 
       {error && (

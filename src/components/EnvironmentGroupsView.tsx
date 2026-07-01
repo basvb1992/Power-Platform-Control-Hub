@@ -529,7 +529,7 @@ function PolicyEditDialog({ open, policy, availableRuleSets, isLoading, isSaving
                   <div style={{ display: 'flex', gap: tokens.spacingHorizontalS, marginTop: tokens.spacingVerticalXS }}>
                     <Dropdown
                       placeholder="Add a rule set…"
-                      value={addingRuleSetId || undefined}
+                      value={addingRuleSetId || ''}
                       selectedOptions={addingRuleSetId ? [addingRuleSetId] : []}
                       onOptionSelect={(_, d) => setAddingRuleSetId(d.optionValue ?? '')}
                       style={{ flex: 1 }}
