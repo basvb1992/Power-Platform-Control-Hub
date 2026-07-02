@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>vbd_powerplatformcontrolhub_155bf</Name>
-  <AppVersion>2026-07-01T10:12:55Z</AppVersion>
+  <AppVersion>2026-07-02T11:33:53Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>0.0.0.0</CreatedByClientVersion>
   <MinClientVersion>0.0.0.0</MinClientVersion>
@@ -14,7 +14,7 @@
   <CommitMessage xsi:nil="true"></CommitMessage>
   <Publisher xsi:nil="true"></Publisher>
   <AuthorizationReferences>[]</AuthorizationReferences>
-  <ConnectionReferences>{"d18a4aba-f1c5-484f-8554-c89cb3c1a3d6":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerplatformadminv2","displayName":"Power Platform for Admins V2","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1816/1.0.1816.4809/powerplatformadminv2/icon.png","dataSources":["powerplatformadminv2"],"isOnPremiseConnection":false,"dataSets":{},"apiTier":"Standard","authenticationType":"oauth2-auth"},"97844ece-b1cc-4608-999f-03dc51218be2":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerplatformforadmins","displayName":"Power Platform for Admins","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/releases/v1.0.1802/1.0.1802.4640/powerplatformforadmins/icon.png","dataSources":["powerplatformforadmins"],"isOnPremiseConnection":false,"dataSets":{},"apiTier":"Standard"},"5fdb9faf-8414-41bc-ae00-ec3475d4c506":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerappsforadmins","displayName":"Power Apps for Admins","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1816/1.0.1816.4770/powerappsforadmins/icon.png","dataSources":["powerappsforadmins"],"isOnPremiseConnection":false,"dataSets":{},"apiTier":"Standard"},"ae7d1147-f939-4d58-8127-c8dcb9ddd3dc":{"id":"/providers/Microsoft.PowerApps/apis/shared_flowmanagement","displayName":"Power Automate Management","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/v1.0.1778/1.0.1778.4417/flowmanagement/icon.png","dataSources":["flowmanagement"],"isOnPremiseConnection":false,"dataSets":{},"apiTier":"Standard","authenticationType":"firstParty"},"bffefc68-9bd7-431b-b45d-27646c3081ea":{"id":"/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps","displayName":"Microsoft Dataverse","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4754/commondataserviceforapps/icon.png","dataSources":["commondataserviceforapps"],"isOnPremiseConnection":false,"dataSets":{},"apiTier":"Premium","authenticationType":"Oauth"}}</ConnectionReferences>
+  <ConnectionReferences>{"d18a4aba-f1c5-484f-8554-c89cb3c1a3d6":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerplatformadminv2","displayName":"Power Platform for Admins V2","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1816/1.0.1816.4809/powerplatformadminv2/icon.png","dataSources":["powerplatformadminv2"],"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard","authenticationType":"oauth2-auth"},"97844ece-b1cc-4608-999f-03dc51218be2":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerplatformforadmins","displayName":"Power Platform for Admins","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/releases/v1.0.1802/1.0.1802.4640/powerplatformforadmins/icon.png","dataSources":["powerplatformforadmins"],"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard"},"5fdb9faf-8414-41bc-ae00-ec3475d4c506":{"id":"/providers/Microsoft.PowerApps/apis/shared_powerappsforadmins","displayName":"Power Apps for Admins","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1816/1.0.1816.4770/powerappsforadmins/icon.png","dataSources":["powerappsforadmins"],"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard"},"ae7d1147-f939-4d58-8127-c8dcb9ddd3dc":{"id":"/providers/Microsoft.PowerApps/apis/shared_flowmanagement","displayName":"Power Automate Management","iconUri":"https://conn-afd-prod-endpoint-bmc9bqahasf3grgk.b01.azurefd.net/v1.0.1778/1.0.1778.4417/flowmanagement/icon.png","dataSources":["flowmanagement"],"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Standard","authenticationType":"firstParty"},"bffefc68-9bd7-431b-b45d-27646c3081ea":{"id":"/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps","displayName":"Microsoft Dataverse","iconUri":"https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon.png","dataSources":["commondataserviceforapps"],"isOnPremiseConnection":false,"bypassConsent":false,"dataSets":{},"apiTier":"Premium","authenticationType":"Oauth"}}</ConnectionReferences>
   <DatabaseReferences>{}</DatabaseReferences>
   <AppComponents>[]</AppComponents>
   <AppComponentDependencies>[]</AppComponentDependencies>
@@ -29,26 +29,26 @@
   <CodeAppPackageUris>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/index.html_ContentType_text/html</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConfirmDialog-CfB5pzNZ.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConnectorsView-D1IUKqy3.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioAgentDetailPanel-C1T415NM.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-CKXp5lWy.css_ContentType_text/css</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-Dfbi0JhS.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/Dashboard-BR9Kts9i.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentGroupsView-BcSiV7G5.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentsView-CvP7JcuS.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/GovernanceView-Dl6RMpkL.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/PowerPlatformforAdminsV2Service-DPSqw9oe.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/RecommendationsView-CBcH9spj.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ResourcesView-Dh4NPCPA.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConnectorsView-CsmIt3_-.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioAgentDetailPanel-Cfy8XsyV.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-CcBVC0Ys.css_ContentType_text/css</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-DwtSePkf.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/Dashboard-CYFbdqp_.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentGroupsView-BCWcEsAe.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentsView-CtJZfool.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/GovernanceView-CL8xrsXl.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/PowerPlatformforAdminsV2Service-BTTg9AdW.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/RecommendationsView-Mr3EdM-e.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ResourcesView-eYH0hQ9b.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/SetupView-Bi2fQaPP.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/copilotStudioService-BIjWGf4c.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/copilotStudioService-i4IASTkp.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/fluent-vendor-_H44X2Ph.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/governanceMutations-ClgQUsIK.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-CMu44pXZ.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-SUpGgwyy.css_ContentType_text/css</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ownerCache-hSX5zv8b.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/governanceMutations-B0uSOVht.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-Bu5ND5fj.css_ContentType_text/css</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-CWo2JDOs.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ownerCache-ClOoOsrn.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/rolldown-runtime-QTnfLwEv.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/tombstoneService-BMXzUL1T.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/tombstoneService-CbX0BUE2.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/useMutation--L93bL80.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/favicon.svg_ContentType_image/svg+xml</CodeAppPackageUri>
   </CodeAppPackageUris>

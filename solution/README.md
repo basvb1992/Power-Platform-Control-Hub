@@ -13,11 +13,11 @@ others can import the **code app** into their own environment and test-run it.
 
 | Path | Description |
 |------|-------------|
-| `VbdPowerPlatformControlHub_managed.zip` | **Managed** solution — use this to import & test-run the app in another environment. |
-| `VbdPowerPlatformControlHub_1_0_0_0.zip` | **Unmanaged** solution — use this if you want to customise the components. |
+| `VbdPowerPlatformControlHub_1_1_0_0_managed.zip` | **Managed** solution — use this to import & test-run the app in another environment. |
+| `VbdPowerPlatformControlHub_1_1_0_0.zip` | **Unmanaged** solution — use this if you want to customise the components. |
 | `src/` | Unpacked solution source (managed by `pac solution unpack/pack`). |
 
-**Solution name:** `VbdPowerPlatformControlHub` · **Version:** 1.0.0.0 · **Publisher:** VBD (prefix `vbd`)
+**Solution name:** `VbdPowerPlatformControlHub` · **Version:** 1.1.0.0 · **Publisher:** VBD (prefix `vbd`)
 
 ---
 
@@ -26,14 +26,15 @@ others can import the **code app** into their own environment and test-run it.
 | Component | Purpose |
 |-----------|---------|
 | **Power Platform Control Hub** (`vbd_powerplatformcontrolhub`, code app) | The app itself — the Copilot Studio deep-analytics + CoE control hub. |
+| **Resource Tombstone** (`vbd_resourcetombstone`, table) | Cross-user soft-delete store for the governance views. |
 
-The solution contains **only the code app**. The app reads tenant-wide data through
-**5 connectors** (see below). Connections are **not** included in the solution — every
-importer authorises their own on first run.
+The solution contains the **code app** and its **tombstone table**. The app reads
+tenant-wide data through **5 connectors** (see below). Connections are **not** included
+in the solution — every importer authorises their own on first run.
 
-> The app's governance views use a soft-delete/tombstone store. If a Dataverse
-> tombstone table is present it will use it; otherwise it falls back to browser
-> `localStorage`. No tombstone table is shipped in this solution.
+> The app's governance views use a soft-delete/tombstone store. This solution ships the
+> `vbd_resourcetombstone` table, so soft-deletes persist **cross-user** in Dataverse. If
+> the table can't be reached at runtime the app falls back to browser `localStorage`.
 
 ---
 
@@ -121,17 +122,17 @@ fork are authored separately; add your own `LICENSE` at the repo root before pub
 ### Re-pack after changes
 
 ```powershell
-pac solution pack --zipfile .\VbdPowerPlatformControlHub_1_0_0_0.zip --folder .\src --packagetype Unmanaged
+pac solution pack --zipfile .\VbdPowerPlatformControlHub_1_1_0_0.zip --folder .\src --packagetype Unmanaged
 ```
 
 ### Unpack a new zip
 
 ```powershell
-pac solution unpack --zipfile .\VbdPowerPlatformControlHub_1_0_0_0.zip --folder .\src --packagetype Unmanaged
+pac solution unpack --zipfile .\VbdPowerPlatformControlHub_1_1_0_0.zip --folder .\src --packagetype Unmanaged
 ```
 
 ### Export a fresh managed build
 
 ```powershell
-pac solution export --name VbdPowerPlatformControlHub --managed --path .\VbdPowerPlatformControlHub_managed.zip --overwrite
+pac solution export --name VbdPowerPlatformControlHub --managed --path .\VbdPowerPlatformControlHub_1_1_0_0_managed.zip --overwrite
 ```

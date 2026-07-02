@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<savedqueries xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <savedquery>
+    <IsCustomizable>1</IsCustomizable>
+    <CanBeDeleted>0</CanBeDeleted>
+    <isquickfindquery>0</isquickfindquery>
+    <isprivate>0</isprivate>
+    <isdefault>1</isdefault>
+    <savedqueryid>{c12acf30-e119-4a75-84a6-6356a59ba500}</savedqueryid>
+    <layoutxml>
+      <grid name="vbd_resourcetombstones" jump="vbd_resourceid" select="1" icon="1" preview="1">
+        <row name="vbd_resourcetombstone" id="vbd_resourcetombstoneid">
+          <cell name="vbd_resourceid" width="300" />
+          <cell name="createdon" width="125" />
+        </row>
+      </grid>
+    </layoutxml>
+    <querytype>2</querytype>
+    <fetchxml>
+      <fetch version="1.0" mapping="logical">
+        <entity name="vbd_resourcetombstone">
+          <attribute name="vbd_resourcetombstoneid" />
+          <attribute name="vbd_resourceid" />
+          <attribute name="createdon" />
+          <order attribute="vbd_resourceid" descending="false" />
+          <filter type="and">
+            <condition attribute="statecode" operator="eq" value="0" />
+          </filter>
+        </entity>
+      </fetch>
+    </fetchxml>
+    <IntroducedVersion>1.0.0.0</IntroducedVersion>
+    <LocalizedNames>
+      <LocalizedName description="Resource Tombstone Associated View" languagecode="1033" />
+    </LocalizedNames>
+  </savedquery>
+</savedqueries>
