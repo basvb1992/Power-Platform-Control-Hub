@@ -28,7 +28,7 @@ export function runsToCsv(runs: RunInfo[], model: CostModel): string {
   const rows = runs.map((r) => {
     const completed = r.steps.filter((s) => !isFailedStep(s)).length;
     const failed = r.steps.length - completed;
-    const credits = runCredits(r, model.creditPerStep);
+    const credits = runCredits(r);
     const cost = model.pricePerCredit > 0 ? (credits * model.pricePerCredit).toFixed(2) : "";
     return [
       shortDate(r.createdon),

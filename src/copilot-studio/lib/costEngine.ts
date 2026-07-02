@@ -1,9 +1,24 @@
 /**
  * Cost engine — reconstructs Copilot Credit consumption from Copilot Studio
- * conversation transcripts. Verified model: each completed plan step carries a
- * `displayedCost` (flat 7 = 5 agent action + 2 generative reasoning); a failed
- * step costs 0. Run cost = sum of displayedCost across the transcript.
+ * conversation transcripts.
+ *
+ * Source of truth: every plan step in a transcript carries a `displayedCost`,
+ * which is the exact number of Copilot Credits Microsoft metered for that step,
+ * at the official per-message rates (Microsoft Learn — "Billing rates and
+ * management"):
+ *   classic answer 1 · generative answer 2 · agent action 5 ·
+ *   tenant graph grounding 10 · agent flow 13 per 100 actions ·
+ *   text & generative AI tools (premium/reasoning) 10 credits / 1,000 tokens.
+ * A failed step costs 0. Run cost = sum of `displayedCost` across the transcript
+ * — never a flat per-step assumption, so totals line up with what each
+ * conversation shows and with Microsoft's own metering.
+ *
+ * Caveat: token-metered premium reasoning credits are billed by the model and
+ * may not always be recorded in the transcript, so figures are the best
+ * transcript-based estimate; reconcile actuals in PPAC → Copilot Studio.
  */
+
+import { classifyModel, type ModelTier } from "./models.ts";
 
 export interface StepInfo {
   tool: string;
@@ -44,16 +59,23 @@ export interface AgentRollup {
   completed: number;
   failed: number;
   credits: number;
+  /** Raw modelNameHint from the agent's configuration (empty when unknown). */
+  model: string;
+  /** Friendly model name (e.g. "Claude Sonnet 4.5"). */
+  modelLabel: string;
+  /** Billing tier of the model (basic / standard / premium). */
+  modelTier: ModelTier;
+  /** True when the agent's configured model is a deep-reasoning / premium model. */
+  deepReasoning: boolean;
 }
 
 export interface CostModel {
-  creditPerStep: number;
+  /** Optional price per Copilot Credit for currency conversion (0 = show credits only). */
   pricePerCredit: number;
   currency: string;
 }
 
 export const DEFAULT_COST_MODEL: CostModel = {
-  creditPerStep: 7,
   pricePerCredit: 0,
   currency: "€",
 };
@@ -187,22 +209,54 @@ export function isFailedStep(s: StepInfo): boolean {
   return String(s.state).toLowerCase() === "failed" || s.cost === 0;
 }
 
-export function aggregateByAgent(runs: RunInfo[], creditPerStep: number): AgentRollup[] {
+/**
+ * Disclaimer for the UI: premium/deep-reasoning token credits are billed on a
+ * separate meter and are not captured in transcript-based figures.
+ */
+export const REASONING_COST_NOTE =
+  "Deep-reasoning / premium-model token costs — \u201CText & generative AI tools (premium)\u201D, " +
+  "10 Copilot Credits per 1,000 tokens — are billed on a separate meter and are not recorded in " +
+  "transcripts. Agents that use a deep reasoning model incur additional credits beyond the figures shown here. " +
+  "Reconcile actuals in PPAC \u2192 Licensing \u2192 Copilot Studio.";
+
+/**
+ * Roll transcripts up per agent. The deep-reasoning flag and model info come from
+ * each agent's *configuration* (the modelNameHint on its Custom GPT component),
+ * passed in via `modelBySchema` (schemaname → raw hint). This is authoritative —
+ * unlike transcript heuristics, it reflects the model the agent is actually set to
+ * use, so premium / reasoning-capable models are flagged even when the current
+ * window has no reasoning activity.
+ */
+export function aggregateByAgent(
+  runs: RunInfo[],
+  modelBySchema?: Record<string, string>
+): AgentRollup[] {
   const map = new Map<string, AgentRollup>();
   for (const r of runs) {
     const key = r.agentLabel || r.agentSchema;
     let a = map.get(key);
     if (!a) {
-      a = { key, label: r.agentLabel, transcripts: 0, completed: 0, failed: 0, credits: 0 };
+      const hint = modelBySchema?.[String(r.agentSchema).toLowerCase()] ?? "";
+      const info = classifyModel(hint);
+      a = {
+        key,
+        label: r.agentLabel,
+        transcripts: 0,
+        completed: 0,
+        failed: 0,
+        credits: 0,
+        model: info.hint,
+        modelLabel: info.label,
+        modelTier: info.tier,
+        deepReasoning: info.reasoning,
+      };
       map.set(key, a);
     }
     a.transcripts++;
     for (const s of r.steps) {
       if (isFailedStep(s)) a.failed++;
-      else {
-        a.completed++;
-        a.credits += creditPerStep;
-      }
+      else a.completed++;
+      a.credits += s.cost;
     }
   }
   return [...map.values()].sort((x, y) => y.credits - x.credits);
@@ -212,32 +266,32 @@ export interface Totals {
   transcripts: number;
   completed: number;
   failed: number;
-  modeledCredits: number;
-  engineCredits: number;
+  /** Actual Copilot Credits = sum of every step's displayedCost across the window. */
+  credits: number;
 }
 
-export function totals(runs: RunInfo[], creditPerStep: number): Totals {
+export function totals(runs: RunInfo[]): Totals {
   let completed = 0,
     failed = 0,
-    engineCredits = 0;
+    credits = 0;
   for (const r of runs) {
     for (const s of r.steps) {
       if (isFailedStep(s)) failed++;
       else completed++;
+      credits += s.cost;
     }
-    engineCredits += r.engineCost;
   }
   return {
     transcripts: runs.length,
     completed,
     failed,
-    modeledCredits: completed * creditPerStep,
-    engineCredits,
+    credits,
   };
 }
 
-export function runCredits(r: RunInfo, creditPerStep: number): number {
-  return r.steps.filter((s) => !isFailedStep(s)).length * creditPerStep;
+/** Actual Copilot Credits for a run = sum of the transcript's per-step displayedCost. */
+export function runCredits(r: RunInfo): number {
+  return r.steps.reduce((sum, s) => sum + s.cost, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -251,7 +305,7 @@ export interface TrendPoint {
 }
 
 /** Credits per day across the loaded window (sorted ascending). */
-export function trendByDay(runs: RunInfo[], creditPerStep: number): TrendPoint[] {
+export function trendByDay(runs: RunInfo[]): TrendPoint[] {
   const map = new Map<string, TrendPoint>();
   for (const r of runs) {
     const date = (r.createdon || "").slice(0, 10) || "(undated)";
@@ -261,7 +315,7 @@ export function trendByDay(runs: RunInfo[], creditPerStep: number): TrendPoint[]
       map.set(date, p);
     }
     p.transcripts++;
-    p.credits += runCredits(r, creditPerStep);
+    p.credits += runCredits(r);
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -274,7 +328,7 @@ export interface KindRollup {
 }
 
 /** Where the credits go: Knowledge / Action / Connected agent / Other. */
-export function aggregateByKind(runs: RunInfo[], creditPerStep: number): KindRollup[] {
+export function aggregateByKind(runs: RunInfo[]): KindRollup[] {
   const map = new Map<string, KindRollup>();
   for (const r of runs) {
     for (const s of r.steps) {
@@ -284,10 +338,8 @@ export function aggregateByKind(runs: RunInfo[], creditPerStep: number): KindRol
         map.set(s.kind, k);
       }
       if (isFailedStep(s)) k.failed++;
-      else {
-        k.completed++;
-        k.credits += creditPerStep;
-      }
+      else k.completed++;
+      k.credits += s.cost;
     }
   }
   return [...map.values()].sort((a, b) => b.credits - a.credits);
@@ -305,8 +357,7 @@ export interface OwnerRollup {
  */
 export function aggregateByOwner(
   runs: RunInfo[],
-  ownerBySchema: Record<string, string>,
-  creditPerStep: number
+  ownerBySchema: Record<string, string>
 ): OwnerRollup[] {
   const map = new Map<string, OwnerRollup>();
   for (const r of runs) {
@@ -317,7 +368,7 @@ export function aggregateByOwner(
       map.set(owner, o);
     }
     o.transcripts++;
-    o.credits += runCredits(r, creditPerStep);
+    o.credits += runCredits(r);
   }
   return [...map.values()].sort((a, b) => b.credits - a.credits);
 }
@@ -332,8 +383,8 @@ export interface Distribution {
 }
 
 /** Per-transcript credit distribution, to surface expensive outliers. */
-export function creditDistribution(runs: RunInfo[], creditPerStep: number): Distribution {
-  const vals = runs.map((r) => runCredits(r, creditPerStep)).sort((a, b) => a - b);
+export function creditDistribution(runs: RunInfo[]): Distribution {
+  const vals = runs.map((r) => runCredits(r)).sort((a, b) => a - b);
   if (!vals.length) return { count: 0, min: 0, p50: 0, p90: 0, max: 0, mean: 0 };
   const pct = (p: number) => vals[Math.min(vals.length - 1, Math.floor((p / 100) * vals.length))];
   const sum = vals.reduce((a, b) => a + b, 0);

@@ -44,11 +44,11 @@ export function AgentDrawer({
   const agentRuns = useMemo(
     () =>
       [...runs].sort((a, b) =>
-        runCredits(b, model.creditPerStep) - runCredits(a, model.creditPerStep)
+        runCredits(b) - runCredits(a)
       ),
-    [runs, model.creditPerStep]
+    [runs]
   );
-  const totalCredits = agentRuns.reduce((s, r) => s + runCredits(r, model.creditPerStep), 0) || credits;
+  const totalCredits = agentRuns.reduce((s, r) => s + runCredits(r), 0) || credits;
 
   return (
     <div className="drawer-overlay" onClick={onClose}>
@@ -174,7 +174,7 @@ export function AgentDrawer({
                       {shortDate(r.createdon)} · {r.messages.length} turns
                       {failed > 0 && <span className="pill fail" style={{ marginLeft: 6 }}>{failed} failed</span>}
                     </span>
-                    <strong>{runCredits(r, model.creditPerStep)} cr</strong>
+                    <strong>{runCredits(r)} cr</strong>
                   </button>
                 );
               })}

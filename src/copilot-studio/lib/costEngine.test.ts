@@ -149,7 +149,7 @@ describe("aggregateByAgent + totals + runCredits", () => {
   ];
 
   it("rolls up credits per agent and sorts by spend", () => {
-    const agg = aggregateByAgent(runs, 7);
+    const agg = aggregateByAgent(runs);
     expect(agg).toHaveLength(2);
     expect(agg[0].credits).toBe(14); // agent A: two completed * 7
     expect(agg[0].completed).toBe(2);
@@ -157,17 +157,35 @@ describe("aggregateByAgent + totals + runCredits", () => {
     expect(agg[1].credits).toBe(7);
   });
 
+  it("flags deep reasoning from the configured model, not transcripts", () => {
+    const agg = aggregateByAgent(runs, { vbd_a: "GPT5Chat", vbd_b: "o3" });
+    const a = agg.find((x) => x.key.includes("A") || x.label.includes("A"));
+    const b = agg.find((x) => x.key.includes("B") || x.label.includes("B"));
+    // vbd_A uses a standard model → not flagged; model label surfaced.
+    expect(a?.deepReasoning).toBe(false);
+    expect(a?.modelLabel).toBe("GPT-5 chat");
+    expect(a?.modelTier).toBe("standard");
+    // vbd_B uses o3 (premium reasoning) → flagged.
+    expect(b?.deepReasoning).toBe(true);
+    expect(b?.modelTier).toBe("premium");
+  });
+
+  it("leaves model unknown when no config is supplied", () => {
+    const agg = aggregateByAgent(runs);
+    expect(agg[0].deepReasoning).toBe(false);
+    expect(agg[0].modelTier).toBe("unknown");
+  });
+
   it("totals across the window", () => {
-    const t = totals(runs, 7);
+    const t = totals(runs);
     expect(t.transcripts).toBe(2);
     expect(t.completed).toBe(3);
     expect(t.failed).toBe(1);
-    expect(t.modeledCredits).toBe(21);
-    expect(t.engineCredits).toBe(21);
+    expect(t.credits).toBe(21);
   });
 
   it("runCredits counts only successful steps", () => {
-    expect(runCredits(runs[0], 7)).toBe(14);
-    expect(runCredits(runs[1], 7)).toBe(7);
+    expect(runCredits(runs[0])).toBe(14);
+    expect(runCredits(runs[1])).toBe(7);
   });
 });

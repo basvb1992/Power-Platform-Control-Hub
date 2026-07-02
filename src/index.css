@@ -15,3 +15,49 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* ===== Collapsible per-tab explainer (used on every tab) ===== */
+.tabinfo {
+  margin: 12px 24px 0;
+  border: 1px solid var(--cp-border, #e0e0e0);
+  border-left: 3px solid var(--cp-accent, #6b3fd4);
+  border-radius: 8px;
+  background: var(--cp-accent-soft, rgba(107, 63, 212, 0.06));
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.tabinfo > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  cursor: pointer;
+  list-style: none;
+  color: var(--cp-text, #242424);
+  font-size: 0.85rem;
+  user-select: none;
+}
+.tabinfo > summary::-webkit-details-marker { display: none; }
+.tabinfo > summary:focus-visible {
+  outline: 2px solid var(--cp-accent, #6b3fd4);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+.tabinfo-icon { color: var(--cp-accent, #6b3fd4); flex-shrink: 0; }
+.tabinfo-title { font-weight: 600; }
+.tabinfo-chevron {
+  margin-left: auto;
+  color: var(--cp-text-muted, #616161);
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+.tabinfo[open] > summary .tabinfo-chevron { transform: rotate(180deg); }
+.tabinfo-body {
+  padding: 0 14px 12px 36px;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--cp-text-soft, #424242);
+}
+.tabinfo-body p { margin: 0 0 6px; }
+.tabinfo-body ul { margin: 4px 0 0; padding-left: 18px; }
+.tabinfo-body li { margin: 2px 0; }

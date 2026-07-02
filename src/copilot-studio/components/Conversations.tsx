@@ -188,7 +188,7 @@ function FullConversationViewer({
   onClose: () => void;
 }) {
   const fanOut = orderFanOut(siblings);
-  const totalCredits = fanOut.reduce((s, r) => s + runCredits(r, model.creditPerStep), 0);
+  const totalCredits = fanOut.reduce((s, r) => s + runCredits(r), 0);
   const totalSteps = fanOut.reduce((s, r) => s + r.steps.length, 0);
   const [layout, setLayout] = useState<"stacked" | "swimlanes">("stacked");
   return (
@@ -220,7 +220,7 @@ function FullConversationViewer({
                   <span className="fanout-branch" aria-hidden>{isRoot ? "◆" : "└─"}</span>
                   <span className="fc-agent-name">{r.agentLabel}</span>
                   {isRoot && <span className="pill kind k-agent">orchestrator</span>}
-                  <span className="fanout-cr">{runCredits(r, model.creditPerStep)} cr</span>
+                  <span className="fanout-cr">{runCredits(r)} cr</span>
                 </header>
                 {r.events.length > 0 ? (
                   <MergedTimeline events={r.events} model={model} />
@@ -269,11 +269,11 @@ export function ConversationDrawer({
   const [showFull, setShowFull] = useState(false);
   const completed = run.steps.filter((s) => !isFailedStep(s)).length;
   const failed = run.steps.length - completed;
-  const credits = runCredits(run, model.creditPerStep);
+  const credits = runCredits(run);
   const duration = durationLabel(run.messages);
   const oc = OUTCOME_META[outcomeOf(run)];
   const fanOut = orderFanOut(siblings);
-  const groupCredits = siblings.reduce((s, r) => s + runCredits(r, model.creditPerStep), 0);
+  const groupCredits = siblings.reduce((s, r) => s + runCredits(r), 0);
 
   return (
     <div className="drawer-overlay" onClick={onClose}>
@@ -314,7 +314,7 @@ export function ConversationDrawer({
                     <span className="fanout-meta">
                       {isRoot && <span className="pill kind k-agent">orchestrator</span>}
                       {rf > 0 && <span className="pill fail">{rf} failed</span>}
-                      <span className="fanout-cr">{runCredits(r, model.creditPerStep)} cr</span>
+                      <span className="fanout-cr">{runCredits(r)} cr</span>
                     </span>
                   </button>
                 );
@@ -406,11 +406,11 @@ export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: Cos
     });
     list = [...list].sort((a, b) =>
       sort === "credits"
-        ? runCredits(b, model.creditPerStep) - runCredits(a, model.creditPerStep)
+        ? runCredits(b) - runCredits(a)
         : String(b.createdon).localeCompare(String(a.createdon))
     );
     return list;
-  }, [runs, search, agent, sort, model.creditPerStep]);
+  }, [runs, search, agent, sort]);
 
   if (!runs.length)
     return (
@@ -489,7 +489,7 @@ export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: Cos
                 <td className="num">{r.steps.length}</td>
                 <td className="num">{failed}</td>
                 <td className="num">
-                  <strong>{runCredits(r, model.creditPerStep)}</strong>
+                  <strong>{runCredits(r)}</strong>
                 </td>
                 <td>
                   <span className={`pill ${oc.cls}`}>{oc.label}</span>

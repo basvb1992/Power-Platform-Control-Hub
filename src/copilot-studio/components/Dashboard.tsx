@@ -31,17 +31,17 @@ export function SummaryCards({ t, model }: { t: Totals; model: CostModel }) {
           <div className="l">Failed steps (0 cr)</div>
         </div>
         <div className="stat">
-          <div className="v">{t.modeledCredits}</div>
-          <div className="l">Estimated credits</div>
+          <div className="v">{t.credits}</div>
+          <div className="l">Metered credits</div>
         </div>
         <div className="stat">
-          <div className="v">{money(t.modeledCredits, model)}</div>
-          <div className="l">Estimated cost</div>
+          <div className="v">{money(t.credits, model)}</div>
+          <div className="l">Metered cost</div>
         </div>
       </div>
       <p className="hint" style={{ marginTop: 12 }}>
-        Engine <code>displayedCost</code> sum across this set: <strong>{t.engineCredits}</strong>{" "}
-        credits (matches the modeled figure when credits-per-step = 7).
+        Every figure is the sum of each transcript's per-message <code>displayedCost</code> — the exact credits
+        Microsoft metered, never a flat per-step assumption.
       </p>
       <div className="credit-legend">
         <strong>How credits are billed</strong> (Microsoft Copilot Studio rates):
@@ -53,8 +53,8 @@ export function SummaryCards({ t, model }: { t: Totals; model: CostModel }) {
         <p className="hint" style={{ marginTop: 8 }}>
           A typical step = <strong>7 cr</strong> (agent action 5 + generative 2). Failed steps cost 0.
           <strong> Deep reasoning</strong> adds <em>Text &amp; generative AI tools (premium)</em> at 10 cr / 1,000 tokens —
-          these token credits are billed by the model and are <em>not</em> recorded in transcripts, so the figures here are a
-          transcript-based estimate. Reconcile actuals in <strong>PPAC → Licensing → Copilot Studio</strong>.
+          these token credits are billed by the model and are <em>not</em> recorded in transcripts, so an agent using a
+          deep reasoning model costs more than shown here. Reconcile actuals in <strong>PPAC → Licensing → Copilot Studio</strong>.
         </p>
       </div>
     </div>
@@ -75,6 +75,7 @@ export function ByAgentTable({ rows, onSelect }: { rows: AgentRollup[]; onSelect
         <thead>
           <tr>
             <th>Agent</th>
+            <th>Model</th>
             <th className="num">Transcripts</th>
             <th className="num">Completed</th>
             <th className="num">Failed</th>
@@ -97,6 +98,27 @@ export function ByAgentTable({ rows, onSelect }: { rows: AgentRollup[]; onSelect
                     <span className="pill warn" style={{ marginLeft: 8 }}>
                       top spender
                     </span>
+                  )}
+                  {a.deepReasoning && (
+                    <span
+                      className="pill warn"
+                      style={{ marginLeft: 8 }}
+                      title="This agent is configured to use a deep-reasoning / premium model. Premium token costs (10 cr / 1,000 tokens) are billed on a separate meter and are NOT included in the credits shown here."
+                    >
+                      🧠 deep reasoning
+                    </span>
+                  )}
+                </td>
+                <td>
+                  {a.modelLabel ? (
+                    <span
+                      className={`pill ${a.modelTier === "premium" ? "warn" : "kind"}`}
+                      title={`Configured model: ${a.model || a.modelLabel} (${a.modelTier} tier)`}
+                    >
+                      {a.modelLabel}
+                    </span>
+                  ) : (
+                    <span className="hint">—</span>
                   )}
                 </td>
                 <td className="num">{a.transcripts}</td>
@@ -140,7 +162,7 @@ function ConversationView({ messages }: { messages: ConversationMessage[] }) {
   );
 }
 
-function StepsView({ r, model }: { r: RunInfo; model: CostModel }) {
+function StepsView({ r }: { r: RunInfo }) {
   return (
     <>
       {r.steps.map((s, i) => {
@@ -149,7 +171,7 @@ function StepsView({ r, model }: { r: RunInfo; model: CostModel }) {
           <div className="stepline" key={i}>
             <span className="pill kind">{s.kind}</span>
             <span className={`pill ${fail ? "fail" : "ok"}`}>
-              {fail ? "failed · 0" : `ok · ${model.creditPerStep}`}
+              {fail ? "failed · 0" : `ok · ${s.cost}`}
             </span>
             <code style={{ fontSize: "0.78rem" }}>{s.tool || "(step)"}</code>
             {s.thought && (
@@ -165,12 +187,12 @@ function StepsView({ r, model }: { r: RunInfo; model: CostModel }) {
   );
 }
 
-function TranscriptRow({ r, model }: { r: RunInfo; model: CostModel }) {
+function TranscriptRow({ r }: { r: RunInfo }) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<"conv" | "steps">(r.messages.length ? "conv" : "steps");
   const completed = r.steps.filter((s) => !isFailedStep(s)).length;
   const failed = r.steps.length - completed;
-  const credits = runCredits(r, model.creditPerStep);
+  const credits = runCredits(r);
   return (
     <>
       <tr className="run-row" onClick={() => setOpen((o) => !o)}>
@@ -205,7 +227,7 @@ function TranscriptRow({ r, model }: { r: RunInfo; model: CostModel }) {
               {view === "conv" ? (
                 <ConversationView messages={r.messages} />
               ) : (
-                <StepsView r={r} model={model} />
+                <StepsView r={r} />
               )}
             </div>
           </td>
@@ -215,12 +237,12 @@ function TranscriptRow({ r, model }: { r: RunInfo; model: CostModel }) {
   );
 }
 
-export function TranscriptTable({ runs, model }: { runs: RunInfo[]; model: CostModel }) {
+export function TranscriptTable({ runs }: { runs: RunInfo[] }) {
   const [sort, setSort] = useState<"date" | "credits">("date");
   if (!runs.length) return null;
   const sorted = [...runs].sort((a, b) =>
     sort === "credits"
-      ? runCredits(b, model.creditPerStep) - runCredits(a, model.creditPerStep)
+      ? runCredits(b) - runCredits(a)
       : String(b.createdon).localeCompare(String(a.createdon))
   );
   return (
@@ -255,7 +277,7 @@ export function TranscriptTable({ runs, model }: { runs: RunInfo[]; model: CostM
         </thead>
         <tbody>
           {sorted.map((r) => (
-            <TranscriptRow key={r.id} r={r} model={model} />
+            <TranscriptRow key={r.id} r={r} />
           ))}
         </tbody>
       </table>
@@ -263,7 +285,7 @@ export function TranscriptTable({ runs, model }: { runs: RunInfo[]; model: CostM
   );
 }
 
-export function AnomalyPanel({ runs, model }: { runs: RunInfo[]; model: CostModel }) {
+export function AnomalyPanel({ runs }: { runs: RunInfo[] }) {
   const withFailures = runs
     .map((r) => ({
       r,
@@ -273,7 +295,7 @@ export function AnomalyPanel({ runs, model }: { runs: RunInfo[]; model: CostMode
     .sort((a, b) => b.failed - a.failed);
 
   const topSpenders = [...runs]
-    .map((r) => ({ r, credits: runCredits(r, model.creditPerStep) }))
+    .map((r) => ({ r, credits: runCredits(r) }))
     .sort((a, b) => b.credits - a.credits)
     .slice(0, 5);
 

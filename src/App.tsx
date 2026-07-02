@@ -29,6 +29,7 @@ import {
 } from '@fluentui/react-icons';
 import { useAdminData } from './hooks/useAdminData.ts';
 import { useInventory } from './hooks/useInventory.ts';
+import TabInfo from './components/TabInfo.tsx';
 const Dashboard = lazy(() => import('./components/Dashboard.tsx'));
 const ResourcesView = lazy(() => import('./components/ResourcesView.tsx'));
 const EnvironmentsView = lazy(() => import('./components/EnvironmentsView.tsx'));
@@ -42,6 +43,43 @@ import ppaLogo from './assets/ppa-logo.png?inline';
 
 type TabValue = 'overview' | 'resources' | 'environments' | 'recommendations' | 'governance' | 'envgroups' | 'connectors' | 'copilotstudio' | 'setup';
 const VALID_TABS: readonly TabValue[] = ['overview', 'resources', 'environments', 'recommendations', 'governance', 'envgroups', 'connectors', 'copilotstudio', 'setup'];
+
+/** Short "what is this tab for" copy, shown in a collapsed explainer at the top of each
+ *  main tab. The Copilot Studio tab is omitted here — its sub-tabs carry their own. */
+const TAB_INFO: Partial<Record<TabValue, { title: string; body: ReactElement }>> = {
+  overview: {
+    title: 'What is the Overview?',
+    body: <p>A tenant-wide summary of your Power Platform estate — environment, resource and connector counts at a glance. Select a card to drill into the matching resources.</p>,
+  },
+  environments: {
+    title: 'What is the Environments tab?',
+    body: <p>Every environment the signed-in admin can see, with type, region, Dataverse status and the group each belongs to. Use it to review and locate environments across the tenant.</p>,
+  },
+  envgroups: {
+    title: 'What are Environment Groups?',
+    body: <p>Environment groups and the rule-based policies assigned to them. Groups let you apply consistent governance (managed settings, rules) to sets of environments at once.</p>,
+  },
+  resources: {
+    title: 'What is the Resources tab?',
+    body: <p>A searchable inventory of Power Platform resources across the tenant — apps, flows, agents, connections and more. Filter by type to focus on a specific resource category.</p>,
+  },
+  connectors: {
+    title: 'What is the Connectors tab?',
+    body: <p>Connector usage across environments, so you can see which connectors (including premium ones) are in use and where. Useful for licensing and DLP review.</p>,
+  },
+  governance: {
+    title: 'What are Tenant Policies?',
+    body: <p>Tenant-level governance: DLP policies, billing policies and cross-tenant isolation reports. Review the guardrails that apply across your environments.</p>,
+  },
+  recommendations: {
+    title: 'What are Recommendations?',
+    body: <p>Advisor recommendations surfaced by the Power Platform admin APIs — actionable suggestions to improve security, performance and cost posture.</p>,
+  },
+  setup: {
+    title: 'What is Setup?',
+    body: <p>Verify and configure the connections this hub uses to read admin and inventory data. Start here if a tab reports a missing connection reference.</p>,
+  },
+};
 
 const useStyles = makeStyles({
   shell: {
@@ -75,8 +113,15 @@ const useStyles = makeStyles({
   },
   content: {
     flex: 1,
-    overflow: 'hidden',
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column',
     backgroundColor: tokens.colorNeutralBackground2,
+  },
+  viewport: {
+    flex: 1,
+    minHeight: 0,
+    overflow: 'hidden',
   },
   suspense: {
     display: 'flex',
@@ -203,6 +248,10 @@ export default function App(): ReactElement {
         </nav>
 
         <main className={styles.content}>
+          {activeTab !== 'copilotstudio' && TAB_INFO[activeTab] && (
+            <TabInfo title={TAB_INFO[activeTab]!.title}>{TAB_INFO[activeTab]!.body}</TabInfo>
+          )}
+          <div className={styles.viewport}>
           <Suspense fallback={<div className={styles.suspense}><Spinner size="medium" label="Loading view…" /></div>}>
           {activeTab === 'overview' && (
             <Dashboard
@@ -277,6 +326,7 @@ export default function App(): ReactElement {
             />
           )}
           </Suspense>
+          </div>
         </main>
 
         <footer className={styles.footer}>

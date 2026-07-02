@@ -83,7 +83,7 @@ export function ControlTower({
   const score = healthScore(gov, t, items.length);
   const band = healthBand(score);
 
-  const usedCredits = t?.modeledCredits ?? 0;
+  const usedCredits = t?.credits ?? 0;
   const budgetPct = budget > 0 ? Math.min(100, Math.round((usedCredits / budget) * 100)) : null;
   const overBudget = budget > 0 && usedCredits > budget;
 
@@ -270,7 +270,12 @@ export function ControlTower({
                   <td>{a.label}</td>
                   <td className="num">{a.transcripts}</td>
                   <td className="num">{a.failed || "—"}</td>
-                  <td className="num">{money(a.credits, model)}</td>
+                  <td className="num">
+                    {a.credits.toLocaleString()}
+                    {model.pricePerCredit > 0 && (
+                      <span className="muted"> · {money(a.credits, model)}</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

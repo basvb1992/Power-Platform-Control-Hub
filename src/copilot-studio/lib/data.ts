@@ -12,6 +12,10 @@ import { listRecordsWithOrg } from "../../services/dataverseConnectorService.ts"
 import { parseTranscript, type BotMap, type RunInfo } from "./costEngine.ts";
 import type { BotComponent } from "./botComponents.ts";
 import type { ConnectionRef } from "./connections.ts";
+import { extractModelHint } from "./models.ts";
+import { parseTools, type ToolRef } from "./agentTools.ts";
+import type { AgentFlow } from "./agentFlows.ts";
+import type { PromptModel } from "./prompts.ts";
 
 const FMT = "@OData.Community.Display.V1.FormattedValue";
 const ANNOTATIONS = 'odata.include-annotations="*"';
@@ -26,11 +30,15 @@ export interface AgentInventoryItem {
   publishedon: string;
   authMode: string;
   languages: string;
+  /** Raw modelNameHint from the agent's Custom GPT component (empty when unknown). */
+  model: string;
 }
 
 export interface BotData {
   inventory: AgentInventoryItem[];
   botMap: BotMap;
+  /** schemaname (lowercased) → raw modelNameHint, for cost rollups. */
+  modelBySchema: Record<string, string>;
 }
 
 export interface TranscriptQuery {
@@ -52,14 +60,36 @@ export async function fetchBots(instanceUrl: string): Promise<BotData> {
     prefer: ANNOTATIONS,
   });
 
+  // Each agent's answer model lives in its Custom GPT component (componenttype 15),
+  // inside the `data` blob as `modelNameHint`. One query builds botid → model.
+  const modelByBotId: Record<string, string> = {};
+  try {
+    const gpt = await listRecordsWithOrg(instanceUrl, "botcomponents", {
+      select: "_parentbotid_value,data",
+      filter: "componenttype eq 15",
+      top: 2000,
+    });
+    for (const g of gpt) {
+      const parent = s(g["_parentbotid_value"]).toLowerCase();
+      const hint = extractModelHint(s(g["data"]));
+      if (parent && hint && !modelByBotId[parent]) modelByBotId[parent] = hint;
+    }
+  } catch {
+    // Model detection is best-effort; inventory still loads without it.
+  }
+
   const inventory: AgentInventoryItem[] = [];
   const botMap: BotMap = {};
+  const modelBySchema: Record<string, string> = {};
   for (const r of rows) {
     const name = s(r["name"]) || s(r["schemaname"]);
     const schemaname = s(r["schemaname"]);
     if (schemaname && name) botMap[schemaname.toLowerCase()] = name;
+    const botid = s(r["botid"]);
+    const model = modelByBotId[botid.toLowerCase()] ?? "";
+    if (schemaname && model) modelBySchema[schemaname.toLowerCase()] = model;
     inventory.push({
-      botid: s(r["botid"]),
+      botid,
       name,
       schemaname,
       state: s(r[`statecode${FMT}`] ?? r["statecode"]),
@@ -68,10 +98,11 @@ export async function fetchBots(instanceUrl: string): Promise<BotData> {
       publishedon: s(r["publishedon"]),
       authMode: s(r[`authenticationmode${FMT}`] ?? r["authenticationmode"]),
       languages: s(r["supportedlanguages"]),
+      model,
     });
   }
   inventory.sort((a, z) => a.name.localeCompare(z.name));
-  return { inventory, botMap };
+  return { inventory, botMap, modelBySchema };
 }
 
 /** Fetch all top-level botcomponent rows (topics, knowledge, actions, …) for an env. */
@@ -103,6 +134,77 @@ export async function fetchConnectionReferences(instanceUrl: string): Promise<Co
     logicalName: s(r["connectionreferencelogicalname"]),
     connectorId: s(r["connectorid"]),
   }));
+}
+
+/**
+ * Fetch agent flows (Power Automate cloud flows, workflow category 5 / type 1)
+ * for an env. Their AI-authored description doubles as a "what it does" summary.
+ */
+export async function fetchAgentFlows(instanceUrl: string): Promise<AgentFlow[]> {
+  const rows = await listRecordsWithOrg(instanceUrl, "workflows", {
+    select:
+      "workflowid,name,description,statecode,createdon,modifiedon,_ownerid_value",
+    filter: "category eq 5 and type eq 1",
+    orderby: "name asc",
+    top: 2000,
+    prefer: ANNOTATIONS,
+  });
+  return rows.map((r) => {
+    const isActive = Number(r["statecode"] ?? 0) === 1;
+    return {
+      id: s(r["workflowid"]),
+      name: s(r["name"]),
+      description: s(r["description"]),
+      state: s(r[`statecode${FMT}`] ?? (isActive ? "Activated" : "Draft")),
+      isActive,
+      createdon: s(r["createdon"]),
+      modifiedon: s(r["modifiedon"]),
+      owner: s(r[`_ownerid_value${FMT}`]),
+    };
+  });
+}
+
+/** Fetch AI Builder / Copilot Studio prompts (msdyn_aimodel) for an env. */
+export async function fetchPrompts(instanceUrl: string): Promise<PromptModel[]> {
+  const rows = await listRecordsWithOrg(instanceUrl, "msdyn_aimodels", {
+    select:
+      "msdyn_aimodelid,msdyn_name,statecode,statuscode,createdon,modifiedon,_ownerid_value",
+    orderby: "msdyn_name asc",
+    top: 2000,
+    prefer: ANNOTATIONS,
+  });
+  return rows.map((r) => ({
+    id: s(r["msdyn_aimodelid"]),
+    name: s(r["msdyn_name"]),
+    status: s(r[`statuscode${FMT}`] ?? r[`statecode${FMT}`]),
+    isActive: Number(r["statecode"] ?? 0) === 0,
+    createdon: s(r["createdon"]),
+    modifiedon: s(r["modifiedon"]),
+    owner: s(r[`_ownerid_value${FMT}`]),
+  }));
+}
+
+/**
+ * Fetch the tool-bearing botcomponents (V2 actions and external triggers) with
+ * their `data` blob, and parse them into cross-reference ToolRefs. This is the
+ * authoritative map of which agent tool invokes which flow / prompt / connector.
+ */
+export async function fetchAgentTools(instanceUrl: string): Promise<ToolRef[]> {
+  const rows = await listRecordsWithOrg(instanceUrl, "botcomponents", {
+    select: "name,schemaname,componenttype,_parentbotid_value,data",
+    filter:
+      "_parentbotcomponentid_value eq null and (contains(schemaname,'.action.') or componenttype eq 17)",
+    top: 2000,
+  });
+  return parseTools(
+    rows.map((r) => ({
+      botId: s(r["_parentbotid_value"]),
+      name: s(r["name"]),
+      schemaname: s(r["schemaname"]),
+      componenttype: Number(r["componenttype"] ?? -1),
+      data: s(r["data"]),
+    }))
+  );
 }
 
 /**

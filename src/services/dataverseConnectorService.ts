@@ -45,7 +45,17 @@ export async function listRecordsWithOrg(
       parameters,
     },
   });
-  if (!res.success) throw res.error ?? new Error(`Failed to list ${entityName}`);
+  if (!res.success) {
+    const raw = res.error;
+    const message =
+      raw instanceof Error
+        ? raw.message
+        : typeof raw === 'string'
+          ? raw
+          : ((raw as { message?: string } | undefined)?.message ?? `Failed to list ${entityName} from ${org}`);
+    console.error(`[dataverseConnectorService] ListRecordsWithOrganization failed for ${entityName} @ ${org}:`, raw);
+    throw new Error(message);
+  }
   return (res.data?.value ?? []) as Record<string, unknown>[];
 }
 
