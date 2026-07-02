@@ -3550,6 +3550,13 @@ export const dataSourcesInfo = {
     "dataSourceType": "Dataverse",
     "apis": {}
   },
+  "vbd_resourcetombstones": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "vbd_resourcetombstoneid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
+  },
   "flowmanagement": {
     "tableId": "",
     "version": "",

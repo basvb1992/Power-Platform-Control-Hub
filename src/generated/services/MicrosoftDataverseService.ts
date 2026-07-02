@@ -47,6 +47,21 @@ export class MicrosoftDataverseService {
   }
 
   /**
+   * Get organizations test
+   * Get all organizations (test variant).
+   */
+  public static async GetOrganizationsTest(): Promise<IOperationResult<OrganizationsDynamicValuesList>> {
+    const result = await MicrosoftDataverseService.client.executeAsync<void, OrganizationsDynamicValuesList>(
+      {
+        connectorOperation: {
+          tableName: MicrosoftDataverseService.dataSourceName,
+          operationName: 'GetOrganizationsTest',
+        },
+      });
+    return result;
+  }
+
+  /**
    * Get table metadata
    * Gets table metadata
    */
@@ -318,8 +333,8 @@ export class MicrosoftDataverseService {
    * Retrieves the metadata for option set attribute metadata
    * Retrieves the metadata for option set attribute metadata
    */
-  public static async GetOptionSetMetadata(entityName: string, attributeMetadataId: string, _type: string): Promise<IOperationResult<Object>> {
-    const params: { entityName: string, attributeMetadataId: string, type: string } = { entityName, attributeMetadataId, type: _type };
+  public static async GetOptionSetMetadata(entityName: string, attributeMetadataId: string, type: string): Promise<IOperationResult<Object>> {
+    const params: { entityName: string, attributeMetadataId: string, type: string } = { entityName, attributeMetadataId, type };
     const result = await MicrosoftDataverseService.client.executeAsync<{ entityName: string, attributeMetadataId: string, type: string }, Object>(
       {
         connectorOperation: {
@@ -352,8 +367,8 @@ export class MicrosoftDataverseService {
    * Retrieves the metadata for option set attribute metadata
    * Retrieves the metadata for option set attribute metadata
    */
-  public static async GetOptionSetMetadataWithEntitySetName(entityName: string, attributeMetadataId: string, _type: string): Promise<IOperationResult<Object>> {
-    const params: { entityName: string, attributeMetadataId: string, type: string } = { entityName, attributeMetadataId, type: _type };
+  public static async GetOptionSetMetadataWithEntitySetName(entityName: string, attributeMetadataId: string, type: string): Promise<IOperationResult<Object>> {
+    const params: { entityName: string, attributeMetadataId: string, type: string } = { entityName, attributeMetadataId, type };
     const result = await MicrosoftDataverseService.client.executeAsync<{ entityName: string, attributeMetadataId: string, type: string }, Object>(
       {
         connectorOperation: {

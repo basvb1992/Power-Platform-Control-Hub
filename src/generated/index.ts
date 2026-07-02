@@ -13,7 +13,7 @@ export * as PowerAppsforAdminsModel from './models/PowerAppsforAdminsModel';
 export * as PowerAutomateManagementModel from './models/PowerAutomateManagementModel';
 export * as PowerPlatformforAdminsModel from './models/PowerPlatformforAdminsModel';
 export * as PowerPlatformforAdminsV2Model from './models/PowerPlatformforAdminsV2Model';
-export * as Ppa_resourcetombstonesModel from './models/Ppa_resourcetombstonesModel';
+export * as Vbd_resourcetombstonesModel from './models/Vbd_resourcetombstonesModel';
 
 // Services
 export * from './services/AaduserService';
@@ -24,4 +24,4 @@ export * from './services/PowerAppsforAdminsService';
 export * from './services/PowerAutomateManagementService';
 export * from './services/PowerPlatformforAdminsService';
 export * from './services/PowerPlatformforAdminsV2Service';
-export * from './services/Ppa_resourcetombstonesService';
+export * from './services/Vbd_resourcetombstonesService';

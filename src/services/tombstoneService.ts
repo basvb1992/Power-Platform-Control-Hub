@@ -2,18 +2,18 @@
  * Tombstone service — persists deleted resource IDs so they stay hidden
  * across all users and sessions until the Inventory API refreshes.
  *
- * PRIMARY: Dataverse table `ppa_resourcetombstone` (shared across all users).
+ * PRIMARY: Dataverse table `vbd_resourcetombstone` (shared across all users).
  * FALLBACK: localStorage (per user/browser) when Dataverse is unavailable
  *           (e.g. running locally without a live connection).
  *
  * To upgrade another tenant: import the solution in `solution/`, then run:
  *   npx power-apps add-data-source --api-id dataverse \
- *     --resource-name ppa_resourcetombstone --org-url <your-org-url>
+ *     --resource-name vbd_resourcetombstone --org-url <your-org-url>
  */
 
-import { Ppa_resourcetombstonesService } from '../generated/services/Ppa_resourcetombstonesService.ts';
+import { Vbd_resourcetombstonesService } from '../generated/services/Vbd_resourcetombstonesService.ts';
 
-const LS_KEY = 'ppa_resourceTombstones';
+const LS_KEY = 'vbd_resourceTombstones';
 const MAX_AGE_DAYS = 30;
 
 export interface TombstoneEntry {
@@ -66,19 +66,19 @@ async function dvGetIds(): Promise<Set<string>> {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - MAX_AGE_DAYS);
 
-  const result = await Ppa_resourcetombstonesService.getAll({
-    select: ['ppa_resourceid', 'ppa_resourcetombstoneid', 'ppa_deletedon'],
-    filter: `ppa_deletedon ge ${cutoff.toISOString()}`,
+  const result = await Vbd_resourcetombstonesService.getAll({
+    select: ['vbd_resourceid', 'vbd_resourcetombstoneid', 'vbd_deletedon'],
+    filter: `vbd_deletedon ge ${cutoff.toISOString()}`,
   });
 
   if (!result.success || !result.data) return new Set();
 
   const ids = new Set<string>();
   for (const record of result.data) {
-    if (!record.ppa_resourceid) continue;
-    ids.add(record.ppa_resourceid);
-    if (record.ppa_resourcetombstoneid) {
-      dvIdCache.set(record.ppa_resourceid, record.ppa_resourcetombstoneid);
+    if (!record.vbd_resourceid) continue;
+    ids.add(record.vbd_resourceid);
+    if (record.vbd_resourcetombstoneid) {
+      dvIdCache.set(record.vbd_resourceid, record.vbd_resourcetombstoneid);
     }
   }
   return ids;
@@ -88,17 +88,17 @@ async function dvAdd(entry: TombstoneEntry): Promise<void> {
   // ownerid and statecode are intentionally omitted — Dataverse assigns the
   // current user as owner and defaults statecode to 0 (Active) automatically.
   const payload = {
-    ppa_resourceid: entry.resourceId,
-    ppa_resourcetype: entry.resourceType,
-    ppa_environmentid: entry.environmentId,
-    ppa_displayname: entry.displayName,
-    ppa_deletedby: entry.deletedBy ?? '',
-    ppa_deletedon: new Date().toISOString(),
-  } as Parameters<typeof Ppa_resourcetombstonesService.create>[0];
+    vbd_resourceid: entry.resourceId,
+    vbd_resourcetype: entry.resourceType,
+    vbd_environmentid: entry.environmentId,
+    vbd_displayname: entry.displayName,
+    vbd_deletedby: entry.deletedBy ?? '',
+    vbd_deletedon: new Date().toISOString(),
+  } as Parameters<typeof Vbd_resourcetombstonesService.create>[0];
 
-  const result = await Ppa_resourcetombstonesService.create(payload);
-  if (result.success && result.data?.ppa_resourcetombstoneid) {
-    dvIdCache.set(entry.resourceId, result.data.ppa_resourcetombstoneid);
+  const result = await Vbd_resourcetombstonesService.create(payload);
+  if (result.success && result.data?.vbd_resourcetombstoneid) {
+    dvIdCache.set(entry.resourceId, result.data.vbd_resourcetombstoneid);
   } else if (!result.success) {
     console.error('[Tombstone] Dataverse create failed:', result.error);
     throw new Error(result.error?.message ?? 'Dataverse create failed');
@@ -108,14 +108,14 @@ async function dvAdd(entry: TombstoneEntry): Promise<void> {
 async function dvRemove(resourceId: string): Promise<void> {
   let id = dvIdCache.get(resourceId);
   if (!id) {
-    const lookup = await Ppa_resourcetombstonesService.getAll({
-      select: ['ppa_resourcetombstoneid'],
-      filter: `ppa_resourceid eq '${resourceId.replace(/'/g, "''")}'`,
+    const lookup = await Vbd_resourcetombstonesService.getAll({
+      select: ['vbd_resourcetombstoneid'],
+      filter: `vbd_resourceid eq '${resourceId.replace(/'/g, "''")}'`,
     });
-    id = lookup.data?.[0]?.ppa_resourcetombstoneid;
+    id = lookup.data?.[0]?.vbd_resourcetombstoneid;
   }
   if (id) {
-    await Ppa_resourcetombstonesService.delete(id);
+    await Vbd_resourcetombstonesService.delete(id);
     dvIdCache.delete(resourceId);
   }
 }

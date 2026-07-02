@@ -4,7 +4,7 @@
   "type": "Microsoft.PowerApps/apis",
   "properties": {
     "displayName": "Microsoft Dataverse",
-    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon.png",
+    "iconUri": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon.png",
     "iconBrandColor": "",
     "apiEnvironment": "Shared",
     "isCustomApi": false,
@@ -8362,11 +8362,11 @@
                 "description": "Operation failed."
               }
             },
-            "deprecated": false,
+            "deprecated": true,
             "x-ms-visibility": "important",
             "x-ms-mcs-visibility": "featured",
             "externalDocs": {
-              "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#dynamics-365-erp-mcp-(deprecated)"
+              "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#dynamics-365-erp-mcp-(deprecated)-%5bdeprecated%5d"
             }
           }
         },
@@ -8376,7 +8376,7 @@
               "agentic",
               "Action",
               "Connector-MCP",
-              "deprecated"
+              "Deprecated"
             ],
             "summary": "Dataverse MCP Server (Deprecated)",
             "description": "Dataverse MCP Server. This server can be used to get information from Dataverse as well as get knowledge from Dataverse and various other tabular sources. To check what all sources this server can access, use the list_knowledge_sources tool. list_knowledge_sources responsds with the source and tables that this server can access. ",
@@ -8419,11 +8419,11 @@
                 "description": "Operation failed."
               }
             },
-            "deprecated": false,
+            "deprecated": true,
             "x-ms-visibility": "important",
             "x-ms-mcs-visibility": "featured",
             "externalDocs": {
-              "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#dataverse-mcp-server-(deprecated)"
+              "url": "https://docs.microsoft.com/connectors/commondataserviceforapps/#dataverse-mcp-server-(deprecated)-%5bdeprecated%5d"
             }
           }
         },
@@ -9587,14 +9587,14 @@
       "brandColor": "",
       "useNewApimVersion": "true",
       "version": {
-        "previous": "releases/v1.0.1811\\1.0.1811.4721",
-        "current": "releases/v1.0.1811\\1.0.1811.4743"
+        "previous": "releases/v1.0.1814\\1.0.1814.4754",
+        "current": "releases/v1.0.1814\\1.0.1814.4760"
       },
       "OperationIcons": {
-        "mcp_ContactCenterMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ContactCenterMCPServer.png",
-        "mcp_ERPMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ERPMCPServer.png",
-        "mcp_SalesMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_SalesMCPServer.png",
-        "mcp_ServiceMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1811/1.0.1811.4743/commondataserviceforapps/icon_mcp_ServiceMCPServer.png"
+        "mcp_ContactCenterMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon_mcp_ContactCenterMCPServer.png",
+        "mcp_ERPMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon_mcp_ERPMCPServer.png",
+        "mcp_SalesMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon_mcp_SalesMCPServer.png",
+        "mcp_ServiceMCPServer": "https://static.powerapps.com/resource/ppcr/releases/v1.0.1814/1.0.1814.4760/commondataserviceforapps/icon_mcp_ServiceMCPServer.png"
       }
     },
     "capabilities": [
@@ -9604,7 +9604,7 @@
     "interfaces": {},
     "description": "Provides access to Microsoft Dataverse actions and triggers for Power Platform environments.",
     "createdTime": "2024-03-25T21:44:09.9343266Z",
-    "changedTime": "2026-06-03T08:41:47.3377022Z",
+    "changedTime": "2026-07-02T08:33:52.7772139Z",
     "releaseTag": "Production",
     "tier": "Premium",
     "publisher": "Microsoft",
