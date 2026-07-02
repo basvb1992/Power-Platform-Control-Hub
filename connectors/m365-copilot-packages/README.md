@@ -40,3 +40,48 @@ connector. This custom connector wraps the Microsoft Graph **Copilot Package Man
 
 Until those steps are done the **M365 Agents** sub-tab loads gracefully with an explanatory
 message instead of data.
+
+## Non-secret config via environment variables
+
+The tenant-specific but **non-secret** values (tenant id, application/client id) are stored as
+Power Platform **environment variables** so they travel with the solution and are visible in the
+setup checklist:
+
+| Environment variable (schema suffix) | Holds | Secret? |
+|---|---|---|
+| `<prefix>_M365CopilotTenantId` | Directory (tenant) ID | No |
+| `<prefix>_M365CopilotClientId` | Application (client) ID | No |
+
+Create them (added to the code app's solution) with:
+
+```pwsh
+./setup-m365-connector.ps1 -SolutionUniqueName <yourSolution> -PublisherPrefix <prefix>
+```
+
+> **Security:** the OAuth **client secret is never** put in an environment variable or in the
+> solution. It is entered only on the connection's *Security* tab in the maker portal.
+
+## Live setup checklist
+
+The **M365 Agents** tab no longer just shows an error — it runs a live check on load and renders an
+ordered checklist that turns each step **✓ Done** as it's completed. It:
+
+- probes the connector once and classifies the result (connector not wired / not connected /
+  no permission-or-license / ready), and
+- reads the two environment variables above to show what tenant config is filled in.
+
+So an admin can open the tab, click **Check setup**, and see exactly which of the steps below still
+need doing.
+
+## ALM: shipping the connector in a solution
+
+For clean cross-environment distribution, add the connector, the two environment variables, and a
+**connection reference** to the solution, then bind the code app to the reference (PAC ≥ 1.51.1):
+
+```pwsh
+pac code add-data-source -a <connectorApiId> -cr <connectionReferenceLogicalName> -s <solutionId>
+```
+
+On import to another tenant the admin re-authorizes the connection and fills the two environment
+variables — no code changes required.
+

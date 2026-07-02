@@ -13,13 +13,20 @@ import {
   type CopilotPackageDetail,
   type AgentSetup,
 } from "../lib/m365Agents.ts";
+import {
+  evaluateSetup,
+  type SetupState,
+  type SetupStep,
+  type StepStatus,
+} from "../lib/m365Setup.ts";
 import { shortDate } from "../lib/format.ts";
 
-export function M365AgentsPanel() {
+export function M365AgentsPanel({ instanceUrl, environmentId }: { instanceUrl?: string; environmentId?: string }) {
   const [loading, setLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [packages, setPackages] = useState<CopilotPackage[]>([]);
+  const [setup, setSetup] = useState<SetupState | null>(null);
 
   const [open, setOpen] = useState<{ detail: CopilotPackageDetail; setup: AgentSetup } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -29,8 +36,14 @@ export function M365AgentsPanel() {
     setLoading(true);
     setError(null);
     try {
-      const list = await listCopilotPackages({ agentsOnly: true });
-      setPackages(list.filter(isCopilotAgent));
+      const state = await evaluateSetup(instanceUrl, environmentId);
+      setSetup(state);
+      if (state.ready) {
+        const list = await listCopilotPackages({ agentsOnly: true });
+        setPackages(list.filter(isCopilotAgent));
+      } else {
+        setPackages([]);
+      }
       setHasLoaded(true);
     } catch (e) {
       setPackages([]);
@@ -68,12 +81,12 @@ export function M365AgentsPanel() {
         <button className="btn" onClick={load} disabled={loading}>
           {loading ? (
             <>
-              <span className="spinner" /> Loading…
+              <span className="spinner" /> Checking…
             </>
           ) : hasLoaded ? (
-            "Reload"
+            "Recheck"
           ) : (
-            "Load"
+            "Check setup"
           )}
         </button>
       </div>
@@ -90,7 +103,9 @@ export function M365AgentsPanel() {
         </div>
       )}
 
-      {hasLoaded && !error && packages.length === 0 && (
+      {!error && setup && !setup.ready && <SetupGuide setup={setup} />}
+
+      {!error && setup?.ready && packages.length === 0 && (
         <p className="muted" style={{ marginTop: 12 }}>No Microsoft 365 Copilot agents found in this tenant.</p>
       )}
 
@@ -135,6 +150,84 @@ export function M365AgentsPanel() {
         <AgentSetupDrawer detail={open.detail} setup={open.setup} onClose={() => setOpen(null)} />
       )}
     </div>
+  );
+}
+
+const STATUS_META: Record<StepStatus, { icon: string; label: string; cls: string }> = {
+  done: { icon: "✓", label: "Done", cls: "ok" },
+  todo: { icon: "●", label: "To do", cls: "warn" },
+  manual: { icon: "○", label: "Manual step", cls: "kind" },
+  blocked: { icon: "—", label: "Blocked", cls: "muted" },
+};
+
+function SetupGuide({ setup }: { setup: SetupState }) {
+  const done = setup.steps.filter((s) => s.status === "done").length;
+  const pct = Math.round(setup.progress * 100);
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div className="inbox-row sev-low" style={{ display: "block" }}>
+        <strong>Set up the M365 Copilot connector</strong>
+        <div className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+          These agents live in Microsoft 365, so the tab reads them through a custom connector. The
+          steps below are checked live — finish the ones marked <em>to do</em> / <em>manual</em>.
+          The client <strong>secret</strong> is entered on the connection only; never in an
+          environment variable.
+        </div>
+        <div className="share" style={{ marginTop: 10, maxWidth: 360 }}>
+          <div className="share-track">
+            <div className="share-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <span className="share-pct">
+            {done}/{setup.steps.length} done
+          </span>
+        </div>
+        {setup.probe.kind === "unknown" && (
+          <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+            Connector response: {setup.probe.message}
+          </div>
+        )}
+      </div>
+
+      <ol style={{ listStyle: "none", margin: "12px 0 0", padding: 0 }}>
+        {setup.steps.map((step, i) => (
+          <StepRow key={step.id} step={step} n={i + 1} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function StepRow({ step, n }: { step: SetupStep; n: number }) {
+  const meta = STATUS_META[step.status];
+  return (
+    <li
+      style={{
+        display: "flex",
+        gap: 12,
+        padding: "10px 0",
+        borderTop: n === 1 ? "none" : "1px solid var(--border, #e5e5e5)",
+      }}
+    >
+      <div style={{ flex: "0 0 auto", fontVariantNumeric: "tabular-nums", opacity: 0.6 }}>{n}.</div>
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <strong style={{ fontSize: 14 }}>{step.title}</strong>
+          <span className={`pill ${meta.cls}`}>
+            {meta.icon} {meta.label}
+          </span>
+        </div>
+        <div className="muted" style={{ fontSize: 13, marginTop: 3 }}>{step.detail}</div>
+        {step.links && step.links.length > 0 && step.status !== "done" && (
+          <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {step.links.map((l) => (
+              <a key={l.href} href={l.href} target="_blank" rel="noreferrer" style={{ fontSize: 13 }}>
+                {l.label} ↗
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </li>
   );
 }
 
