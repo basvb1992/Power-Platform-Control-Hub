@@ -50,6 +50,7 @@ function run(schema: string, steps: StepInfo[]): RunInfo {
     engineCost: steps.reduce((s, x) => s + x.cost, 0),
     messages: [],
     events: [],
+    latency: null,
   };
 }
 

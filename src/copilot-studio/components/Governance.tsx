@@ -12,6 +12,7 @@ import {
   type AgentGovernance,
   type Severity,
 } from "../lib/governance";
+import { academyLinkForFindingCategory } from "../lib/academy";
 
 const SEV_META: Record<Severity, { label: string; cls: string }> = {
   high: { label: "High", cls: "sev-high" },
@@ -33,10 +34,14 @@ export function GovernancePanel({
   items,
   runs,
   connRefs,
+  instanceUrl,
+  onOpenAgent,
 }: {
   items: AgentInventoryItem[];
   runs: RunInfo[];
   connRefs: ConnectionRef[];
+  instanceUrl?: string;
+  onOpenAgent?: (botid: string) => void;
 }) {
   const gov = useMemo(() => buildGovernance(items, runs, connRefs), [items, runs, connRefs]);
   const [filter, setFilter] = useState<Severity | "all" | "clean">("all");
@@ -130,7 +135,7 @@ export function GovernancePanel({
         ) : (
           <div className="gov-list">
             {visible.map((a) => (
-              <GovRow key={a.botid} a={a} />
+              <GovRow key={a.botid} a={a} instanceUrl={instanceUrl} onOpen={onOpenAgent} />
             ))}
           </div>
         )}
@@ -139,7 +144,15 @@ export function GovernancePanel({
   );
 }
 
-function GovRow({ a }: { a: AgentGovernance }) {
+function GovRow({
+  a,
+  instanceUrl,
+  onOpen,
+}: {
+  a: AgentGovernance;
+  instanceUrl?: string;
+  onOpen?: (botid: string) => void;
+}) {
   const top: Severity = a.findings.some((f) => f.severity === "high")
     ? "high"
     : a.findings.some((f) => f.severity === "medium")
@@ -153,7 +166,13 @@ function GovRow({ a }: { a: AgentGovernance }) {
     <div className={`gov-row ${clean ? "gov-clean" : SEV_META[top].cls}`}>
       <div className="gov-head">
         <div>
-          <div className="gov-name">{a.name}</div>
+          {onOpen ? (
+            <button className="gov-name linkbtn" onClick={() => onOpen(a.botid)} title="Open agent details">
+              {a.name}
+            </button>
+          ) : (
+            <div className="gov-name">{a.name}</div>
+          )}
           <div className="muted" style={{ fontSize: 12 }}>{a.schemaname}</div>
         </div>
         <div className="gov-meta">
@@ -167,16 +186,40 @@ function GovRow({ a }: { a: AgentGovernance }) {
           ) : (
             <span className={`pill score ${SEV_META[top].cls}`}>risk {a.score}</span>
           )}
+          {instanceUrl && (
+            <a
+              href={`${instanceUrl}/main.aspx?pagetype=entityrecord&etn=bot&id=${a.botid}`}
+              target="_blank"
+              rel="noreferrer"
+              title="Open in Dataverse"
+            >
+              ↗
+            </a>
+          )}
         </div>
       </div>
       {a.findings.length > 0 && (
         <ul className="gov-findings">
-          {a.findings.map((f, i) => (
-            <li key={i} className={SEV_META[f.severity].cls}>
-              <span className="sev-tag">{SEV_META[f.severity].label}</span>
-              <strong>{f.category}</strong> — {f.message}
-            </li>
-          ))}
+          {a.findings.map((f, i) => {
+            const learn = academyLinkForFindingCategory(f.category);
+            return (
+              <li key={i} className={SEV_META[f.severity].cls}>
+                <span className="sev-tag">{SEV_META[f.severity].label}</span>
+                <strong>{f.category}</strong> — {f.message}
+                {learn && (
+                  <a
+                    className="gov-learn"
+                    href={learn.module.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    title={`Agent Academy · ${learn.module.track} · ${learn.module.title}`}
+                  >
+                    Learn how →
+                  </a>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

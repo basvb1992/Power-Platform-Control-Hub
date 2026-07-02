@@ -20,6 +20,16 @@ import type { PromptModel } from "./prompts.ts";
 const FMT = "@OData.Community.Display.V1.FormattedValue";
 const ANNOTATIONS = 'odata.include-annotations="*"';
 
+/**
+ * Authoring type of a Copilot Studio agent:
+ * - `Modern`     — the newest `cliagent` template (single instruction-driven LLM,
+ *                  knowledge + tools, no topics; `CLICopilotRecognizer`).
+ * - `Generative` — autonomous / orchestrated agent (`GenerativeAIRecognizer`,
+ *                  generative actions on).
+ * - `Classic`    — topic-based / manually orchestrated agent.
+ */
+export type AgentKind = "Modern" | "Generative" | "Classic";
+
 export interface AgentInventoryItem {
   botid: string;
   name: string;
@@ -32,6 +42,33 @@ export interface AgentInventoryItem {
   languages: string;
   /** Raw modelNameHint from the agent's Custom GPT component (empty when unknown). */
   model: string;
+  /** Authoring type (Classic / Generative / Modern), from template + configuration. */
+  kind: AgentKind;
+  /** Raw template string, e.g. "default-2.1.0" or "cliagent-1.0.0" (empty when unknown). */
+  template: string;
+}
+
+/**
+ * Classify an agent's authoring type from its `template` and `configuration`
+ * (the BotConfiguration JSON on the bot row). Mirrors the modern-vs-classic
+ * split from Roel's mcs-modern-agent-analyser (`cliagent` template /
+ * `CLICopilotRecognizer`), but reads the same signal live from Dataverse
+ * instead of an exported BotDefinition YAML.
+ */
+export function classifyAgentKind(template: string, configuration: string): AgentKind {
+  const t = (template || "").toLowerCase();
+  let recognizer = "";
+  let generativeActions = false;
+  try {
+    const cfg = configuration ? JSON.parse(configuration) : null;
+    recognizer = String(cfg?.recognizer?.["$kind"] ?? "").toLowerCase();
+    generativeActions = Boolean(cfg?.settings?.GenerativeActionsEnabled);
+  } catch {
+    // configuration is best-effort; fall back to template-only classification.
+  }
+  if (t.startsWith("cliagent") || recognizer.includes("clicopilot")) return "Modern";
+  if (generativeActions || recognizer.includes("generativeai")) return "Generative";
+  return "Classic";
 }
 
 export interface BotData {
@@ -54,7 +91,7 @@ const s = (v: unknown): string => (v === undefined || v === null ? "" : String(v
 export async function fetchBots(instanceUrl: string): Promise<BotData> {
   const rows = await listRecordsWithOrg(instanceUrl, "bots", {
     select:
-      "botid,name,schemaname,statecode,_ownerid_value,createdon,publishedon,authenticationmode,supportedlanguages",
+      "botid,name,schemaname,statecode,_ownerid_value,createdon,publishedon,authenticationmode,supportedlanguages,template,configuration",
     orderby: "name asc",
     top: 500,
     prefer: ANNOTATIONS,
@@ -99,6 +136,8 @@ export async function fetchBots(instanceUrl: string): Promise<BotData> {
       authMode: s(r[`authenticationmode${FMT}`] ?? r["authenticationmode"]),
       languages: s(r["supportedlanguages"]),
       model,
+      template: s(r["template"]),
+      kind: classifyAgentKind(s(r["template"]), s(r["configuration"])),
     });
   }
   inventory.sort((a, z) => a.name.localeCompare(z.name));

@@ -20,6 +20,8 @@ import {
   type StepStatus,
 } from "../lib/m365Setup.ts";
 import { shortDate } from "../lib/format.ts";
+import { useSort, sortBy } from "../lib/tableSort.ts";
+import { SortTh } from "./SortHeader.tsx";
 
 export function M365AgentsPanel({ instanceUrl, environmentId }: { instanceUrl?: string; environmentId?: string }) {
   const [loading, setLoading] = useState(false);
@@ -31,6 +33,9 @@ export function M365AgentsPanel({ instanceUrl, environmentId }: { instanceUrl?: 
   const [open, setOpen] = useState<{ detail: CopilotPackageDetail; setup: AgentSetup } | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const { sort, onSort } = useSort<
+    "agent" | "type" | "publisher" | "hosts" | "version" | "updated"
+  >("agent");
 
   async function load() {
     setLoading(true);
@@ -113,16 +118,28 @@ export function M365AgentsPanel({ instanceUrl, environmentId }: { instanceUrl?: 
         <table style={{ marginTop: 12 }}>
           <thead>
             <tr>
-              <th>Agent</th>
-              <th>Type</th>
-              <th>Publisher</th>
-              <th>Hosts</th>
-              <th>Version</th>
-              <th>Updated</th>
+              <SortTh col="agent" label="Agent" sort={sort} onSort={onSort} />
+              <SortTh col="type" label="Type" sort={sort} onSort={onSort} />
+              <SortTh col="publisher" label="Publisher" sort={sort} onSort={onSort} />
+              <SortTh col="hosts" label="Hosts" sort={sort} onSort={onSort} />
+              <SortTh col="version" label="Version" sort={sort} onSort={onSort} />
+              <SortTh col="updated" label="Updated" sort={sort} onSort={onSort} />
             </tr>
           </thead>
           <tbody>
-            {packages.map((p) => (
+            {sortBy(packages, sort, (p, k) =>
+              k === "agent"
+                ? p.displayName
+                : k === "type"
+                  ? p.type ?? ""
+                  : k === "publisher"
+                    ? p.publisher ?? ""
+                    : k === "hosts"
+                      ? (p.supportedHosts ?? []).join(", ")
+                      : k === "version"
+                        ? p.version ?? ""
+                        : p.lastModifiedDateTime ?? ""
+            ).map((p) => (
               <tr key={p.id} className="clickable" onClick={() => openDetail(p)}>
                 <td>
                   {p.displayName}

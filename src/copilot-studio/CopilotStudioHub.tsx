@@ -21,6 +21,7 @@ import {
   fetchPrompts,
   fetchAgentTools,
   type AgentInventoryItem,
+  type AgentKind,
   type BotData,
 } from "./lib/data.ts";
 import type { AgentFlow } from "./lib/agentFlows.ts";
@@ -46,8 +47,10 @@ import { ConversationsPage } from "./components/Conversations.tsx";
 import { GovernancePanel } from "./components/Governance.tsx";
 import { AgentDrawer } from "./components/AgentDetail.tsx";
 import { M365AgentsPanel } from "./components/M365Agents.tsx";
+import { AcademyPanel } from "./components/Academy.tsx";
 import { AgentFlows } from "./components/AgentFlows.tsx";
 import { Prompts } from "./components/Prompts.tsx";
+import { LatencyPanel } from "./components/Latency.tsx";
 import {
   SummaryCards,
   ByAgentTable,
@@ -61,24 +64,40 @@ import {
 import TabInfo from "../components/TabInfo.tsx";
 import "./theme.css";
 
+/** Pill styling for an agent's authoring type (Modern / Generative / Classic). */
+function kindPillClass(kind: AgentKind): string {
+  if (kind === "Modern") return "pill kind k-agent";
+  if (kind === "Generative") return "pill kind";
+  return "pill";
+}
+function kindTitle(kind: AgentKind): string {
+  if (kind === "Modern") return "Modern agent — newest cliagent template: instruction-driven, knowledge + tools, no topics.";
+  if (kind === "Generative") return "Generative / autonomous agent — orchestrated with generative actions.";
+  return "Classic agent — topic-based / manually orchestrated.";
+}
+
 type SubTab =
   | "tower"
   | "cost"
   | "conversations"
+  | "latency"
   | "governance"
   | "agents"
   | "flows"
   | "prompts"
-  | "m365";
+  | "m365"
+  | "academy";
 const SUBTABS: [SubTab, string][] = [
   ["tower", "Control Tower"],
   ["cost", "Cost"],
   ["conversations", "Conversations"],
+  ["latency", "Latency"],
   ["governance", "Governance"],
   ["agents", "Agents"],
   ["flows", "Agent flows"],
   ["prompts", "Prompts"],
   ["m365", "M365 Agents"],
+  ["academy", "Academy"],
 ];
 
 /** Short "what is this sub-tab for" copy, shown in a collapsed explainer per tab. */
@@ -111,6 +130,18 @@ const SUBTAB_INFO: Record<SubTab, { title: string; body: ReactNode }> = {
         Replays individual conversation transcripts in the window and shows the
         underlying orchestration trace — useful for auditing behaviour and
         understanding why a run consumed the credits it did.
+      </p>
+    ),
+  },
+  latency: {
+    title: "What is the Latency tab?",
+    body: (
+      <p>
+        Measures how long each orchestrated turn took and where the time went —
+        splitting it into model / orchestration reasoning, tool execution,
+        knowledge search and queue overhead. It flags the slowest step and the
+        biggest idle gaps, then suggests concrete fixes. Only{" "}
+        <strong>orchestrated</strong> agents record the per-step timing this needs.
       </p>
     ),
   },
@@ -161,8 +192,26 @@ const SUBTAB_INFO: Record<SubTab, { title: string; body: ReactNode }> = {
     title: "What is the M365 Agents tab?",
     body: (
       <p>
-        Lists Microsoft 365 Copilot agents available in the tenant. This view is
-        tenant-scoped and does not require selecting an environment or loading data.
+        Lists <strong>Microsoft 365 Copilot agents</strong> (declarative agents built in the
+        M365 Copilot Agent Builder and read via Graph) available in the tenant — these live in
+        Microsoft 365, not in a Dataverse environment. This is distinct from the{" "}
+        <strong>Agents</strong> tab, which inventories Copilot Studio bots and classifies each as
+        Classic / Generative / Modern. This view is tenant-scoped and does not require selecting an
+        environment or loading data.
+      </p>
+    ),
+  },
+  academy: {
+    title: "What is the Academy tab?",
+    body: (
+      <p>
+        An in-app knowledge base built from the free, open-source{" "}
+        <a href="https://microsoft.github.io/agent-academy/" target="_blank" rel="noreferrer">
+          Copilot Studio Agent Academy
+        </a>
+        . It matches governance findings and agent design in this environment to the
+        exact training module that teaches the fix, and lets you browse every track,
+        module and standalone lab.
       </p>
     ),
   },
@@ -207,7 +256,8 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
   const [instanceUrl, setInstanceUrl] = useState<string>("");
   const [agentSearch, setAgentSearch] = useState("");
   const [agentState, setAgentState] = useState("");
-  const [agentSort, setAgentSort] = useState<{ key: "name" | "state" | "owner" | "conversations" | "credits"; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
+  const [agentKind, setAgentKind] = useState("");
+  const [agentSort, setAgentSort] = useState<{ key: "name" | "kind" | "state" | "owner" | "conversations" | "credits"; dir: "asc" | "desc" }>({ key: "name", dir: "asc" });
 
   async function load() {
     if (!selectedEnv) return;
@@ -304,6 +354,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
     const filtered = inventory.filter(
       (i) =>
         (!agentState || i.state === agentState) &&
+        (!agentKind || i.kind === agentKind) &&
         (!agentSearch ||
           i.name.toLowerCase().includes(agentSearch.toLowerCase()) ||
           (i.owner || "").toLowerCase().includes(agentSearch.toLowerCase()))
@@ -311,6 +362,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
     const val = (i: AgentInventoryItem): string | number => {
       switch (agentSort.key) {
         case "name": return i.name.toLowerCase();
+        case "kind": return i.kind;
         case "state": return (i.state || "").toLowerCase();
         case "owner": return (i.owner || "").toLowerCase();
         case "conversations": return runsForAgent(i).length;
@@ -325,7 +377,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
       return String(av).localeCompare(String(bv)) * mul;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inventory, agentState, agentSearch, agentSort, runs]);
+  }, [inventory, agentState, agentKind, agentSearch, agentSort, runs]);
 
   function toggleSort(key: typeof agentSort.key) {
     setAgentSort((s) =>
@@ -394,7 +446,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
 
       {error && <p className="err" style={{ padding: "0 16px" }}>{error}</p>}
 
-      <div className="cs-costbasis" role="note" hidden={tab === "m365" || tab === "prompts"}>
+      <div className="cs-costbasis" role="note" hidden={tab === "m365" || tab === "prompts" || tab === "latency" || tab === "academy"}>
         <span className="cs-cb-chip">Credits</span>
         <span className="cs-cb-eq">=</span>
         <strong>metered per message from each transcript</strong>
@@ -470,6 +522,8 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
 
         {tab === "m365" && <M365AgentsPanel instanceUrl={instanceUrl} environmentId={selectedEnv} />}
 
+        {tab === "academy" && <AcademyPanel items={inventory} runs={runs} connRefs={connRefs} />}
+
         {hasLoaded && inventory.length > 0 && tab === "tower" && (
           <ControlTower
             items={inventory}
@@ -517,8 +571,21 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
 
         {hasLoaded && inventory.length > 0 && tab === "conversations" && <ConversationsPage runs={runs} model={model} />}
 
+        {hasLoaded && inventory.length > 0 && tab === "latency" && (
+          <LatencyPanel runs={runs} onOpenFlows={() => setTab("flows")} />
+        )}
+
         {hasLoaded && inventory.length > 0 && tab === "governance" && (
-          <GovernancePanel items={inventory} runs={runs} connRefs={connRefs} />
+          <GovernancePanel
+            items={inventory}
+            runs={runs}
+            connRefs={connRefs}
+            instanceUrl={instanceUrl}
+            onOpenAgent={(botid) => {
+              const it = inventory.find((b) => b.botid === botid);
+              if (it) setOpenAgent(it);
+            }}
+          />
         )}
 
         {hasLoaded && inventory.length > 0 && tab === "agents" && (
@@ -531,7 +598,11 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
                   <option value="">All states</option>
                   {Array.from(new Set(inventory.map((i) => i.state).filter(Boolean))).sort().map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
-                {(agentSearch || agentState) && <button className="linkbtn" onClick={() => { setAgentSearch(""); setAgentState(""); }}>Clear filters</button>}
+                <select value={agentKind} onChange={(e) => setAgentKind(e.target.value)} title="Filter by authoring type">
+                  <option value="">All types</option>
+                  {Array.from(new Set(inventory.map((i) => i.kind).filter(Boolean))).sort().map((k) => <option key={k} value={k}>{k}</option>)}
+                </select>
+                {(agentSearch || agentState || agentKind) && <button className="linkbtn" onClick={() => { setAgentSearch(""); setAgentState(""); setAgentKind(""); }}>Clear filters</button>}
               </div>
             </div>
             {inventory.length === 0 ? (
@@ -541,6 +612,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
                 <thead>
                   <tr>
                     <th className="sortable" onClick={() => toggleSort("name")} title="Sort by agent">Agent{sortIndicator("name")}</th>
+                    <th className="sortable" onClick={() => toggleSort("kind")} title="Sort by authoring type">Type{sortIndicator("kind")}</th>
                     <th className="sortable" onClick={() => toggleSort("state")} title="Sort by state">State{sortIndicator("state")}</th>
                     <th className="sortable" onClick={() => toggleSort("owner")} title="Sort by owner">Owner{sortIndicator("owner")}</th>
                     <th className="num sortable" onClick={() => toggleSort("conversations")} title="Sort by conversations">Conversations{sortIndicator("conversations")}</th>
@@ -559,6 +631,9 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
                         onClick={() => setOpenAgent(item)}
                       >
                         <td>{item.name}</td>
+                        <td>
+                          <span className={kindPillClass(item.kind)} title={kindTitle(item.kind)}>{item.kind}</span>
+                        </td>
                         <td>{item.state}</td>
                         <td>{item.owner || "—"}</td>
                         <td className="num">{ar.length}</td>

@@ -12,6 +12,8 @@ import type {
 } from "../lib/costEngine";
 import { isFailedStep, runCredits } from "../lib/costEngine";
 import { shortDate, money } from "../lib/format";
+import { useSort, sortBy } from "../lib/tableSort";
+import { SortTh } from "./SortHeader";
 
 export function SummaryCards({ t, model }: { t: Totals; model: CostModel }) {
   return (
@@ -62,39 +64,57 @@ export function SummaryCards({ t, model }: { t: Totals; model: CostModel }) {
 }
 
 export function ByAgentTable({ rows, onSelect }: { rows: AgentRollup[]; onSelect?: (key: string) => void }) {
+  const { sort, onSort } = useSort<
+    "agent" | "model" | "transcripts" | "completed" | "failed" | "credits"
+  >("credits", "desc");
   if (!rows.length) return null;
   const totalCredits = rows.reduce((a, r) => a + r.credits, 0) || 1;
   const maxCredits = Math.max(...rows.map((r) => r.credits), 1);
+  const topKey = rows.reduce((best, r) => (r.credits > best.credits ? r : best), rows[0]).key;
+  const sorted = sortBy(rows, sort, (r, k) =>
+    k === "agent"
+      ? r.label
+      : k === "model"
+        ? r.modelLabel
+        : k === "transcripts"
+          ? r.transcripts
+          : k === "completed"
+            ? r.completed
+            : k === "failed"
+              ? r.failed
+              : r.credits
+  );
   return (
     <div className="card">
       <h2>By agent</h2>
       <p className="hint" style={{ marginTop: 0 }}>
-        Sorted by credits — the highest-consuming agents are at the top.{onSelect ? " Select a row to open the agent." : ""}
+        Click a column header to sort.{onSelect ? " Select a row to open the agent." : ""}
       </p>
       <table>
         <thead>
           <tr>
-            <th>Agent</th>
-            <th>Model</th>
-            <th className="num">Transcripts</th>
-            <th className="num">Completed</th>
-            <th className="num">Failed</th>
-            <th className="num">Credits</th>
+            <SortTh col="agent" label="Agent" sort={sort} onSort={onSort} />
+            <SortTh col="model" label="Model" sort={sort} onSort={onSort} />
+            <SortTh col="transcripts" label="Transcripts" sort={sort} onSort={onSort} numeric />
+            <SortTh col="completed" label="Completed" sort={sort} onSort={onSort} numeric />
+            <SortTh col="failed" label="Failed" sort={sort} onSort={onSort} numeric />
+            <SortTh col="credits" label="Credits" sort={sort} onSort={onSort} numeric />
             <th>Share of total</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((a, i) => {
+          {sorted.map((a) => {
             const pct = Math.round((a.credits / totalCredits) * 100);
+            const isTop = a.key === topKey && a.credits > 0;
             return (
               <tr
                 key={a.key}
-                className={`${i === 0 && a.credits > 0 ? "top-spender" : ""} ${onSelect ? "clickable" : ""}`}
+                className={`${isTop ? "top-spender" : ""} ${onSelect ? "clickable" : ""}`}
                 onClick={onSelect ? () => onSelect(a.key) : undefined}
               >
                 <td>
                   {a.label}
-                  {i === 0 && a.credits > 0 && (
+                  {isTop && (
                     <span className="pill warn" style={{ marginLeft: 8 }}>
                       top spender
                     </span>
@@ -384,24 +404,28 @@ export function TrendChart({ points, model }: { points: TrendPoint[]; model: Cos
 }
 
 export function ByKindCard({ rows, model }: { rows: KindRollup[]; model: CostModel }) {
+  const { sort, onSort } = useSort<"kind" | "completed" | "failed" | "credits">("credits", "desc");
   if (!rows.length) return null;
   const total = rows.reduce((a, k) => a + k.credits, 0) || 1;
+  const sorted = sortBy(rows, sort, (r, k) =>
+    k === "kind" ? r.kind : k === "completed" ? r.completed : k === "failed" ? r.failed : r.credits
+  );
   return (
     <div className="card">
       <h2>Where the credits go</h2>
       <table>
         <thead>
           <tr>
-            <th>Capability</th>
-            <th className="num">Completed</th>
-            <th className="num">Failed</th>
-            <th className="num">Credits</th>
+            <SortTh col="kind" label="Capability" sort={sort} onSort={onSort} />
+            <SortTh col="completed" label="Completed" sort={sort} onSort={onSort} numeric />
+            <SortTh col="failed" label="Failed" sort={sort} onSort={onSort} numeric />
+            <SortTh col="credits" label="Credits" sort={sort} onSort={onSort} numeric />
             <th className="num">Share</th>
             <th>Cost</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((k) => (
+          {sorted.map((k) => (
             <tr key={k.kind}>
               <td>
                 <span className="pill kind">{k.kind}</span>
@@ -422,21 +446,25 @@ export function ByKindCard({ rows, model }: { rows: KindRollup[]; model: CostMod
 }
 
 export function ByOwnerCard({ rows, model }: { rows: OwnerRollup[]; model: CostModel }) {
+  const { sort, onSort } = useSort<"owner" | "transcripts" | "credits">("credits", "desc");
   if (rows.length < 2) return null; // only interesting with >1 owner
+  const sorted = sortBy(rows, sort, (r, k) =>
+    k === "owner" ? r.owner : k === "transcripts" ? r.transcripts : r.credits
+  );
   return (
     <div className="card">
       <h2>By owner</h2>
       <table>
         <thead>
           <tr>
-            <th>Owner</th>
-            <th className="num">Transcripts</th>
-            <th className="num">Credits</th>
+            <SortTh col="owner" label="Owner" sort={sort} onSort={onSort} />
+            <SortTh col="transcripts" label="Transcripts" sort={sort} onSort={onSort} numeric />
+            <SortTh col="credits" label="Credits" sort={sort} onSort={onSort} numeric />
             <th>Cost</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((o) => (
+          {sorted.map((o) => (
             <tr key={o.owner}>
               <td>{o.owner}</td>
               <td className="num">{o.transcripts}</td>

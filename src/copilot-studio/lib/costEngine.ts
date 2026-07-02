@@ -19,6 +19,7 @@
  */
 
 import { classifyModel, type ModelTier } from "./models.ts";
+import { buildLatencyProfile, type LatencyProfile } from "./latency.ts";
 
 export interface StepInfo {
   tool: string;
@@ -45,6 +46,8 @@ export interface RunInfo {
   engineCost: number;
   messages: ConversationMessage[];
   events: ConvEvent[];
+  /** Per-turn timing profile (null when the transcript has no usable timing). */
+  latency: LatencyProfile | null;
 }
 
 /** Ordered transcript event for the merged conversation timeline. */
@@ -202,6 +205,7 @@ export function parseTranscript(rec: TranscriptRecord, botMap: BotMap): RunInfo 
     engineCost,
     messages,
     events,
+    latency: buildLatencyProfile(activities),
   };
 }
 

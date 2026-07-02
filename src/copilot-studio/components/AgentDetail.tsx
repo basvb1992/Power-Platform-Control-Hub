@@ -7,6 +7,8 @@ import { isFailedStep, runCredits } from "../lib/costEngine";
 import type { ConnectionRef } from "../lib/connections";
 import { refsForAgent, connectorLabel, isPremiumConnector } from "../lib/connections";
 import { shortDate } from "../lib/format";
+import { useSort, sortBy } from "../lib/tableSort";
+import { SortTh } from "./SortHeader";
 import { ConversationDrawer, groupRuns } from "./Conversations";
 import { quarantineBot, unquarantineBot, deleteCopilotAgent } from "../../services/copilotStudioService";
 
@@ -39,6 +41,7 @@ export function AgentDrawer({
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDel, setConfirmDel] = useState(false);
   const [actionErr, setActionErr] = useState<string | null>(null);
+  const { sort: compSort, onSort: onCompSort } = useSort<"name" | "type" | "state">("name");
   const conns = useMemo(() => refsForAgent(connRefs, item.schemaname), [connRefs, item.schemaname]);
   const groups = useMemo(() => groupRuns(allRuns), [allRuns]);
   const agentRuns = useMemo(
@@ -188,19 +191,29 @@ export function AgentDrawer({
             <table className="subtable">
               <thead>
                 <tr>
-                  <th>Component</th>
-                  <th>Type</th>
-                  <th>State</th>
+                  <SortTh col="name" label="Component" sort={compSort} onSort={onCompSort} />
+                  <SortTh col="type" label="Type" sort={compSort} onSort={onCompSort} />
+                  <SortTh col="state" label="State" sort={compSort} onSort={onCompSort} />
                 </tr>
               </thead>
               <tbody>
-                {roll.components.slice(0, 100).map((c, i) => (
-                  <tr key={`${c.schemaname}-${i}`}>
-                    <td>{c.name || c.schemaname}</td>
-                    <td className="muted">{componentTypeLabel(c.componenttype)}</td>
-                    <td>{c.statecode === 0 ? "Active" : "Inactive"}</td>
-                  </tr>
-                ))}
+                {sortBy(roll.components, compSort, (c, k) =>
+                  k === "name"
+                    ? c.name || c.schemaname
+                    : k === "type"
+                      ? componentTypeLabel(c.componenttype)
+                      : c.statecode === 0
+                        ? "Active"
+                        : "Inactive"
+                )
+                  .slice(0, 100)
+                  .map((c, i) => (
+                    <tr key={`${c.schemaname}-${i}`}>
+                      <td>{c.name || c.schemaname}</td>
+                      <td className="muted">{componentTypeLabel(c.componenttype)}</td>
+                      <td>{c.statecode === 0 ? "Active" : "Inactive"}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
             {roll.components.length > 100 && (

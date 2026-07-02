@@ -4,6 +4,8 @@ import remarkGfm from "remark-gfm";
 import type { RunInfo, CostModel, StepInfo, ConversationMessage, ConvEvent } from "../lib/costEngine";
 import { isFailedStep, runCredits, creditBreakdown } from "../lib/costEngine";
 import { shortDate, money } from "../lib/format";
+import { useSort, sortBy } from "../lib/tableSort";
+import { SortTh } from "./SortHeader";
 
 /* ------------------------------------------------------------------ helpers */
 
@@ -383,7 +385,9 @@ export function ConversationDrawer({
 export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: CostModel }) {
   const [search, setSearch] = useState("");
   const [agent, setAgent] = useState("");
-  const [sort, setSort] = useState<"date" | "credits">("date");
+  const { sort, onSort } = useSort<
+    "created" | "agent" | "turns" | "steps" | "failed" | "credits"
+  >("created", "desc");
   const [selected, setSelected] = useState<RunInfo | null>(null);
 
   const agents = useMemo(
@@ -395,7 +399,7 @@ export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: Cos
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = runs.filter((r) => {
+    const list = runs.filter((r) => {
       if (agent && r.agentLabel !== agent) return false;
       if (!q) return true;
       return (
@@ -404,12 +408,19 @@ export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: Cos
         r.messages.some((m) => m.text.toLowerCase().includes(q))
       );
     });
-    list = [...list].sort((a, b) =>
-      sort === "credits"
-        ? runCredits(b) - runCredits(a)
-        : String(b.createdon).localeCompare(String(a.createdon))
+    return sortBy(list, sort, (r, k) =>
+      k === "created"
+        ? r.createdon
+        : k === "agent"
+          ? r.agentLabel
+          : k === "turns"
+            ? r.messages.length
+            : k === "steps"
+              ? r.steps.length
+              : k === "failed"
+                ? r.steps.filter(isFailedStep).length
+                : runCredits(r)
     );
-    return list;
   }, [runs, search, agent, sort]);
 
   if (!runs.length)
@@ -446,26 +457,18 @@ export function ConversationsPage({ runs, model }: { runs: RunInfo[]; model: Cos
               </option>
             ))}
           </select>
-          <div className="seg">
-            <button className={sort === "date" ? "on" : ""} onClick={() => setSort("date")}>
-              Newest
-            </button>
-            <button className={sort === "credits" ? "on" : ""} onClick={() => setSort("credits")}>
-              Most expensive
-            </button>
-          </div>
         </div>
       </div>
 
       <table style={{ marginTop: 12 }}>
         <thead>
           <tr>
-            <th>Created</th>
-            <th>Agent</th>
-            <th className="num">Turns</th>
-            <th className="num">Steps</th>
-            <th className="num">Failed</th>
-            <th className="num">Credits</th>
+            <SortTh col="created" label="Created" sort={sort} onSort={onSort} />
+            <SortTh col="agent" label="Agent" sort={sort} onSort={onSort} />
+            <SortTh col="turns" label="Turns" sort={sort} onSort={onSort} numeric />
+            <SortTh col="steps" label="Steps" sort={sort} onSort={onSort} numeric />
+            <SortTh col="failed" label="Failed" sort={sort} onSort={onSort} numeric />
+            <SortTh col="credits" label="Credits" sort={sort} onSort={onSort} numeric />
             <th>Outcome</th>
           </tr>
         </thead>
