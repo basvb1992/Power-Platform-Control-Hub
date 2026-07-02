@@ -13,11 +13,11 @@ others can import the **code app** into their own environment and test-run it.
 
 | Path | Description |
 |------|-------------|
-| `VbdPowerPlatformControlHub_1_1_0_0_managed.zip` | **Managed** solution — use this to import & test-run the app in another environment. |
-| `VbdPowerPlatformControlHub_1_1_0_0.zip` | **Unmanaged** solution — use this if you want to customise the components. |
+| `VbdPowerPlatformControlHub_1_2_0_0_managed.zip` | **Managed** solution — use this to import & test-run the app in another environment. |
+| `VbdPowerPlatformControlHub_1_2_0_0.zip` | **Unmanaged** solution — use this if you want to customise the components. |
 | `src/` | Unpacked solution source (managed by `pac solution unpack/pack`). |
 
-**Solution name:** `VbdPowerPlatformControlHub` · **Version:** 1.1.0.0 · **Publisher:** VBD (prefix `vbd`)
+**Solution name:** `VbdPowerPlatformControlHub` · **Version:** 1.2.0.0 · **Publisher:** VBD (prefix `vbd`)
 
 ---
 
@@ -55,14 +55,14 @@ in the solution — every importer authorises their own on first run.
 
 1. Go to [make.powerapps.com](https://make.powerapps.com/) → select the target environment (top-right).
 2. **Solutions** → **Import solution**.
-3. Browse to `VbdPowerPlatformControlHub_managed.zip` → **Next** → **Import**.
+3. Browse to `VbdPowerPlatformControlHub_1_2_0_0_managed.zip` → **Next** → **Import**.
 4. Wait for the import to complete (the code app is provisioned during import).
 
 ### Option B — PAC CLI
 
 ```powershell
 # Authenticate to the target environment first: pac auth create --environment <url>
-pac solution import --path .\VbdPowerPlatformControlHub_managed.zip --environment <environment-id>
+pac solution import --path .\VbdPowerPlatformControlHub_1_2_0_0_managed.zip --environment <environment-id>
 ```
 
 ---
@@ -122,17 +122,17 @@ fork are authored separately; add your own `LICENSE` at the repo root before pub
 ### Re-pack after changes
 
 ```powershell
-pac solution pack --zipfile .\VbdPowerPlatformControlHub_1_1_0_0.zip --folder .\src --packagetype Unmanaged
+pac solution pack --zipfile .\VbdPowerPlatformControlHub_1_2_0_0.zip --folder .\src --packagetype Unmanaged
 ```
 
 ### Unpack a new zip
 
 ```powershell
-pac solution unpack --zipfile .\VbdPowerPlatformControlHub_1_1_0_0.zip --folder .\src --packagetype Unmanaged
+pac solution unpack --zipfile .\VbdPowerPlatformControlHub_1_2_0_0.zip --folder .\src --packagetype Unmanaged
 ```
 
 ### Export a fresh managed build
 
 ```powershell
-pac solution export --name VbdPowerPlatformControlHub --managed --path .\VbdPowerPlatformControlHub_1_1_0_0_managed.zip --overwrite
+pac solution export --name VbdPowerPlatformControlHub --managed --path .\VbdPowerPlatformControlHub_1_2_0_0_managed.zip --overwrite
 ```
