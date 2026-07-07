@@ -35,12 +35,14 @@ export function GovernancePanel({
   runs,
   connRefs,
   instanceUrl,
+  envId,
   onOpenAgent,
 }: {
   items: AgentInventoryItem[];
   runs: RunInfo[];
   connRefs: ConnectionRef[];
   instanceUrl?: string;
+  envId?: string;
   onOpenAgent?: (botid: string) => void;
 }) {
   const gov = useMemo(() => buildGovernance(items, runs, connRefs), [items, runs, connRefs]);
@@ -135,7 +137,7 @@ export function GovernancePanel({
         ) : (
           <div className="gov-list">
             {visible.map((a) => (
-              <GovRow key={a.botid} a={a} instanceUrl={instanceUrl} onOpen={onOpenAgent} />
+              <GovRow key={a.botid} a={a} instanceUrl={instanceUrl} envId={envId} onOpen={onOpenAgent} />
             ))}
           </div>
         )}
@@ -147,10 +149,12 @@ export function GovernancePanel({
 function GovRow({
   a,
   instanceUrl,
+  envId,
   onOpen,
 }: {
   a: AgentGovernance;
   instanceUrl?: string;
+  envId?: string;
   onOpen?: (botid: string) => void;
 }) {
   const top: Severity = a.findings.some((f) => f.severity === "high")
@@ -185,6 +189,16 @@ function GovRow({
             <span className="pill ok">No findings</span>
           ) : (
             <span className={`pill score ${SEV_META[top].cls}`}>risk {a.score}</span>
+          )}
+          {envId && a.botid && (
+            <a
+              href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${a.botid}`}
+              target="_blank"
+              rel="noreferrer"
+              title="Open in Copilot Studio"
+            >
+              Open ↗
+            </a>
           )}
           {instanceUrl && (
             <a

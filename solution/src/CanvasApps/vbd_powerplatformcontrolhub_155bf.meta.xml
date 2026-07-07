@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <CanvasApp xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <Name>vbd_powerplatformcontrolhub_155bf</Name>
-  <AppVersion>2026-07-02T12:58:57Z</AppVersion>
+  <AppVersion>2026-07-07T11:16:59Z</AppVersion>
   <Status>Ready</Status>
   <CreatedByClientVersion>0.0.0.0</CreatedByClientVersion>
   <MinClientVersion>0.0.0.0</MinClientVersion>
@@ -29,24 +29,24 @@
   <CodeAppPackageUris>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/index.html_ContentType_text/html</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConfirmDialog-CfB5pzNZ.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConnectorsView-DicZvGcb.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioAgentDetailPanel-Fz1jxHOl.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-BV09fIKm.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-D-R9-pjq.css_ContentType_text/css</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/Dashboard-CygNYsZg.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentGroupsView-Cdz2w3yM.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentsView-Bma1igyE.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/GovernanceView-BaU_BVN6.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ConnectorsView-C14rLDxI.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioAgentDetailPanel-BhYZ9-qa.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-B_wXcD6Q.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/CopilotStudioHub-MeokJ025.css_ContentType_text/css</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/Dashboard-Y2c8L79_.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentGroupsView-gkDk6uhm.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/EnvironmentsView-CLp7lTiA.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/GovernanceView-Ci5ZIA7T.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/PowerPlatformforAdminsV2Service-BTTg9AdW.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/RecommendationsView-Mr3EdM-e.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ResourcesView-B6SsJ4QW.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ResourcesView-Dfr75_cC.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/SetupView-Bi2fQaPP.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/copilotStudioService-B0FQaExf.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/copilotStudioService-H67zJ2LP.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/fluent-vendor-_H44X2Ph.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/governanceMutations-B0uSOVht.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-Bu5ND5fj.css_ContentType_text/css</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-CTVWZBug.js_ContentType_application/javascript</CodeAppPackageUri>
-    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ownerCache-CnITuq72.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/index-DLY_PpnH.js_ContentType_application/javascript</CodeAppPackageUri>
+    <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/ownerCache-B-paU_Hj.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/rolldown-runtime-QTnfLwEv.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/tombstoneService-CbX0BUE2.js_ContentType_application/javascript</CodeAppPackageUri>
     <CodeAppPackageUri>/CanvasApps/vbd_powerplatformcontrolhub_155bf_CodeAppPackages/assets/useMutation--L93bL80.js_ContentType_application/javascript</CodeAppPackageUri>

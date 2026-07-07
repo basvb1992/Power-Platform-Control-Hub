@@ -394,6 +394,10 @@ th {
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 th.sortable:hover { color: var(--cp-text); background: var(--cp-surface-soft); }
+th.sortable.sorted { color: var(--cp-accent); background: var(--cp-surface-soft); box-shadow: inset 0 -2px 0 var(--cp-accent); }
+.sort-arrow { margin-left: 4px; font-size: 0.72em; opacity: 0.28; transition: opacity 0.12s ease, color 0.12s ease; }
+th.sortable:hover .sort-arrow { opacity: 0.6; }
+.sort-arrow.on { opacity: 1; color: var(--cp-accent); }
 tr.run-row { cursor: pointer; }
 tr.run-row:hover { background: var(--cp-surface-soft); }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; }

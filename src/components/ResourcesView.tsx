@@ -97,6 +97,11 @@ const useStyles = makeStyles({
       color: tokens.colorNeutralForeground1,
       backgroundColor: tokens.colorNeutralBackground3Hover,
     },
+    '&[aria-sort="ascending"], &[aria-sort="descending"]': {
+      color: tokens.colorBrandForeground1,
+      backgroundColor: tokens.colorNeutralBackground3Hover,
+      boxShadow: `inset 0 -2px 0 ${tokens.colorBrandStroke1}`,
+    },
   },
   td: {
     padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,

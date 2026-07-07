@@ -56,7 +56,9 @@ export function SummaryCards({ t, model }: { t: Totals; model: CostModel }) {
           A typical step = <strong>7 cr</strong> (agent action 5 + generative 2). Failed steps cost 0.
           <strong> Deep reasoning</strong> adds <em>Text &amp; generative AI tools (premium)</em> at 10 cr / 1,000 tokens —
           these token credits are billed by the model and are <em>not</em> recorded in transcripts, so an agent using a
-          deep reasoning model costs more than shown here. Reconcile actuals in <strong>PPAC → Licensing → Copilot Studio</strong>.
+          deep reasoning model costs more than shown here. For reasoning-tier agents the table shows a
+          <strong> +≈ est. premium</strong> figure — a heuristic estimate from the volume of reasoning + answer text
+          (~4 chars/token), not billed actuals. Reconcile in <strong>PPAC → Licensing → Copilot Studio</strong>.
         </p>
       </div>
     </div>
@@ -123,7 +125,7 @@ export function ByAgentTable({ rows, onSelect }: { rows: AgentRollup[]; onSelect
                     <span
                       className="pill warn"
                       style={{ marginLeft: 8 }}
-                      title="This agent is configured to use a deep-reasoning / premium model. Premium token costs (10 cr / 1,000 tokens) are billed on a separate meter and are NOT included in the credits shown here."
+                      title="This agent is configured to use a deep-reasoning / premium model. Premium token costs (10 cr / 1,000 tokens) are billed on a separate meter and are NOT included in the metered credits shown here — see the estimate next to the credits."
                     >
                       🧠 deep reasoning
                     </span>
@@ -146,6 +148,15 @@ export function ByAgentTable({ rows, onSelect }: { rows: AgentRollup[]; onSelect
                 <td className="num">{a.failed}</td>
                 <td className="num">
                   <strong>{a.credits}</strong>
+                  {a.deepReasoning && a.estPremiumCredits > 0 && (
+                    <div
+                      className="hint"
+                      style={{ marginTop: 2, whiteSpace: "nowrap" }}
+                      title={`Heuristic estimate only. Premium reasoning tokens (≈${a.estPremiumTokens.toLocaleString()} tokens) are billed at 10 credits / 1,000 tokens on a separate meter that is NOT recorded in transcripts. This figure is approximated from the volume of reasoning + answer text (~4 chars/token) and is on top of the ${a.credits} metered credits. Reconcile actuals in PPAC → Licensing → Copilot Studio.`}
+                    >
+                      +≈{a.estPremiumCredits} est. premium
+                    </div>
+                  )}
                 </td>
                 <td>
                   <div className="share">

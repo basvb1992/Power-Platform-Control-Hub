@@ -21,15 +21,18 @@ export function SortTh<K extends string>({
   numeric?: boolean;
   title?: string;
 }) {
-  const ind = sort.key === col ? (sort.dir === "asc" ? " ▲" : " ▼") : "";
+  const active = sort.key === col;
   return (
     <th
-      className={`sortable${numeric ? " num" : ""}`}
+      className={`sortable${numeric ? " num" : ""}${active ? " sorted" : ""}`}
       onClick={() => onSort(col, numeric)}
       title={title ?? `Sort by ${typeof label === "string" ? label : col}`}
+      aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
     >
       {label}
-      {ind}
+      <span className={`sort-arrow${active ? " on" : ""}`} aria-hidden="true">
+        {active ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+      </span>
     </th>
   );
 }

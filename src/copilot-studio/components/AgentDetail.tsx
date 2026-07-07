@@ -68,6 +68,9 @@ export function AgentDrawer({
 
         {envId && (
           <div className="agent-actions">
+            {item.botid && (
+              <a className="linkbtn" href={`https://copilotstudio.microsoft.com/environments/${envId}/bots/${item.botid}`} target="_blank" rel="noreferrer">Open in Copilot Studio</a>
+            )}
             {instanceUrl && (
               <a className="linkbtn" href={`${instanceUrl}/main.aspx?pagetype=entityrecord&etn=bot&id=${item.botid}`} target="_blank" rel="noreferrer">Open in Dataverse</a>
             )}

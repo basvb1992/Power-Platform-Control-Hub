@@ -176,6 +176,29 @@ describe("aggregateByAgent + totals + runCredits", () => {
     expect(agg[0].modelTier).toBe("unknown");
   });
 
+  it("estimates premium token credits only for reasoning-tier agents", () => {
+    // 400 chars of reasoning text ≈ 100 tokens ≈ 1 credit at 10 cr / 1,000 tokens.
+    const thought = "x".repeat(400);
+    const mkRunThought = (schema: string) => {
+      const rec = transcript([
+        { value: { taskDialogId: `${schema}.action.x`, displayedCost: 7, state: "completed", thought } },
+      ]);
+      return parseTranscript(rec, {})!;
+    };
+    const reasoningRuns = [mkRunThought("vbd_R"), mkRunThought("vbd_S")];
+    const agg = aggregateByAgent(reasoningRuns, { vbd_r: "o3", vbd_s: "GPT5Chat" });
+    const r = agg.find((x) => x.label.includes("R"));
+    const s = agg.find((x) => x.label.includes("S"));
+    // o3 (reasoning) → estimate populated (~100 tokens → ~1 credit).
+    expect(r?.deepReasoning).toBe(true);
+    expect(r?.estPremiumTokens).toBe(100);
+    expect(r?.estPremiumCredits).toBe(1);
+    // GPT-5 chat (standard) → no premium estimate.
+    expect(s?.deepReasoning).toBe(false);
+    expect(s?.estPremiumTokens).toBe(0);
+    expect(s?.estPremiumCredits).toBe(0);
+  });
+
   it("totals across the window", () => {
     const t = totals(runs);
     expect(t.transcripts).toBe(2);

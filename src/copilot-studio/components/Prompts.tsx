@@ -11,6 +11,8 @@ import type { ToolRef } from "../lib/agentTools";
 import type { PromptModel } from "../lib/prompts";
 import { rollupPrompts, type PromptRollup } from "../lib/prompts";
 import { shortDate } from "../lib/format";
+import { useSort, sortBy } from "../lib/tableSort";
+import { SortTh } from "./SortHeader";
 
 type SortKey = "name" | "usedBy" | "status" | "created";
 
@@ -26,7 +28,7 @@ export function Prompts({
   instanceUrl: string;
 }) {
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState<SortKey>("usedBy");
+  const { sort, onSort } = useSort<SortKey>("usedBy", "desc");
   const [open, setOpen] = useState<string | null>(null);
 
   const botNameById = useMemo(() => {
@@ -49,7 +51,15 @@ export function Prompts({
             r.usedByAgents.some((u) => u.agentName.toLowerCase().includes(q))
         )
       : rollups.slice();
-    return sortRollups(list, sort);
+    return sortBy(list, sort, (r, k) =>
+      k === "name"
+        ? r.prompt.name
+        : k === "status"
+          ? r.prompt.status
+          : k === "created"
+            ? Date.parse(r.prompt.createdon) || 0
+            : r.usedByAgents.length
+    );
   }, [rollups, search, sort]);
 
   const referenced = rollups.filter((r) => !r.noDirectAgentUse).length;
@@ -78,18 +88,10 @@ export function Prompts({
         <table className="subtable">
           <thead>
             <tr>
-              <th className="sortable" onClick={() => setSort("name")}>
-                Prompt
-              </th>
-              <th className="sortable" onClick={() => setSort("status")}>
-                Status
-              </th>
-              <th className="sortable num" onClick={() => setSort("usedBy")}>
-                Used by
-              </th>
-              <th className="sortable" onClick={() => setSort("created")}>
-                Created
-              </th>
+              <SortTh col="name" label="Prompt" sort={sort} onSort={onSort} />
+              <SortTh col="status" label="Status" sort={sort} onSort={onSort} />
+              <SortTh col="usedBy" label="Used by" sort={sort} onSort={onSort} numeric />
+              <SortTh col="created" label="Created" sort={sort} onSort={onSort} numeric />
               <th></th>
             </tr>
           </thead>
@@ -178,19 +180,4 @@ function PromptRow({
       )}
     </>
   );
-}
-
-function sortRollups(list: PromptRollup[], key: SortKey): PromptRollup[] {
-  const arr = list.slice();
-  switch (key) {
-    case "name":
-      return arr.sort((a, b) => a.prompt.name.localeCompare(b.prompt.name));
-    case "status":
-      return arr.sort((a, b) => a.prompt.status.localeCompare(b.prompt.status));
-    case "created":
-      return arr.sort((a, b) => b.prompt.createdon.localeCompare(a.prompt.createdon));
-    case "usedBy":
-    default:
-      return arr.sort((a, b) => b.usedByAgents.length - a.usedByAgents.length);
-  }
 }

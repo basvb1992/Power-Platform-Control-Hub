@@ -101,6 +101,11 @@ const useStyles = makeStyles({
     cursor: 'pointer',
     userSelect: 'none',
     ':hover': { color: tokens.colorNeutralForeground1 },
+    '&[aria-sort="ascending"], &[aria-sort="descending"]': {
+      color: tokens.colorBrandForeground1,
+      backgroundColor: tokens.colorNeutralBackground3Hover,
+      boxShadow: `inset 0 -2px 0 ${tokens.colorBrandStroke1}`,
+    },
   },
   count: {
     fontSize: tokens.fontSizeBase200,
@@ -263,6 +268,11 @@ export default function ConnectorsView({
     return sortDir === 'asc' ? ' ↑' : ' ↓';
   }
 
+  function ariaSortAttr(field: typeof sortField): 'ascending' | 'descending' | 'none' {
+    if (activeTab !== 'connectors' || sortField !== field) return 'none';
+    return sortDir === 'asc' ? 'ascending' : 'descending';
+  }
+
   const displayedConnections = useMemo(() => {
     if (activeTab !== 'connectors') return currentConnections;
     const filtered = currentConnections.filter((c) => {
@@ -317,20 +327,24 @@ export default function ConnectorsView({
           <thead>
             <tr>
               <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
-                onClick={activeTab === 'connectors' ? () => handleConnectorSort('displayName') : undefined}>
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('displayName') : undefined}
+                aria-sort={ariaSortAttr('displayName')}>
                 Display Name{activeTab === 'connectors' && sortIndicator('displayName')}
               </th>
               <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
-                onClick={activeTab === 'connectors' ? () => handleConnectorSort('publisher') : undefined}>
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('publisher') : undefined}
+                aria-sort={ariaSortAttr('publisher')}>
                 Publisher{activeTab === 'connectors' && sortIndicator('publisher')}
               </th>
               <th className={styles.th}>Custom API</th>
               <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
-                onClick={activeTab === 'connectors' ? () => handleConnectorSort('createdTime') : undefined}>
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('createdTime') : undefined}
+                aria-sort={ariaSortAttr('createdTime')}>
                 Created{activeTab === 'connectors' && sortIndicator('createdTime')}
               </th>
               <th className={activeTab === 'connectors' ? styles.thSortable : styles.th}
-                onClick={activeTab === 'connectors' ? () => handleConnectorSort('tier') : undefined}>
+                onClick={activeTab === 'connectors' ? () => handleConnectorSort('tier') : undefined}
+                aria-sort={ariaSortAttr('tier')}>
                 Type (Tier){activeTab === 'connectors' && sortIndicator('tier')}
               </th>
               {activeTab === 'connections' && <th className={styles.th} style={{ width: '60px' }}></th>}

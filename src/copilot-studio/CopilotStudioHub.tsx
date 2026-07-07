@@ -50,6 +50,7 @@ import { M365AgentsPanel } from "./components/M365Agents.tsx";
 import { AcademyPanel } from "./components/Academy.tsx";
 import { AgentFlows } from "./components/AgentFlows.tsx";
 import { Prompts } from "./components/Prompts.tsx";
+import { SortTh } from "./components/SortHeader.tsx";
 import { LatencyPanel } from "./components/Latency.tsx";
 import {
   SummaryCards,
@@ -386,9 +387,6 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
         : { key, dir: key === "conversations" || key === "credits" ? "desc" : "asc" }
     );
   }
-  function sortIndicator(key: typeof agentSort.key): string {
-    return agentSort.key === key ? (agentSort.dir === "asc" ? " ▲" : " ▼") : "";
-  }
 
   return (
     <div className="cs-hub">
@@ -581,6 +579,7 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
             runs={runs}
             connRefs={connRefs}
             instanceUrl={instanceUrl}
+            envId={selectedEnv}
             onOpenAgent={(botid) => {
               const it = inventory.find((b) => b.botid === botid);
               if (it) setOpenAgent(it);
@@ -611,12 +610,12 @@ export default function CopilotStudioHub({ environments }: { environments: Resou
               <table>
                 <thead>
                   <tr>
-                    <th className="sortable" onClick={() => toggleSort("name")} title="Sort by agent">Agent{sortIndicator("name")}</th>
-                    <th className="sortable" onClick={() => toggleSort("kind")} title="Sort by authoring type">Type{sortIndicator("kind")}</th>
-                    <th className="sortable" onClick={() => toggleSort("state")} title="Sort by state">State{sortIndicator("state")}</th>
-                    <th className="sortable" onClick={() => toggleSort("owner")} title="Sort by owner">Owner{sortIndicator("owner")}</th>
-                    <th className="num sortable" onClick={() => toggleSort("conversations")} title="Sort by conversations">Conversations{sortIndicator("conversations")}</th>
-                    <th className="num sortable" onClick={() => toggleSort("credits")} title="Sort by credits">Credits{sortIndicator("credits")}</th>
+                    <SortTh col="name" label="Agent" sort={agentSort} onSort={toggleSort} title="Sort by agent" />
+                    <SortTh col="kind" label="Type" sort={agentSort} onSort={toggleSort} title="Sort by authoring type" />
+                    <SortTh col="state" label="State" sort={agentSort} onSort={toggleSort} title="Sort by state" />
+                    <SortTh col="owner" label="Owner" sort={agentSort} onSort={toggleSort} title="Sort by owner" />
+                    <SortTh col="conversations" label="Conversations" sort={agentSort} onSort={toggleSort} numeric title="Sort by conversations" />
+                    <SortTh col="credits" label="Credits" sort={agentSort} onSort={toggleSort} numeric title="Sort by credits" />
                     <th>Open</th>
                   </tr>
                 </thead>

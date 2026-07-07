@@ -70,6 +70,19 @@ export interface AgentRollup {
   modelTier: ModelTier;
   /** True when the agent's configured model is a deep-reasoning / premium model. */
   deepReasoning: boolean;
+  /**
+   * Heuristic estimate of premium reasoning tokens generated across the window.
+   * Only populated for reasoning-tier agents (0 otherwise) — approximated from
+   * the volume of reasoning + answer text in the transcripts, so it's a rough
+   * order-of-magnitude figure, not billed actuals.
+   */
+  estPremiumTokens: number;
+  /**
+   * Heuristic estimate of the *credits* those premium tokens cost, at the
+   * official 10 credits / 1,000 tokens rate. 0 unless the agent is reasoning-tier.
+   * These are NOT included in `credits` (that meter isn't in the transcript).
+   */
+  estPremiumCredits: number;
 }
 
 export interface CostModel {
@@ -253,6 +266,8 @@ export function aggregateByAgent(
         modelLabel: info.label,
         modelTier: info.tier,
         deepReasoning: info.reasoning,
+        estPremiumTokens: 0,
+        estPremiumCredits: 0,
       };
       map.set(key, a);
     }
@@ -262,8 +277,16 @@ export function aggregateByAgent(
       else a.completed++;
       a.credits += s.cost;
     }
+    // Only reasoning-tier agents incur the premium token meter; estimate it.
+    if (a.deepReasoning) a.estPremiumTokens += estimateRunTokens(r);
   }
-  return [...map.values()].sort((x, y) => y.credits - x.credits);
+  const list = [...map.values()];
+  for (const a of list) {
+    a.estPremiumCredits = a.deepReasoning
+      ? Math.round(premiumCreditsForTokens(a.estPremiumTokens))
+      : 0;
+  }
+  return list.sort((x, y) => y.credits - x.credits);
 }
 
 export interface Totals {
@@ -296,6 +319,38 @@ export function totals(runs: RunInfo[]): Totals {
 /** Actual Copilot Credits for a run = sum of the transcript's per-step displayedCost. */
 export function runCredits(r: RunInfo): number {
   return r.steps.reduce((sum, s) => sum + s.cost, 0);
+}
+
+// ---------------------------------------------------------------------------
+// Premium-token credit ESTIMATE (heuristic — for reasoning-tier agents only)
+// ---------------------------------------------------------------------------
+// The "Text & generative AI tools (premium)" meter (10 cr / 1,000 tokens) is
+// billed by the model and is NOT written into conversation transcripts. When an
+// agent runs a reasoning-tier model we can only APPROXIMATE that cost from the
+// volume of text the model produced (its reasoning traces + answers), using the
+// common ~4-characters-per-token rule of thumb. This is an order-of-magnitude
+// estimate to make the otherwise-invisible premium meter tangible — reconcile
+// real numbers in PPAC → Licensing → Copilot Studio.
+
+/** Rough English-text token density (~4 chars per token). */
+export const CHARS_PER_TOKEN = 4;
+/** Premium-model token credit rate: 10 Copilot Credits per 1,000 tokens. */
+export const PREMIUM_CREDITS_PER_1K_TOKENS = 10;
+
+/**
+ * Approximate the number of premium tokens a run generated, from the volume of
+ * reasoning text (step thoughts) plus the agent's answer messages.
+ */
+export function estimateRunTokens(r: RunInfo): number {
+  let chars = 0;
+  for (const s of r.steps) chars += s.thought.length;
+  for (const m of r.messages) if (m.role === "bot") chars += m.text.length;
+  return Math.round(chars / CHARS_PER_TOKEN);
+}
+
+/** Convert an estimated token count into estimated premium credits. */
+export function premiumCreditsForTokens(tokens: number): number {
+  return (tokens / 1000) * PREMIUM_CREDITS_PER_1K_TOKENS;
 }
 
 // ---------------------------------------------------------------------------
